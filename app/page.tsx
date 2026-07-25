@@ -1,79 +1,53 @@
+import FeaturedJacket from "@/components/FeaturedJacket";
+import Hero from "@/components/Hero";
+import Navbar from "@/components/Navbar";
+
 export default function Home() {
   return (
     <main className="min-h-screen bg-[#1E1F20] text-[#F6F2EA]">
-      {/* Navigation */}
-      <nav className="flex items-center justify-between px-10 py-6 border-b border-white/10">
-        <h1 className="text-2xl font-bold tracking-[0.25em] uppercase">
-          The Family Regiment
-        </h1>
+      <Navbar />
+      <Hero />
 
-        <div className="hidden md:flex gap-8 text-sm uppercase tracking-widest">
-          <a href="#">Jackets</a>
-          <a href="#">Build Your Regiment</a>
-          <a href="#">Patches</a>
-          <a href="#">Journal</a>
-          <a href="#">About</a>
-        </div>
-      </nav>
+      <section className="mx-auto grid max-w-7xl gap-6 px-6 pb-24 md:grid-cols-3">
+        <article className="rounded-3xl border border-white/10 bg-white/[0.03] p-8">
+          <p className="mb-8 text-xs uppercase tracking-[0.35em] text-[#B08D57]">
+            Chapter I
+          </p>
 
-      {/* Hero */}
-      <section className="flex flex-col items-center justify-center text-center px-6 py-32">
+          <h3 className="text-3xl">Heritage</h3>
 
-        <p className="uppercase tracking-[0.4em] text-[#B08D57] text-sm mb-6">
-          Luxury Heritage Apparel
-        </p>
+          <p className="mt-4 leading-7 text-[#AAA69E]">
+            Turn ancestry, places, symbols, and traditions into a family crest.
+          </p>
+        </article>
 
-        <h2 className="text-6xl md:text-8xl font-bold leading-tight max-w-5xl">
-          Every Family
-          <br />
-          Has a Regiment.
-        </h2>
+        <article className="rounded-3xl border border-white/10 bg-white/[0.03] p-8">
+          <p className="mb-8 text-xs uppercase tracking-[0.35em] text-[#B08D57]">
+            Chapter II
+          </p>
 
-        <p className="mt-8 max-w-2xl text-lg text-gray-300 leading-8">
-          Design a modern heirloom inspired by your family's heritage,
-          traditions, service, and legacy.
-        </p>
+          <h3 className="text-3xl">The Jacket</h3>
 
-        <div className="flex gap-6 mt-12 flex-wrap justify-center">
+          <p className="mt-4 leading-7 text-[#AAA69E]">
+            Build a premium field jacket with patches chosen around your story.
+          </p>
+        </article>
 
-          <button className="bg-[#B08D57] text-black px-8 py-4 rounded-full font-semibold hover:scale-105 transition">
-            Build Your Regiment
-          </button>
+        <article className="rounded-3xl border border-white/10 bg-white/[0.03] p-8">
+          <p className="mb-8 text-xs uppercase tracking-[0.35em] text-[#B08D57]">
+            Chapter III
+          </p>
 
-          <button className="border border-[#B08D57] px-8 py-4 rounded-full hover:bg-[#B08D57] hover:text-black transition">
-            Explore Jackets
-          </button>
+          <h3 className="text-3xl">Legacy</h3>
 
-        </div>
-
+          <p className="mt-4 leading-7 text-[#AAA69E]">
+            Create a modern heirloom designed to be worn, remembered, and passed
+            down.
+          </p>
+        </article>
       </section>
 
-      {/* Preview Section */}
-
-      <section className="grid md:grid-cols-3 gap-10 px-10 pb-32">
-
-        <div className="rounded-3xl bg-[#2B2C2D] p-10">
-          <h3 className="text-2xl mb-4">Heritage</h3>
-          <p className="text-gray-300">
-            Build a crest inspired by your family's story and traditions.
-          </p>
-        </div>
-
-        <div className="rounded-3xl bg-[#2B2C2D] p-10">
-          <h3 className="text-2xl mb-4">Regiment Jacket</h3>
-          <p className="text-gray-300">
-            Customize a premium field jacket with meaningful patches.
-          </p>
-        </div>
-
-        <div className="rounded-3xl bg-[#2B2C2D] p-10">
-          <h3 className="text-2xl mb-4">Legacy</h3>
-          <p className="text-gray-300">
-            Create something your children and grandchildren can inherit.
-          </p>
-        </div>
-
-      </section>
+      <FeaturedJacket />
     </main>
   );
 }

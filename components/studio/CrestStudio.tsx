@@ -11,6 +11,8 @@ type BuilderDraft = {
   symbol: string;
   value: string;
   motto: string;
+
+  embroideryFinish?: string;
 };
 
 type StudioDraft = BuilderDraft & {
@@ -93,10 +95,46 @@ export default function CrestStudio() {
         : {};
 
       setDraft({
-        ...defaultDraft,
-        ...parsedBuilder,
-        ...parsedStudio,
-      });
+  ...defaultDraft,
+  ...parsedStudio,
+
+  familyName:
+    parsedBuilder.familyName ??
+    parsedStudio.familyName ??
+    defaultDraft.familyName,
+
+  initials:
+    parsedBuilder.initials ??
+    parsedStudio.initials ??
+    defaultDraft.initials,
+
+  heritage:
+    parsedBuilder.heritage ??
+    parsedStudio.heritage ??
+    defaultDraft.heritage,
+
+  symbol:
+    parsedBuilder.symbol ??
+    parsedStudio.symbol ??
+    defaultDraft.symbol,
+
+  value:
+    parsedBuilder.value ??
+    parsedStudio.value ??
+    defaultDraft.value,
+
+  motto:
+    parsedBuilder.motto ??
+    parsedStudio.motto ??
+    defaultDraft.motto,
+
+  palette:
+    parsedBuilder.embroideryFinish === "Tactical Subdued"
+      ? "Tactical Subdued"
+      : parsedBuilder.embroideryFinish === "Heritage Ivory"
+        ? "Heritage Ivory"
+        : parsedStudio.palette ?? defaultDraft.palette,
+});
     } catch {
       window.localStorage.removeItem("family-regiment-studio");
     }

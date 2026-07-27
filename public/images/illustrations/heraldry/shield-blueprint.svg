@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" role="img">
+<title>Shield Blueprint</title>
+<style>
+.line{fill:none;stroke:#111;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
+.fine{fill:none;stroke:#111;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.guide{fill:none;stroke:#111;stroke-width:1.2;stroke-dasharray:8 8;opacity:.55}
+.label{fill:#111;font-family:Georgia,'Times New Roman',serif;font-size:22px;letter-spacing:3px}
+.small{fill:#111;font-family:Georgia,'Times New Roman',serif;font-size:14px;letter-spacing:1.5px}
+</style>
+
+<text class="label" x="800" y="90" text-anchor="middle">SHIELD BLUEPRINT</text>
+<line class="guide" x1="800" y1="120" x2="800" y2="820"/>
+<path class="line" d="M520 180H1080V430C1080 610 965 720 800 795C635 720 520 610 520 430Z"/>
+<path class="fine" d="M565 225H1035V425C1035 575 945 665 800 735C655 665 565 575 565 425Z"/>
+<line class="guide" x1="430" y1="180" x2="1170" y2="180"/><line class="guide" x1="430" y1="430" x2="1170" y2="430"/>
+</svg>

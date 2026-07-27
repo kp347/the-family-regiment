@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" role="img">
+<title>Laurel Wreath</title>
+<style>
+.line{fill:none;stroke:#111;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
+.fine{fill:none;stroke:#111;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.guide{fill:none;stroke:#111;stroke-width:1.2;stroke-dasharray:8 8;opacity:.55}
+.label{fill:#111;font-family:Georgia,'Times New Roman',serif;font-size:22px;letter-spacing:3px}
+.small{fill:#111;font-family:Georgia,'Times New Roman',serif;font-size:14px;letter-spacing:1.5px}
+</style>
+
+<text class="label" x="800" y="790" text-anchor="middle">LAUREL WREATH</text>
+<path class="line" d="M690 690C500 580 450 375 560 220M910 690C1100 580 1150 375 1040 220"/>
+<ellipse class="fine" cx="555" cy="270" rx="30" ry="58" transform="rotate(-50 555 270)"/>
+<ellipse class="fine" cx="590" cy="350" rx="30" ry="58" transform="rotate(-35 590 350)"/>
+<ellipse class="fine" cx="630" cy="440" rx="30" ry="58" transform="rotate(-20 630 440)"/>
+<ellipse class="fine" cx="665" cy="540" rx="30" ry="58" transform="rotate(-8 665 540)"/>
+<ellipse class="fine" cx="1045" cy="270" rx="30" ry="58" transform="rotate(50 1045 270)"/>
+<ellipse class="fine" cx="1010" cy="350" rx="30" ry="58" transform="rotate(35 1010 350)"/>
+<ellipse class="fine" cx="970" cy="440" rx="30" ry="58" transform="rotate(20 970 440)"/>
+<ellipse class="fine" cx="935" cy="540" rx="30" ry="58" transform="rotate(8 935 540)"/>
+</svg>

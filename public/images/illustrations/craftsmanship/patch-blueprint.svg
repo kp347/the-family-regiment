@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" role="img">
+<title>Patch Blueprint</title>
+<style>
+.line{fill:none;stroke:#111;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
+.fine{fill:none;stroke:#111;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.guide{fill:none;stroke:#111;stroke-width:1.2;stroke-dasharray:8 8;opacity:.55}
+.label{fill:#111;font-family:Georgia,'Times New Roman',serif;font-size:22px;letter-spacing:3px}
+.small{fill:#111;font-family:Georgia,'Times New Roman',serif;font-size:14px;letter-spacing:1.5px}
+</style>
+
+<text class="label" x="800" y="95" text-anchor="middle">PATCH CONSTRUCTION</text>
+<path class="line" d="M560 220H1040V470C1040 610 930 690 800 745C670 690 560 610 560 470Z"/>
+<path class="fine" d="M590 250H1010V465C1010 580 920 650 800 700C680 650 590 580 590 465Z"/>
+<path class="guide" d="M625 285H975V455C975 545 900 600 800 640C700 600 625 545 625 455Z"/>
+</svg>

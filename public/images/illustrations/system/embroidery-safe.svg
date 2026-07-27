@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" role="img">
+<title>Embroidery Safe</title>
+<style>
+.line{fill:none;stroke:#111;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
+.fine{fill:none;stroke:#111;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.guide{fill:none;stroke:#111;stroke-width:1.2;stroke-dasharray:8 8;opacity:.55}
+.label{fill:#111;font-family:Georgia,'Times New Roman',serif;font-size:22px;letter-spacing:3px}
+.small{fill:#111;font-family:Georgia,'Times New Roman',serif;font-size:14px;letter-spacing:1.5px}
+</style>
+
+<text class="label" x="800" y="90" text-anchor="middle">EMBROIDERY SAFE / UNSAFE</text>
+<rect class="line" x="180" y="170" width="550" height="560" rx="20"/><rect class="line" x="870" y="170" width="550" height="560" rx="20"/>
+<path class="line" d="M330 330L420 420L590 245"/><path class="line" d="M1010 260L1280 530M1280 260L1010 530"/>
+</svg>

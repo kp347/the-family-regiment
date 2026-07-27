@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" role="img">
+<title>Embroidery Stitches</title>
+<style>
+.line{fill:none;stroke:#111;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
+.fine{fill:none;stroke:#111;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.guide{fill:none;stroke:#111;stroke-width:1.2;stroke-dasharray:8 8;opacity:.55}
+.label{fill:#111;font-family:Georgia,'Times New Roman',serif;font-size:22px;letter-spacing:3px}
+.small{fill:#111;font-family:Georgia,'Times New Roman',serif;font-size:14px;letter-spacing:1.5px}
+</style>
+
+<text class="label" x="800" y="100" text-anchor="middle">EMBROIDERY STITCHES</text>
+<path class="line" d="M260 270H650"/><path class="fine" d="M280 230L320 310M340 230L380 310M400 230L440 310M460 230L500 310M520 230L560 310M580 230L620 310"/>
+<rect class="line" x="930" y="205" width="390" height="130" rx="10"/><path class="fine" d="M950 230H1300M950 255H1300M950 280H1300M950 305H1300"/>
+<path class="line" d="M260 560C340 500 420 620 500 560S660 500 740 560"/>
+<path class="line" d="M930 610L990 510L1050 610L1110 510L1170 610L1230 510L1290 610"/>
+</svg>

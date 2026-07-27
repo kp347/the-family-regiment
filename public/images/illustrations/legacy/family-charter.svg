@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" role="img">
+<title>Family Charter</title>
+<style>
+.line{fill:none;stroke:#111;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
+.fine{fill:none;stroke:#111;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.guide{fill:none;stroke:#111;stroke-width:1.2;stroke-dasharray:8 8;opacity:.55}
+.label{fill:#111;font-family:Georgia,'Times New Roman',serif;font-size:22px;letter-spacing:3px}
+.small{fill:#111;font-family:Georgia,'Times New Roman',serif;font-size:14px;letter-spacing:1.5px}
+</style>
+
+<path class="line" d="M430 145H1170V755H430Z"/><path class="fine" d="M470 185H1130V715H470Z"/>
+<path class="line" d="M750 220H850V320C850 355 825 380 800 395C775 380 750 355 750 320Z"/>
+<text class="label" x="800" y="455" text-anchor="middle">THE FAMILY CHARTER</text>
+<line class="fine" x1="560" y1="515" x2="1040" y2="515"/><line class="fine" x1="520" y1="565" x2="1080" y2="565"/>
+<circle class="line" cx="1030" cy="665" r="42"/>
+</svg>

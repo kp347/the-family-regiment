@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" role="img">
+<title>Banner Ribbon</title>
+<style>
+.line{fill:none;stroke:#111;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
+.fine{fill:none;stroke:#111;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.guide{fill:none;stroke:#111;stroke-width:1.2;stroke-dasharray:8 8;opacity:.55}
+.label{fill:#111;font-family:Georgia,'Times New Roman',serif;font-size:22px;letter-spacing:3px}
+.small{fill:#111;font-family:Georgia,'Times New Roman',serif;font-size:14px;letter-spacing:1.5px}
+</style>
+
+<text class="label" x="800" y="170" text-anchor="middle">MOTTO BANNER</text>
+<path class="line" d="M350 360C520 300 1080 300 1250 360L1170 470C1000 425 600 425 430 470Z"/>
+<path class="line" d="M350 360L255 325L315 455L430 470M1250 360L1345 325L1285 455L1170 470"/>
+<line class="guide" x1="500" y1="395" x2="1100" y2="395"/>
+</svg>

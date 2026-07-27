@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" role="img">
+<title>Needle Thread</title>
+<style>
+.line{fill:none;stroke:#111;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
+.fine{fill:none;stroke:#111;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.guide{fill:none;stroke:#111;stroke-width:1.2;stroke-dasharray:8 8;opacity:.55}
+.label{fill:#111;font-family:Georgia,'Times New Roman',serif;font-size:22px;letter-spacing:3px}
+.small{fill:#111;font-family:Georgia,'Times New Roman',serif;font-size:14px;letter-spacing:1.5px}
+</style>
+
+<text class="label" x="800" y="100" text-anchor="middle">NEEDLE &amp; THREAD</text>
+<path class="line" d="M500 690L960 230"/><ellipse class="fine" cx="970" cy="220" rx="20" ry="48" transform="rotate(45 970 220)"/>
+<path class="line" d="M990 235C1120 260 1160 360 1095 440C1010 545 820 455 890 360C945 285 1080 340 1020 420"/>
+</svg>

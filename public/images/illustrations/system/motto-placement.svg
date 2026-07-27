@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" role="img">
+<title>Motto Placement</title>
+<style>
+.line{fill:none;stroke:#111;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
+.fine{fill:none;stroke:#111;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.guide{fill:none;stroke:#111;stroke-width:1.2;stroke-dasharray:8 8;opacity:.55}
+.label{fill:#111;font-family:Georgia,'Times New Roman',serif;font-size:22px;letter-spacing:3px}
+.small{fill:#111;font-family:Georgia,'Times New Roman',serif;font-size:14px;letter-spacing:1.5px}
+</style>
+
+<text class="label" x="800" y="90" text-anchor="middle">MOTTO PLACEMENT</text>
+<path class="line" d="M610 180H990V390C990 510 900 590 800 640C700 590 610 510 610 390Z"/>
+<path class="line" d="M390 660C550 610 1050 610 1210 660L1145 755C1000 715 600 715 455 755Z"/>
+<line class="guide" x1="500" y1="695" x2="1100" y2="695"/>
+</svg>

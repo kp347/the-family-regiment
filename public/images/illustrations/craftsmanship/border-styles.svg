@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" role="img">
+<title>Border Styles</title>
+<style>
+.line{fill:none;stroke:#111;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
+.fine{fill:none;stroke:#111;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.guide{fill:none;stroke:#111;stroke-width:1.2;stroke-dasharray:8 8;opacity:.55}
+.label{fill:#111;font-family:Georgia,'Times New Roman',serif;font-size:22px;letter-spacing:3px}
+.small{fill:#111;font-family:Georgia,'Times New Roman',serif;font-size:14px;letter-spacing:1.5px}
+</style>
+
+<text class="label" x="800" y="100" text-anchor="middle">BORDER STYLES</text>
+<rect class="line" x="230" y="220" width="430" height="180" rx="24"/><rect class="fine" x="255" y="245" width="380" height="130" rx="15"/>
+<rect class="line" x="940" y="220" width="430" height="180" rx="4"/><rect class="guide" x="965" y="245" width="380" height="130" rx="2"/>
+<path class="line" d="M230 610H660M940 610H1370"/>
+<path class="fine" d="M250 570Q275 650 300 570T350 570T400 570T450 570T500 570T550 570T600 570T650 570"/>
+<path class="fine" d="M960 570L1000 650L1040 570L1080 650L1120 570L1160 650L1200 570L1240 650L1280 570L1320 650L1360 570"/>
+</svg>

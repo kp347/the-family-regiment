@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" role="img">
+<title>Layer Diagram</title>
+<style>
+.line{fill:none;stroke:#111;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
+.fine{fill:none;stroke:#111;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.guide{fill:none;stroke:#111;stroke-width:1.2;stroke-dasharray:8 8;opacity:.55}
+.label{fill:#111;font-family:Georgia,'Times New Roman',serif;font-size:22px;letter-spacing:3px}
+.small{fill:#111;font-family:Georgia,'Times New Roman',serif;font-size:14px;letter-spacing:1.5px}
+</style>
+
+<text class="label" x="800" y="90" text-anchor="middle">CREST LAYER DIAGRAM</text>
+<rect class="line" x="410" y="620" width="780" height="90" rx="12"/><rect class="line" x="470" y="490" width="660" height="90" rx="12"/>
+<rect class="line" x="530" y="360" width="540" height="90" rx="12"/><rect class="line" x="590" y="230" width="420" height="90" rx="12"/>
+</svg>

@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" role="img">
+<title>Thread Palette</title>
+<style>
+.line{fill:none;stroke:#111;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
+.fine{fill:none;stroke:#111;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.guide{fill:none;stroke:#111;stroke-width:1.2;stroke-dasharray:8 8;opacity:.55}
+.label{fill:#111;font-family:Georgia,'Times New Roman',serif;font-size:22px;letter-spacing:3px}
+.small{fill:#111;font-family:Georgia,'Times New Roman',serif;font-size:14px;letter-spacing:1.5px}
+</style>
+
+<text class="label" x="800" y="100" text-anchor="middle">THREAD PALETTE</text>
+<rect class="line" x="220" y="190" width="230" height="140" rx="18"/><rect class="line" x="490" y="190" width="230" height="140" rx="18"/>
+<rect class="line" x="760" y="190" width="230" height="140" rx="18"/><rect class="line" x="1030" y="190" width="230" height="140" rx="18"/>
+<rect class="line" x="220" y="470" width="230" height="140" rx="18"/><rect class="line" x="490" y="470" width="230" height="140" rx="18"/>
+<rect class="line" x="760" y="470" width="230" height="140" rx="18"/><rect class="line" x="1030" y="470" width="230" height="140" rx="18"/>
+<text class="small" x="335" y="365" text-anchor="middle">CRIMSON</text><text class="small" x="605" y="365" text-anchor="middle">ROYAL BLUE</text>
+<text class="small" x="875" y="365" text-anchor="middle">FOREST GREEN</text><text class="small" x="1145" y="365" text-anchor="middle">GOLD</text>
+<text class="small" x="335" y="645" text-anchor="middle">WHITE</text><text class="small" x="605" y="645" text-anchor="middle">BLACK</text>
+<text class="small" x="875" y="645" text-anchor="middle">PURPLE</text><text class="small" x="1145" y="645" text-anchor="middle">NATURAL</text>
+</svg>

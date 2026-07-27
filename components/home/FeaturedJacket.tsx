@@ -10,7 +10,7 @@ export default function FeaturedJacket() {
         <div className="overflow-hidden rounded-[2rem] border border-white/10 bg-[#1D1E1F]">
           <div className="relative aspect-[4/5] overflow-hidden">
             <Image
-              src="/images/regiment-jacket.png"
+              src="/images/products/studio/regiment-jacket.png"
               alt="Olive Regiment Jacket with custom embroidered family patches"
               fill
               priority

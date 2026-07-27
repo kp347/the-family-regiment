@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" role="img">
+<title>Heraldic Crown</title>
+<style>
+.line{fill:none;stroke:#111;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
+.fine{fill:none;stroke:#111;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.guide{fill:none;stroke:#111;stroke-width:1.2;stroke-dasharray:8 8;opacity:.55}
+.label{fill:#111;font-family:Georgia,'Times New Roman',serif;font-size:22px;letter-spacing:3px}
+.small{fill:#111;font-family:Georgia,'Times New Roman',serif;font-size:14px;letter-spacing:1.5px}
+</style>
+
+<text class="label" x="800" y="760" text-anchor="middle">HERALDIC CROWN</text>
+<path class="line" d="M470 515H1130L1085 665H515Z"/>
+<path class="line" d="M515 515L455 310L640 435L800 230L960 435L1145 310L1085 515"/>
+<circle class="line" cx="455" cy="300" r="28"/><circle class="line" cx="800" cy="215" r="30"/><circle class="line" cx="1145" cy="300" r="28"/>
+</svg>

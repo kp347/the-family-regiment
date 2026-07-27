@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" role="img">
+<title>Certificate</title>
+<style>
+.line{fill:none;stroke:#111;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
+.fine{fill:none;stroke:#111;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.guide{fill:none;stroke:#111;stroke-width:1.2;stroke-dasharray:8 8;opacity:.55}
+.label{fill:#111;font-family:Georgia,'Times New Roman',serif;font-size:22px;letter-spacing:3px}
+.small{fill:#111;font-family:Georgia,'Times New Roman',serif;font-size:14px;letter-spacing:1.5px}
+</style>
+
+<rect class="line" x="330" y="150" width="940" height="600" rx="8"/><rect class="fine" x="365" y="185" width="870" height="530" rx="5"/>
+<circle class="line" cx="800" cy="300" r="70"/><path class="fine" d="M765 300L792 327L842 275"/>
+<text class="label" x="800" y="420" text-anchor="middle">FAMILY REGIMENT CERTIFICATE</text>
+<line class="fine" x1="500" y1="500" x2="1100" y2="500"/><line class="fine" x1="560" y1="560" x2="1040" y2="560"/>
+</svg>

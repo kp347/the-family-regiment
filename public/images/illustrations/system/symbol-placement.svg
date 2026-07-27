@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" role="img">
+<title>Symbol Placement</title>
+<style>
+.line{fill:none;stroke:#111;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
+.fine{fill:none;stroke:#111;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.guide{fill:none;stroke:#111;stroke-width:1.2;stroke-dasharray:8 8;opacity:.55}
+.label{fill:#111;font-family:Georgia,'Times New Roman',serif;font-size:22px;letter-spacing:3px}
+.small{fill:#111;font-family:Georgia,'Times New Roman',serif;font-size:14px;letter-spacing:1.5px}
+</style>
+
+<text class="label" x="800" y="90" text-anchor="middle">SYMBOL PLACEMENT</text>
+<path class="line" d="M560 175H1040V430C1040 590 920 700 800 765C680 700 560 590 560 430Z"/>
+<line class="guide" x1="800" y1="175" x2="800" y2="765"/><line class="guide" x1="560" y1="430" x2="1040" y2="430"/>
+<circle class="line" cx="800" cy="400" r="105"/><circle class="fine" cx="680" cy="255" r="44"/><circle class="fine" cx="920" cy="255" r="44"/>
+</svg>

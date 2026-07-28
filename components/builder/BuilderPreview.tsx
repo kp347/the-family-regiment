@@ -1,5 +1,3 @@
-// components/builder/BuilderPreview.tsx
-
 import Image from "next/image";
 import { jacketLayout } from "@/lib/jacketLayout";
 
@@ -44,6 +42,9 @@ const fallbackJacket: PreviewJacketOption = {
   image: "/images/jackets/m65-front.png",
 };
 
+const activePatchClasses =
+  "ring-2 ring-[#D4AF6A]/90 ring-offset-2 ring-offset-transparent drop-shadow-[0_0_14px_rgba(212,175,106,0.75)]";
+
 export default function BuilderPreview({
   familyName,
   initials,
@@ -71,15 +72,21 @@ export default function BuilderPreview({
 
   const isFrontView = jacketView === "Front";
 
-  const crestLayout =
-    crestPlacement === "Left Chest"
-      ? jacketLayout.front.crest.leftChest
-      : jacketLayout.front.crest.rightChest;
+  const isLeftChestActive = crestPlacement === "Left Chest";
+  const isRightChestActive = crestPlacement === "Right Chest";
+  const isSleeveActive = crestPlacement === "Sleeve Patch";
+  const isTopRockerActive = crestPlacement === "Top Rocker";
+  const isBackCrestActive =
+    crestPlacement === "Back Crest" || crestPlacement === "Center Patch";
+  const isBottomRockerActive = crestPlacement === "Bottom Rocker";
 
-  const nameTapeLayout =
-    crestPlacement === "Left Chest"
-      ? jacketLayout.front.nameTape.leftChest
-      : jacketLayout.front.nameTape.rightChest;
+  const crestLayout = isLeftChestActive
+    ? jacketLayout.front.crest.leftChest
+    : jacketLayout.front.crest.rightChest;
+
+  const nameTapeLayout = isLeftChestActive
+    ? jacketLayout.front.nameTape.leftChest
+    : jacketLayout.front.nameTape.rightChest;
 
   const sleevePatchLayout = jacketLayout.front.sleevePatch;
   const backLayout = jacketLayout.back;
@@ -124,7 +131,7 @@ export default function BuilderPreview({
           <div className="mb-6 flex items-center justify-between">
             <div>
               <p className="text-xs uppercase tracking-[0.4em] text-[#B08D57]">
-                Live Jacket Preview
+                Regiment Workshop
               </p>
 
               <p className="mt-2 text-sm text-[#77736A]">
@@ -132,18 +139,18 @@ export default function BuilderPreview({
               </p>
             </div>
 
-            <span className="rounded-full border border-white/10 px-4 py-2 text-[10px] uppercase tracking-[0.25em] text-[#8F8B82]">
-              Preview
+            <span className="rounded-full border border-[#B08D57]/30 bg-[#B08D57]/5 px-4 py-2 text-[10px] uppercase tracking-[0.25em] text-[#BDA16F]">
+              In Progress
             </span>
           </div>
 
-          <div className="relative mx-auto aspect-[4/5] w-full max-w-[540px] overflow-hidden rounded-[2rem] border border-white/10 bg-[#181916]">
+          <div className="relative mx-auto aspect-[4/5] w-full max-w-[540px] overflow-hidden rounded-[2rem] border border-white/10 bg-[#181916] shadow-[0_35px_80px_rgba(0,0,0,0.35)]">
             <Image
               src={selectedJacket.image}
               alt={`${jacketView} view of the customized Regiment Jacket`}
               fill
               priority
-              className="object-cover"
+              className="object-cover transition-opacity duration-300"
               sizes="(max-width: 1024px) 100vw, 45vw"
             />
 
@@ -156,8 +163,13 @@ export default function BuilderPreview({
                     style={{
                       left: nameTapeLayout.left,
                       top: nameTapeLayout.top,
+                      transform: isLeftChestActive
+                        ? "translate(-50%, -50%) scale(1.03)"
+                        : "translate(-50%, -50%)",
                     }}
-                    className={`absolute z-10 rounded-sm border px-3 py-1.5 shadow-xl transition-all duration-300 ${finishClasses.border} ${finishClasses.background}`}
+                    className={`absolute z-10 rounded-sm border px-3 py-1.5 shadow-xl transition-all duration-300 ${finishClasses.border} ${finishClasses.background} ${
+                      isLeftChestActive ? activePatchClasses : ""
+                    }`}
                   >
                     <p
                       className={`max-w-[120px] truncate text-[9px] font-bold uppercase tracking-[0.14em] ${finishClasses.text}`}
@@ -173,9 +185,16 @@ export default function BuilderPreview({
                     top: crestLayout.top,
                     width: `${crestLayout.width}px`,
                     height: `${crestLayout.height}px`,
-                    transform: "translate(-50%, -50%)",
+                    transform:
+                      isLeftChestActive || isRightChestActive
+                        ? "translate(-50%, -50%) scale(1.03)"
+                        : "translate(-50%, -50%)",
                   }}
-                  className={`absolute z-10 flex flex-col items-center justify-center rounded-t-[45%] border-[3px] shadow-2xl transition-all duration-300 ${finishClasses.border} ${finishClasses.background}`}
+                  className={`absolute z-10 flex flex-col items-center justify-center rounded-t-[45%] border-[3px] shadow-2xl transition-all duration-300 ${finishClasses.border} ${finishClasses.background} ${
+                    isLeftChestActive || isRightChestActive
+                      ? activePatchClasses
+                      : ""
+                  }`}
                 >
                   <span
                     className={`text-3xl leading-none ${finishClasses.text}`}
@@ -198,9 +217,13 @@ export default function BuilderPreview({
                       top: sleevePatchLayout.top,
                       width: `${sleevePatchLayout.size}px`,
                       height: `${sleevePatchLayout.size}px`,
-                      transform: "rotate(-5deg)",
+                      transform: isSleeveActive
+                        ? "rotate(-5deg) scale(1.06)"
+                        : "rotate(-5deg)",
                     }}
-                    className={`absolute z-10 flex items-center justify-center rounded-full border-2 shadow-xl transition-all duration-300 ${finishClasses.border} ${finishClasses.background}`}
+                    className={`absolute z-10 flex items-center justify-center rounded-full border-2 shadow-xl transition-all duration-300 ${finishClasses.border} ${finishClasses.background} ${
+                      isSleeveActive ? activePatchClasses : ""
+                    }`}
                   >
                     <span
                       className={`text-[9px] font-bold uppercase tracking-[0.12em] ${finishClasses.text}`}
@@ -220,10 +243,14 @@ export default function BuilderPreview({
                     top: backLayout.topRocker.top,
                     width: `${backLayout.topRocker.width}px`,
                     height: `${backLayout.topRocker.height}px`,
-                    transform: "translate(-50%, -50%)",
+                    transform: isTopRockerActive
+                      ? "translate(-50%, -50%) scale(1.04)"
+                      : "translate(-50%, -50%)",
                     borderRadius: "55% 55% 25% 25% / 75% 75% 30% 30%",
                   }}
-                  className={`absolute z-10 flex items-center justify-center border-2 px-2 shadow-xl ${finishClasses.border} ${finishClasses.background}`}
+                  className={`absolute z-10 flex items-center justify-center border-2 px-2 shadow-xl transition-all duration-300 ${finishClasses.border} ${finishClasses.background} ${
+                    isTopRockerActive ? activePatchClasses : ""
+                  }`}
                 >
                   <p
                     className={`max-w-full truncate text-center text-[6px] font-bold uppercase tracking-[0.14em] ${finishClasses.text}`}
@@ -238,9 +265,13 @@ export default function BuilderPreview({
                     top: backLayout.centerPatch.top,
                     width: `${backLayout.centerPatch.width}px`,
                     height: `${backLayout.centerPatch.height}px`,
-                    transform: "translate(-50%, -50%)",
+                    transform: isBackCrestActive
+                      ? "translate(-50%, -50%) scale(1.04)"
+                      : "translate(-50%, -50%)",
                   }}
-                  className={`absolute z-10 flex flex-col items-center justify-center rounded-t-[42%] border-2 shadow-xl ${finishClasses.border} ${finishClasses.background}`}
+                  className={`absolute z-10 flex flex-col items-center justify-center rounded-t-[42%] border-2 shadow-xl transition-all duration-300 ${finishClasses.border} ${finishClasses.background} ${
+                    isBackCrestActive ? activePatchClasses : ""
+                  }`}
                 >
                   <span
                     className={`text-lg leading-none ${finishClasses.text}`}
@@ -262,10 +293,14 @@ export default function BuilderPreview({
                     top: backLayout.bottomRocker.top,
                     width: `${backLayout.bottomRocker.width}px`,
                     height: `${backLayout.bottomRocker.height}px`,
-                    transform: "translate(-50%, -50%)",
+                    transform: isBottomRockerActive
+                      ? "translate(-50%, -50%) scale(1.04)"
+                      : "translate(-50%, -50%)",
                     borderRadius: "25% 25% 55% 55% / 30% 30% 75% 75%",
                   }}
-                  className={`absolute z-10 flex items-center justify-center border-2 px-2 shadow-xl ${finishClasses.border} ${finishClasses.background}`}
+                  className={`absolute z-10 flex items-center justify-center border-2 px-2 shadow-xl transition-all duration-300 ${finishClasses.border} ${finishClasses.background} ${
+                    isBottomRockerActive ? activePatchClasses : ""
+                  }`}
                 >
                   <p
                     className={`max-w-full truncate text-center text-[5px] font-bold uppercase tracking-[0.1em] ${finishClasses.text}`}
@@ -300,7 +335,7 @@ export default function BuilderPreview({
           </div>
 
           <p className="mt-6 text-center text-[10px] uppercase tracking-[0.3em] text-[#65625D]">
-            Concept preview · Final placement refined for production
+            Workshop concept · Final placement refined for production
           </p>
         </div>
       </div>

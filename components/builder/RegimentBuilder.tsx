@@ -307,6 +307,21 @@ export default function RegimentBuilder() {
     setCurrentStep((step) => Math.max(step - 1, 0));
   }
 
+  function handleCrestPlacementChange(nextPlacement: string) {
+    setCrestPlacement(nextPlacement);
+
+    if (
+      nextPlacement === "Left Chest" ||
+      nextPlacement === "Right Chest" ||
+      nextPlacement === "Sleeve Patch"
+    ) {
+      setJacketView("Front");
+      return;
+    }
+
+    setJacketView("Back");
+  }
+
   function saveDraft() {
     window.localStorage.setItem(
       "family-regiment-draft",
@@ -443,7 +458,7 @@ export default function RegimentBuilder() {
                     jacketViews={jacketViews}
                     embroideryFinishes={embroideryFinishes}
                     onJacketViewChange={setJacketView}
-                    onCrestPlacementChange={setCrestPlacement}
+                    onCrestPlacementChange={handleCrestPlacementChange}
                     onEmbroideryFinishChange={setEmbroideryFinish}
                     onNameTapeChange={setIncludeNameTape}
                     onSleevePatchChange={setIncludeSleevePatch}

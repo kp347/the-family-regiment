@@ -1,4 +1,16 @@
+"use client";
+
 import Image from "next/image";
+
+import CrestPatch from "@/components/patches/CrestPatch";
+import NameTape from "@/components/patches/NameTape";
+import RockerPatch from "@/components/patches/RockerPatch";
+import {
+  isCrestAnimal,
+  normalizeBuilderCrestSpec,
+  type BuilderShieldStyle,
+  type CrestCrown,
+} from "@/lib/herald/types";
 import { jacketLayout } from "@/lib/jacketLayout";
 
 export type PreviewSymbolOption = {
@@ -16,6 +28,8 @@ type BuilderPreviewProps = {
   initials: string;
   heritage: string;
   symbol: string;
+  shield?: string;
+  crown?: string;
   value: string;
   motto: string;
   jacketView: string;
@@ -32,6 +46,11 @@ type PreviewStatProps = {
   value: string;
 };
 
+type SupportedFinish =
+  | "Regiment Gold"
+  | "Tactical Subdued"
+  | "Heritage Ivory";
+
 const fallbackSymbol: PreviewSymbolOption = {
   name: "Regiment",
   character: "◆",
@@ -42,14 +61,13 @@ const fallbackJacket: PreviewJacketOption = {
   image: "/images/jackets/m65-front.png",
 };
 
-const activePatchClasses =
-  "ring-2 ring-[#D4AF6A]/90 ring-offset-2 ring-offset-transparent drop-shadow-[0_0_14px_rgba(212,175,106,0.75)]";
-
 export default function BuilderPreview({
   familyName,
   initials,
   heritage,
   symbol,
+  shield = "Heater Shield",
+  crown = "None",
   value,
   motto,
   jacketView,
@@ -70,6 +88,7 @@ export default function BuilderPreview({
     jacketViews[0] ??
     fallbackJacket;
 
+  const finish = normalizeFinish(embroideryFinish);
   const isFrontView = jacketView === "Front";
 
   const isLeftChestActive = crestPlacement === "Left Chest";
@@ -91,25 +110,6 @@ export default function BuilderPreview({
   const sleevePatchLayout = jacketLayout.front.sleevePatch;
   const backLayout = jacketLayout.back;
 
-  const finishClasses =
-    embroideryFinish === "Tactical Subdued"
-      ? {
-          border: "border-[#777B63]",
-          text: "text-[#A7AA91]",
-          background: "bg-[#303429]",
-        }
-      : embroideryFinish === "Heritage Ivory"
-        ? {
-            border: "border-[#E7D8B4]",
-            text: "text-[#E7D8B4]",
-            background: "bg-[#24251F]",
-          }
-        : {
-            border: "border-[#B08D57]",
-            text: "text-[#B08D57]",
-            background: "bg-[#20231C]",
-          };
-
   const displayFamilyName = familyName.trim() || "Family";
   const displayInitials = initials.trim() || "FR";
   const displayHeritage = heritage.trim() || "Heritage";
@@ -117,10 +117,34 @@ export default function BuilderPreview({
   const displayValue = value.trim() || "Legacy";
   const displayMotto = motto.trim() || "Fortis in Familia";
 
+  const crestSpec = normalizeBuilderCrestSpec({
+    animal: isCrestAnimal(displaySymbol) ? displaySymbol : "Lion",
+    shield: normalizeShield(shield),
+    crown: normalizeCrown(crown),
+    heritage: displayHeritage,
+    motto: displayMotto,
+    initials: displayInitials,
+    colors: {
+      primary: "#1F2A1F",
+      secondary: "#E8D7AE",
+      metallic: finish === "Heritage Ivory" ? "silver" : "gold",
+    },
+    supporters: [],
+    wreath: false,
+    banner: true,
+  });
+
   const sleevePatchText =
     heritage.trim().length >= 2
       ? heritage.trim().slice(0, 2).toUpperCase()
       : displayInitials.slice(0, 2).toUpperCase();
+
+  const sleeveFinishClasses =
+    finish === "Tactical Subdued"
+      ? "border-[#777B63] bg-[#303429] text-[#A7AA91]"
+      : finish === "Heritage Ivory"
+        ? "border-[#E7D8B4] bg-[#24251F] text-[#E7D8B4]"
+        : "border-[#B08D57] bg-[#20231C] text-[#B08D57]";
 
   return (
     <aside className="relative min-h-[720px] overflow-hidden border-t border-white/10 bg-[#20211E] lg:border-l lg:border-t-0">
@@ -167,15 +191,14 @@ export default function BuilderPreview({
                         ? "translate(-50%, -50%) scale(1.03)"
                         : "translate(-50%, -50%)",
                     }}
-                    className={`absolute z-10 rounded-sm border px-3 py-1.5 shadow-xl transition-all duration-300 ${finishClasses.border} ${finishClasses.background} ${
-                      isLeftChestActive ? activePatchClasses : ""
-                    }`}
+                    className="absolute z-10 transition-transform duration-300"
                   >
-                    <p
-                      className={`max-w-[120px] truncate text-[9px] font-bold uppercase tracking-[0.14em] ${finishClasses.text}`}
-                    >
-                      {displayFamilyName}
-                    </p>
+                    <NameTape
+                      name={displayFamilyName}
+                      finish={finish}
+                      active={isLeftChestActive}
+                      className="min-w-[112px] px-3 py-1.5"
+                    />
                   </div>
                 )}
 
@@ -190,24 +213,14 @@ export default function BuilderPreview({
                         ? "translate(-50%, -50%) scale(1.03)"
                         : "translate(-50%, -50%)",
                   }}
-                  className={`absolute z-10 flex flex-col items-center justify-center rounded-t-[45%] border-[3px] shadow-2xl transition-all duration-300 ${finishClasses.border} ${finishClasses.background} ${
-                    isLeftChestActive || isRightChestActive
-                      ? activePatchClasses
-                      : ""
-                  }`}
+                  className="absolute z-10 transition-transform duration-300"
                 >
-                  <span
-                    className={`text-3xl leading-none ${finishClasses.text}`}
-                    aria-hidden="true"
-                  >
-                    {selectedSymbol.character}
-                  </span>
-
-                  <span
-                    className={`mt-1 text-[7px] font-bold uppercase tracking-[0.12em] ${finishClasses.text}`}
-                  >
-                    {displayInitials}
-                  </span>
+                  <CrestPatch
+                    crest={crestSpec}
+                    finish={finish}
+                    active={isLeftChestActive || isRightChestActive}
+                    className="h-full min-h-0 w-full min-w-0 px-2 py-2"
+                  />
                 </div>
 
                 {includeSleevePatch && (
@@ -221,13 +234,13 @@ export default function BuilderPreview({
                         ? "rotate(-5deg) scale(1.06)"
                         : "rotate(-5deg)",
                     }}
-                    className={`absolute z-10 flex items-center justify-center rounded-full border-2 shadow-xl transition-all duration-300 ${finishClasses.border} ${finishClasses.background} ${
-                      isSleeveActive ? activePatchClasses : ""
+                    className={`absolute z-10 flex items-center justify-center rounded-full border-2 shadow-xl transition-all duration-300 ${sleeveFinishClasses} ${
+                      isSleeveActive
+                        ? "ring-2 ring-[#D4AF6A]/90 ring-offset-2 ring-offset-transparent drop-shadow-[0_0_14px_rgba(212,175,106,0.75)]"
+                        : ""
                     }`}
                   >
-                    <span
-                      className={`text-[9px] font-bold uppercase tracking-[0.12em] ${finishClasses.text}`}
-                    >
+                    <span className="text-[9px] font-bold uppercase tracking-[0.12em]">
                       {sleevePatchText}
                     </span>
                   </div>
@@ -246,17 +259,16 @@ export default function BuilderPreview({
                     transform: isTopRockerActive
                       ? "translate(-50%, -50%) scale(1.04)"
                       : "translate(-50%, -50%)",
-                    borderRadius: "55% 55% 25% 25% / 75% 75% 30% 30%",
                   }}
-                  className={`absolute z-10 flex items-center justify-center border-2 px-2 shadow-xl transition-all duration-300 ${finishClasses.border} ${finishClasses.background} ${
-                    isTopRockerActive ? activePatchClasses : ""
-                  }`}
+                  className="absolute z-10 transition-transform duration-300"
                 >
-                  <p
-                    className={`max-w-full truncate text-center text-[6px] font-bold uppercase tracking-[0.14em] ${finishClasses.text}`}
-                  >
-                    {displayMotto}
-                  </p>
+                  <RockerPatch
+                    text={displayMotto}
+                    position="top"
+                    finish={finish}
+                    active={isTopRockerActive}
+                    className="h-full min-h-0 w-full min-w-0 px-2 py-1"
+                  />
                 </div>
 
                 <div
@@ -269,22 +281,14 @@ export default function BuilderPreview({
                       ? "translate(-50%, -50%) scale(1.04)"
                       : "translate(-50%, -50%)",
                   }}
-                  className={`absolute z-10 flex flex-col items-center justify-center rounded-t-[42%] border-2 shadow-xl transition-all duration-300 ${finishClasses.border} ${finishClasses.background} ${
-                    isBackCrestActive ? activePatchClasses : ""
-                  }`}
+                  className="absolute z-10 transition-transform duration-300"
                 >
-                  <span
-                    className={`text-lg leading-none ${finishClasses.text}`}
-                    aria-hidden="true"
-                  >
-                    {selectedSymbol.character}
-                  </span>
-
-                  <span
-                    className={`mt-1 text-[6px] font-bold uppercase tracking-[0.1em] ${finishClasses.text}`}
-                  >
-                    {displayInitials}
-                  </span>
+                  <CrestPatch
+                    crest={crestSpec}
+                    finish={finish}
+                    active={isBackCrestActive}
+                    className="h-full min-h-0 w-full min-w-0 px-2 py-2"
+                  />
                 </div>
 
                 <div
@@ -296,17 +300,16 @@ export default function BuilderPreview({
                     transform: isBottomRockerActive
                       ? "translate(-50%, -50%) scale(1.04)"
                       : "translate(-50%, -50%)",
-                    borderRadius: "25% 25% 55% 55% / 30% 30% 75% 75%",
                   }}
-                  className={`absolute z-10 flex items-center justify-center border-2 px-2 shadow-xl transition-all duration-300 ${finishClasses.border} ${finishClasses.background} ${
-                    isBottomRockerActive ? activePatchClasses : ""
-                  }`}
+                  className="absolute z-10 transition-transform duration-300"
                 >
-                  <p
-                    className={`max-w-full truncate text-center text-[5px] font-bold uppercase tracking-[0.1em] ${finishClasses.text}`}
-                  >
-                    {displayFamilyName} Regiment
-                  </p>
+                  <RockerPatch
+                    text={`${displayFamilyName} Regiment`}
+                    position="bottom"
+                    finish={finish}
+                    active={isBottomRockerActive}
+                    className="h-full min-h-0 w-full min-w-0 px-2 py-1"
+                  />
                 </div>
               </>
             )}
@@ -330,7 +333,7 @@ export default function BuilderPreview({
 
           <div className="mt-6 grid grid-cols-3 gap-3">
             <PreviewStat label="Heritage" value={displayHeritage} />
-            <PreviewStat label="Symbol" value={displaySymbol} />
+            <PreviewStat label="Heraldry" value={`${displaySymbol} · ${crestSpec.crown}`} />
             <PreviewStat label="Principle" value={displayValue} />
           </div>
 
@@ -353,4 +356,43 @@ function PreviewStat({ label, value }: PreviewStatProps) {
       <p className="mt-2 truncate text-xs text-[#D8D3CA]">{value}</p>
     </div>
   );
+}
+
+function normalizeFinish(finish: string): SupportedFinish {
+  if (
+    finish === "Tactical Subdued" ||
+    finish === "Heritage Ivory" ||
+    finish === "Regiment Gold"
+  ) {
+    return finish;
+  }
+
+  return "Regiment Gold";
+}
+
+function normalizeShield(value: string): BuilderShieldStyle {
+  if (
+    value === "Norman Shield" ||
+    value === "Tournament Shield" ||
+    value === "Crusader Shield" ||
+    value === "Heater Shield"
+  ) {
+    return value;
+  }
+
+  return "Heater Shield";
+}
+
+function normalizeCrown(value: string): CrestCrown {
+  if (
+    value === "Baron" ||
+    value === "Count" ||
+    value === "Ducal" ||
+    value === "Royal" ||
+    value === "None"
+  ) {
+    return value;
+  }
+
+  return "None";
 }

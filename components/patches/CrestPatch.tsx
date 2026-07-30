@@ -1,5 +1,12 @@
 "use client";
 
+import type {
+  BuilderCrestSpec,
+  BuilderShieldStyle,
+  CrestCrown,
+} from "@/lib/herald/types";
+import CrestRenderer from "@/lib/herald/svg/CrestRenderer";
+
 import PatchBase from "./PatchBase";
 
 export type CrestPatchFinish =
@@ -8,69 +15,136 @@ export type CrestPatchFinish =
   | "Heritage Ivory";
 
 type CrestPatchProps = {
+  crest?: Partial<BuilderCrestSpec>;
   symbol?: string;
   initials?: string;
+  shield?: BuilderShieldStyle | string;
+  crown?: CrestCrown | string;
   finish?: CrestPatchFinish;
   active?: boolean;
   className?: string;
 };
 
-const finishStyles: Record<
+const finishPalettes: Record<
   CrestPatchFinish,
   {
-    symbol: string;
-    initials: string;
-    accent: string;
+    primary: string;
+    secondary: string;
+    metallic: BuilderCrestSpec["colors"]["metallic"];
+    border: string;
   }
 > = {
   "Regiment Gold": {
-    symbol: "text-[#D4AF6A]",
-    initials: "text-[#E8D7AE]",
-    accent: "border-[#B08D57]",
+    primary: "#20231C",
+    secondary: "#E8D7AE",
+    metallic: "gold",
+    border: "border-[#B08D57]",
   },
+
   "Tactical Subdued": {
-    symbol: "text-[#A7AA91]",
-    initials: "text-[#C1C3B2]",
-    accent: "border-[#777B63]",
+    primary: "#303429",
+    secondary: "#C1C3B2",
+    metallic: "silver",
+    border: "border-[#777B63]",
   },
+
   "Heritage Ivory": {
-    symbol: "text-[#E7D8B4]",
-    initials: "text-[#F1E7CF]",
-    accent: "border-[#D7C49C]",
+    primary: "#24251F",
+    secondary: "#F1E7CF",
+    metallic: "gold",
+    border: "border-[#D7C49C]",
   },
 };
 
 export default function CrestPatch({
-  symbol = "◆",
-  initials = "FR",
+  crest,
+  symbol,
+  initials,
+  shield,
+  crown,
   finish = "Regiment Gold",
   active = false,
   className = "",
 }: CrestPatchProps) {
-  const styles = finishStyles[finish];
+  const palette = finishPalettes[finish];
+
+  const resolvedCrest: BuilderCrestSpec = {
+    animal: normalizeAnimal(crest?.animal ?? symbol),
+    shield: normalizeShield(crest?.shield ?? shield),
+    crown: normalizeCrown(crest?.crown ?? crown),
+    heritage: crest?.heritage?.trim() || "Heritage",
+    motto: crest?.motto?.trim() || "Fortis in Familia",
+    initials:
+      crest?.initials?.trim() ||
+      initials?.trim() ||
+      "FR",
+    colors: {
+      primary: crest?.colors?.primary ?? palette.primary,
+      secondary: crest?.colors?.secondary ?? palette.secondary,
+      metallic: crest?.colors?.metallic ?? palette.metallic,
+    },
+    supporters: crest?.supporters ?? [],
+    wreath: crest?.wreath ?? false,
+    banner: crest?.banner ?? true,
+  };
 
   return (
     <PatchBase
       shape="shield"
       active={active}
-      className={`min-h-[88px] min-w-[78px] px-4 py-3 ${styles.accent} ${className}`}
+      className={`h-full min-h-[88px] w-full min-w-[78px] overflow-visible border-2 px-1.5 py-1.5 ${palette.border} ${className}`}
     >
-      <div className="flex flex-col items-center justify-center text-center">
-        <span
-          aria-hidden="true"
-          className={`text-3xl leading-none drop-shadow-[0_1px_1px_rgba(0,0,0,0.65)] ${styles.symbol}`}
-        >
-          {symbol}
-        </span>
-
-        <div className="my-2 h-px w-8 bg-current opacity-35" />
-
-        <span
-          className={`max-w-[64px] truncate text-[9px] font-bold uppercase tracking-[0.18em] ${styles.initials}`}
-        >
-          {initials.trim() || "FR"}
-        </span>
-      </div>
+      <CrestRenderer
+        crest={resolvedCrest}
+        className="h-full w-full overflow-visible"
+      />
     </PatchBase>
   );
+}
+
+function normalizeAnimal(
+  value: string | undefined,
+): BuilderCrestSpec["animal"] {
+  if (
+    value === "Lion" ||
+    value === "Eagle" ||
+    value === "Wolf" ||
+    value === "Bear" ||
+    value === "Stag"
+  ) {
+    return value;
+  }
+
+  return "Lion";
+}
+
+function normalizeShield(
+  value: BuilderShieldStyle | string | undefined,
+): BuilderShieldStyle {
+  if (
+    value === "Norman Shield" ||
+    value === "Tournament Shield" ||
+    value === "Crusader Shield" ||
+    value === "Heater Shield"
+  ) {
+    return value;
+  }
+
+  return "Heater Shield";
+}
+
+function normalizeCrown(
+  value: CrestCrown | string | undefined,
+): CrestCrown {
+  if (
+    value === "Baron" ||
+    value === "Count" ||
+    value === "Ducal" ||
+    value === "Royal" ||
+    value === "None"
+  ) {
+    return value;
+  }
+
+  return "None";
 }

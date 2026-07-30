@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import BuilderHeader from "./BuilderHeader";
+import BuilderHeraldry from "./BuilderHeraldry";
 import BuilderHeritage from "./BuilderHeritage";
 import BuilderIdentity from "./BuilderIdentity";
 import BuilderJacket from "./BuilderJacket";
@@ -11,14 +12,15 @@ import BuilderMotto from "./BuilderMotto";
 import BuilderPreview from "./BuilderPreview";
 import BuilderStepper from "./BuilderStepper";
 import BuilderSummary from "./BuilderSummary";
-import BuilderSymbol from "./BuilderSymbol";
 import BuilderValues from "./BuilderValues";
 
 type BuilderDraft = {
   familyName: string;
   initials: string;
   heritage: string;
-  symbol: string;
+  animal: string;
+  shield: string;
+  crown: string;
   value: string;
   motto: string;
   jacketView: string;
@@ -41,8 +43,9 @@ const steps = [
   },
   {
     number: "03",
-    name: "Symbol",
-    description: "Choose the heraldic figure that leads your crest.",
+    name: "Heraldry",
+    description:
+      "Choose the animal, shield, and crown that define your family crest.",
   },
   {
     number: "04",
@@ -98,6 +101,11 @@ const symbolOptions = [
     name: "Wolf",
     character: "◇",
     meaning: "Loyalty, instinct, and family unity.",
+  },
+  {
+    name: "Bear",
+    character: "●",
+    meaning: "Protection, resilience, and strength.",
   },
 ];
 
@@ -169,7 +177,9 @@ const defaultDraft: BuilderDraft = {
   familyName: "Laurent",
   initials: "LR",
   heritage: "France",
-  symbol: "Lion",
+  animal: "Lion",
+  shield: "Heater Shield",
+  crown: "Ducal",
   value: "Courage",
   motto: "Fortis in Familia",
   jacketView: "Front",
@@ -186,7 +196,9 @@ export default function RegimentBuilder() {
   const [familyName, setFamilyName] = useState(defaultDraft.familyName);
   const [initials, setInitials] = useState(defaultDraft.initials);
   const [heritage, setHeritage] = useState(defaultDraft.heritage);
-  const [symbol, setSymbol] = useState(defaultDraft.symbol);
+  const [animal, setAnimal] = useState(defaultDraft.animal);
+  const [shield, setShield] = useState(defaultDraft.shield);
+  const [crown, setCrown] = useState(defaultDraft.crown);
   const [value, setValue] = useState(defaultDraft.value);
   const [motto, setMotto] = useState(defaultDraft.motto);
   const [jacketView, setJacketView] = useState(defaultDraft.jacketView);
@@ -214,19 +226,25 @@ export default function RegimentBuilder() {
 
   const regimentTitle = familyName.trim()
     ? `The House of ${familyName.trim()}`
-    : `The ${heritage} ${symbol}`;
+    : `The ${heritage} ${animal}`;
 
   useEffect(() => {
     const savedDraft = window.localStorage.getItem("family-regiment-draft");
 
     if (savedDraft) {
       try {
-        const parsedDraft = JSON.parse(savedDraft) as Partial<BuilderDraft>;
+        const parsedDraft = JSON.parse(savedDraft) as Partial<
+          BuilderDraft & { symbol?: string }
+        >;
 
         setFamilyName(parsedDraft.familyName ?? defaultDraft.familyName);
         setInitials(parsedDraft.initials ?? defaultDraft.initials);
         setHeritage(parsedDraft.heritage ?? defaultDraft.heritage);
-        setSymbol(parsedDraft.symbol ?? defaultDraft.symbol);
+        setAnimal(
+          parsedDraft.animal ?? parsedDraft.symbol ?? defaultDraft.animal,
+        );
+        setShield(parsedDraft.shield ?? defaultDraft.shield);
+        setCrown(parsedDraft.crown ?? defaultDraft.crown);
         setValue(parsedDraft.value ?? defaultDraft.value);
         setMotto(parsedDraft.motto ?? defaultDraft.motto);
         setJacketView(parsedDraft.jacketView ?? defaultDraft.jacketView);
@@ -268,7 +286,9 @@ export default function RegimentBuilder() {
     familyName,
     initials,
     heritage,
-    symbol,
+    animal,
+    shield,
+    crown,
     value,
     motto,
     jacketView,
@@ -279,20 +299,22 @@ export default function RegimentBuilder() {
   ]);
 
   function createDraft(): BuilderDraft {
-  return {
-    familyName,
-    initials,
-    heritage,
-    symbol,
-    value,
-    motto,
-    jacketView,
-    crestPlacement,
-    embroideryFinish,
-    includeNameTape,
-    includeSleevePatch,
-  };
-}
+    return {
+      familyName,
+      initials,
+      heritage,
+      animal,
+      shield,
+      crown,
+      value,
+      motto,
+      jacketView,
+      crestPlacement,
+      embroideryFinish,
+      includeNameTape,
+      includeSleevePatch,
+    };
+  }
 
   function chooseValue(nextValue: string) {
     setValue(nextValue);
@@ -325,19 +347,7 @@ export default function RegimentBuilder() {
   function saveDraft() {
     window.localStorage.setItem(
       "family-regiment-draft",
-      JSON.stringify({
-        familyName,
-        initials,
-        heritage,
-        symbol,
-        value,
-        motto,
-        jacketView,
-        crestPlacement,
-        embroideryFinish,
-        includeNameTape,
-        includeSleevePatch,
-      }),
+      JSON.stringify(createDraft()),
     );
 
     showMessage("Draft saved");
@@ -352,7 +362,9 @@ export default function RegimentBuilder() {
     setFamilyName(defaultDraft.familyName);
     setInitials(defaultDraft.initials);
     setHeritage(defaultDraft.heritage);
-    setSymbol(defaultDraft.symbol);
+    setAnimal(defaultDraft.animal);
+    setShield(defaultDraft.shield);
+    setCrown(defaultDraft.crown);
     setValue(defaultDraft.value);
     setMotto(defaultDraft.motto);
     setJacketView(defaultDraft.jacketView);
@@ -425,10 +437,13 @@ export default function RegimentBuilder() {
                 )}
 
                 {currentStep === 2 && (
-                  <BuilderSymbol
-                    symbol={symbol}
-                    options={symbolOptions}
-                    onSymbolChange={setSymbol}
+                  <BuilderHeraldry
+                    animal={animal}
+                    shield={shield}
+                    crown={crown}
+                    onAnimalChange={setAnimal}
+                    onShieldChange={setShield}
+                    onCrownChange={setCrown}
                   />
                 )}
 
@@ -471,7 +486,7 @@ export default function RegimentBuilder() {
                     familyName={familyName}
                     initials={initials}
                     heritage={heritage}
-                    symbol={symbol}
+                    symbol={animal}
                     value={value}
                     motto={motto}
                     crestPlacement={crestPlacement}
@@ -493,19 +508,21 @@ export default function RegimentBuilder() {
             </section>
 
             <BuilderPreview
-              familyName={familyName}
-              initials={initials}
-              heritage={heritage}
-              symbol={symbol}
-              value={value}
-              motto={motto}
-              jacketView={jacketView}
-              crestPlacement={crestPlacement}
-              embroideryFinish={embroideryFinish}
-              includeNameTape={includeNameTape}
-              includeSleevePatch={includeSleevePatch}
-              symbolOptions={symbolOptions}
-              jacketViews={jacketViews}
+  familyName={familyName}
+  initials={initials}
+  heritage={heritage}
+  symbol={animal}
+  shield={shield}
+  crown={crown}
+  value={value}
+  motto={motto}
+  jacketView={jacketView}
+  crestPlacement={crestPlacement}
+  embroideryFinish={embroideryFinish}
+  includeNameTape={includeNameTape}
+  includeSleevePatch={includeSleevePatch}
+  symbolOptions={symbolOptions}
+  jacketViews={jacketViews}
             />
           </div>
         </div>

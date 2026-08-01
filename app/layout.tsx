@@ -1,10 +1,26 @@
 import type { Metadata } from "next";
+import {
+  Cormorant_Garamond,
+  Source_Sans_3,
+} from "next/font/google";
 import "./globals.css";
+
+const displayFont = Cormorant_Garamond({
+  variable: "--font-display",
+  subsets: ["latin"],
+  weight: ["400", "500", "600"],
+});
+
+const bodyFont = Source_Sans_3({
+  variable: "--font-body",
+  subsets: ["latin"],
+  weight: ["400", "500", "600"],
+});
 
 export const metadata: Metadata = {
   title: "The Family Regiment",
   description:
-    "Luxury heritage apparel, custom family crests, and personalized regiment jackets.",
+    "Discover, preserve, and express an enduring family identity.",
 };
 
 export default function RootLayout({
@@ -14,7 +30,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body
+        className={`${displayFont.variable} ${bodyFont.variable}`}
+      >
+        {children}
+      </body>
     </html>
   );
 }

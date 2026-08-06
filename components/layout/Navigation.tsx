@@ -2,41 +2,43 @@ import Link from "next/link";
 
 const navigationItems = [
   { label: "Mission", href: "/mission" },
-  { label: "Journey", href: "/journey" },
+  { label: "The Journey", href: "/journey" },
   { label: "Heraldry", href: "/heraldry" },
-  { label: "Great Hall", href: "/great-hall" },
-  { label: "Resources", href: "/resources" },
+  { label: "The Great Hall", href: "/great-hall" },
+  { label: "Registry", href: "/registry" },
 ];
 
 export default function Navigation() {
   return (
-    <header className="relative z-50 border-b border-[#d4cab9] bg-[#fbf8f1]">
-      <div className="mx-auto flex min-h-20 max-w-[1440px] items-center justify-between gap-8 px-6 lg:px-10">
+    <header className="relative z-50 border-b border-[#9d8257]/30 bg-[#171813] text-[#eee4d4]">
+      <div className="mx-auto flex min-h-20 max-w-[1440px] items-center justify-between gap-8 px-6 lg:px-12">
         <Link
           href="/"
-          className="font-display shrink-0 text-xl font-semibold uppercase tracking-[0.16em] text-[#302820]"
+          className="font-display shrink-0 text-xl font-semibold uppercase tracking-[0.17em] text-[#f3eadc]"
         >
           The Family Regiment
         </Link>
 
         <nav
           aria-label="Primary navigation"
-          className="hidden items-center gap-7 md:flex"
+          className="hidden items-center gap-7 lg:flex"
         >
           {navigationItems.map((item) => (
             <Link
               key={item.href}
               href={item.href}
-              className="text-[0.92rem] font-medium text-[#625c53] transition-colors duration-200 hover:text-[#653b23]"
+              className="group relative py-2 text-xs font-semibold uppercase tracking-[0.16em] text-[#bdb4a5] transition-colors duration-300 hover:text-[#f2e6d2]"
             >
               {item.label}
+
+              <span className="absolute bottom-0 left-0 h-px w-0 bg-[#b89559] transition-all duration-300 group-hover:w-full" />
             </Link>
           ))}
         </nav>
 
         <Link
           href="/begin"
-          className="inline-flex shrink-0 items-center justify-center border border-[#653b23] bg-[#653b23] px-5 py-2.5 text-sm font-semibold text-white transition-colors duration-200 hover:bg-[#8b542f]"
+          className="inline-flex shrink-0 items-center justify-center border border-[#a7723f] bg-[#7a4728] px-5 py-2.5 text-xs font-semibold uppercase tracking-[0.12em] text-white transition-colors duration-300 hover:bg-[#925a32]"
         >
           Begin
           <span className="hidden sm:inline">&nbsp;Your Journey</span>

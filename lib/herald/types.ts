@@ -349,3 +349,130 @@ export function toEmbroideryFinish(
 
   return finishMap[finish];
 }
+/*
+ * Heraldic Canon
+ *
+ * These types define The Family Regiment's curated heraldic
+ * knowledge base. They intentionally remain separate from
+ * CrestSpec and BuilderCrestSpec, which describe actual designs.
+ */
+
+export type CanonCategory =
+  | "tincture"
+  | "charge"
+  | "ordinary"
+  | "symbol"
+  | "crest"
+  | "motto"
+  | "shield";
+
+export type CanonSource = {
+  title: string;
+
+  author?: string;
+
+  publisher?: string;
+
+  year?: number;
+
+  url?: string;
+
+  notes?: string;
+};
+
+export interface CanonEntry {
+  /*
+   * Permanent machine-readable identifier.
+   *
+   * Examples:
+   * azure
+   * lion
+   * chevron
+   * oak-tree
+   */
+  id: string;
+
+  /*
+   * Customer-facing name.
+   */
+  name: string;
+
+  category: CanonCategory;
+
+  /*
+   * Brief plain-English explanation suitable for
+   * Herald Reports, tooltips, and Academy previews.
+   */
+  summary: string;
+
+  /*
+   * Traditional associations should be presented as
+   * associations rather than absolute universal meanings.
+   */
+  traditionalAssociations: string[];
+
+  /*
+   * Longer educational explanation for the Academy
+   * and expandable Herald Report sections.
+   */
+  historicalNotes: string;
+
+  /*
+   * Concepts that help connect a Family Record to
+   * this Canon entry.
+   */
+  associatedVirtues: string[];
+
+  associatedThemes: string[];
+
+  /*
+   * IDs of other Canon entries that pair naturally
+   * with this entry.
+   */
+  relatedEntries: string[];
+
+  /*
+   * Optional production guidance prevents the AI
+   * from recommending symbols that cannot translate
+   * cleanly to embroidery, patches, print, or engraving.
+   */
+  designGuidance?: string;
+
+  /*
+   * Search terminology used internally by the Herald
+   * and eventually by the Academy.
+   */
+  keywords?: string[];
+
+  /*
+   * Curated references supporting the educational
+   * material. We can populate these gradually as the
+   * Canon is researched and reviewed.
+   */
+  sources?: CanonSource[];
+
+  /*
+   * Allows entries to evolve without rewriting old
+   * Herald Reports.
+   */
+  canonVersion: string;
+}
+export interface ChargeVariant {
+  id: string;
+
+  name: string;
+
+  summary: string;
+}
+
+export interface ChargeEntry extends CanonEntry {
+  variants: ChargeVariant[];
+
+  compatibleTinctures: string[];
+
+  compatibleOrdinaries: string[];
+
+  embroideryComplexity: 1 | 2 | 3 | 4 | 5;
+
+  productionNotes?: string;
+}

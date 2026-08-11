@@ -5,18 +5,8 @@ import { NextResponse } from "next/server";
 
 import { createClient } from "@/lib/supabase/server";
 import {
-  HeraldCanon,
-} from "@/lib/herald";
-
-import type {
-  CanonEntry,
-} from "@/lib/herald/types";
-
-/*
- * =========================================================
- * Structured Herald Response
- * =========================================================
- */
+  buildProductionCanonContext,
+} from "@/lib/herald/productionCanonContext";
 
 const HeraldRecommendation = z.object({
   recommendation: z.string(),
@@ -57,218 +47,6 @@ const HeraldAnalysis = z.object({
     .max(5),
 });
 
-/*
- * =========================================================
- * Canon Retrieval
- * =========================================================
- */
-
-interface RankedCanonEntry {
-  entry: CanonEntry;
-  score: number;
-  matches: string[];
-}
-
-function normalize(
-  value: string,
-): string {
-  return value.trim().toLowerCase();
-}
-
-function collectStrings(
-  value: unknown,
-): string[] {
-  if (typeof value === "string") {
-    const cleaned = value.trim();
-
-    return cleaned
-      ? [cleaned]
-      : [];
-  }
-
-  if (Array.isArray(value)) {
-    return value.flatMap(
-      collectStrings,
-    );
-  }
-
-  if (
-    value &&
-    typeof value === "object"
-  ) {
-    return Object.values(
-      value as Record<string, unknown>,
-    ).flatMap(
-      collectStrings,
-    );
-  }
-
-  return [];
-}
-
-function buildSearchTerms(
-  familyRecord: Record<string, unknown>,
-): string[] {
-  const recordSections = [
-    familyRecord.origins,
-    familyRecord.values_record,
-    familyRecord.service,
-    familyRecord.traditions,
-    familyRecord.symbols,
-    familyRecord.achievements,
-    familyRecord.future_legacy,
-  ];
-
-  const rawStrings =
-    recordSections.flatMap(
-      collectStrings,
-    );
-
-  const terms = new Set<string>();
-
-  for (const rawString of rawStrings) {
-    const cleaned =
-      rawString.trim();
-
-    if (cleaned.length >= 3) {
-      terms.add(cleaned);
-    }
-
-    const words =
-      cleaned
-        .split(
-          /[\s,;:/|()\-–—]+/,
-        )
-        .map(normalize)
-        .filter(
-          (word) =>
-            word.length >= 4,
-        );
-
-    for (const word of words) {
-      terms.add(word);
-    }
-  }
-
-  return Array.from(terms);
-}
-
-function rankCanonEntries(
-  familyRecord: Record<string, unknown>,
-): RankedCanonEntry[] {
-  const searchTerms =
-    buildSearchTerms(
-      familyRecord,
-    );
-
-  const ranked =
-    new Map<
-      string,
-      RankedCanonEntry
-    >();
-
-  for (const term of searchTerms) {
-    const matches =
-      HeraldCanon.search(term);
-
-    for (const entry of matches) {
-      const existing =
-        ranked.get(entry.id);
-
-      if (existing) {
-        existing.score += 1;
-
-        if (
-          !existing.matches.includes(
-            term,
-          )
-        ) {
-          existing.matches.push(
-            term,
-          );
-        }
-
-        continue;
-      }
-
-      ranked.set(entry.id, {
-        entry,
-        score: 1,
-        matches: [term],
-      });
-    }
-  }
-
-  return Array.from(
-    ranked.values(),
-  ).sort(
-    (a, b) =>
-      b.score - a.score ||
-      a.entry.name.localeCompare(
-        b.entry.name,
-      ),
-  );
-}
-
-function buildCanonContext(
-  familyRecord: Record<string, unknown>,
-) {
-  const ranked =
-    rankCanonEntries(
-      familyRecord,
-    );
-
-  /*
-   * Keep the AI context intentionally small.
-   * The Canon owns the knowledge.
-   * OpenAI receives only the most relevant entries.
-   */
-
-  return ranked
-    .slice(0, 18)
-    .map(
-      ({
-        entry,
-        score,
-        matches,
-      }) => ({
-        id: entry.id,
-
-        name: entry.name,
-
-        category:
-          entry.category,
-
-        summary:
-          entry.summary,
-
-        traditionalAssociations:
-          entry.traditionalAssociations,
-
-        associatedVirtues:
-          entry.associatedVirtues,
-
-        associatedThemes:
-          entry.associatedThemes,
-
-        designGuidance:
-          entry.designGuidance,
-
-        relevanceScore:
-          score,
-
-        matchedFamilyTerms:
-          matches,
-      }),
-    );
-}
-
-/*
- * =========================================================
- * Route
- * =========================================================
- */
-
 export async function POST() {
   try {
     const supabase =
@@ -294,12 +72,6 @@ export async function POST() {
         },
       );
     }
-
-    /*
-     * =====================================================
-     * Load Production Family Record
-     * =====================================================
-     */
 
     const {
       data: familyRecord,
@@ -342,22 +114,11 @@ export async function POST() {
       );
     }
 
-    /*
-     * =====================================================
-     * Retrieve Relevant Canon Knowledge
-     * =====================================================
-     */
-
     const canonContext =
-      buildCanonContext(
+      buildProductionCanonContext(
         familyRecord,
+        18,
       );
-
-    /*
-     * =====================================================
-     * OpenAI Interpretation
-     * =====================================================
-     */
 
     const openai =
       new OpenAI();
@@ -375,7 +136,7 @@ You are The Herald for The Family Regiment.
 
 You interpret a family's completed Family Record using The Family Regiment Heraldic Canon.
 
-The Heraldic Canon supplied in this request is the authoritative source for heraldic meanings.
+The supplied Heraldic Canon is the authoritative source for heraldic meanings in this request.
 
 Do not invent heraldic meanings that are absent from the supplied Canon.
 
@@ -545,12 +306,6 @@ If the Canon does not contain enough evidence for a recommendation, omit that re
         },
       );
     }
-
-    /*
-     * =====================================================
-     * Persist Herald Report
-     * =====================================================
-     */
 
     const {
       data: report,

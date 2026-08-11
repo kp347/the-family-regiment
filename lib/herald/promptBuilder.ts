@@ -9,6 +9,19 @@ import {
   getSymbolsForValues,
 } from "./rules";
 
+import {
+  buildFamilyRecord,
+} from "./familyRecord";
+
+import {
+  recommendCanonEntries,
+} from "./recommendationEngine";
+
+import {
+  buildHeraldAIContext,
+  serializeHeraldAIContext,
+} from "./aiContextBuilder";
+
 export interface CrestPrompt {
   system: string;
   user: string;
@@ -30,58 +43,57 @@ export function buildCrestPrompt(
     .map((symbol) => symbol.label)
     .join(", ");
 
-  const heritage =
-    interview.heritage.length > 0
-      ? interview.heritage.join(", ")
-      : "Not specified";
+  const familyRecord =
+    buildFamilyRecord(interview);
+
+  const recommendationResult =
+    recommendCanonEntries(
+      familyRecord,
+    );
+
+  const heraldContext =
+    buildHeraldAIContext(
+      familyRecord,
+      recommendationResult,
+      12,
+    );
+
+  const serializedCanonContext =
+    serializeHeraldAIContext(
+      heraldContext,
+    );
 
   return {
     system: `
-You are an expert heraldic designer and embroidery production specialist.
+You are The Family Regiment Herald.
 
-Your task is to design authentic family crests that are historically inspired,
-visually balanced, and manufacturable as embroidered patches.
+Your role is to interpret a family's documented record using the curated Heraldic Canon supplied in the user context.
 
 Rules:
 
-• Maximum ${EMBROIDERY_RULES.maximumThreadColors} thread colors
-• Prefer ${EMBROIDERY_RULES.preferredThreadColors} or fewer
-• Keep symbols bold and embroidery friendly
-• Avoid intricate textures
-• Keep motto under ${EMBROIDERY_RULES.maximumMottoCharacters} characters
-• Use heraldic symbolism whenever possible
-• Design should look premium and timeless
+- Use the supplied Heraldic Canon as the authoritative source for heraldic meanings and recommendations.
+- Do not invent heraldic meanings that are not supported by the supplied Canon.
+- Present traditional symbolism as historical or traditional associations, not universal facts.
+- Do not imply nobility, inherited rank, aristocratic status, or historical entitlement without documented evidence.
+- Prefer historically coherent and visually balanced combinations.
+- Respect the family's documented heritage, values, service, faith, profession, and preferences.
+- Maximum ${EMBROIDERY_RULES.maximumThreadColors} thread colors.
+- Prefer ${EMBROIDERY_RULES.preferredThreadColors} or fewer.
+- Keep symbols bold and embroidery friendly.
+- Avoid intricate textures and excessive internal detail.
+- Keep motto under ${EMBROIDERY_RULES.maximumMottoCharacters} characters.
+- Favor recommendations that can translate cleanly to embroidered patches.
+- If the Canon does not support a requested interpretation, say so rather than inventing one.
 `.trim(),
 
     user: `
-Create a family crest using these details.
+Create a family crest interpretation using the following documented family information and curated Heraldic Canon context.
 
-Family Name:
-${interview.familyName}
+CURATED HERALDIC CONTEXT:
 
-Heritage:
-${heritage}
+${serializedCanonContext}
 
-Military Service:
-${interview.militaryService || "None"}
-
-Profession:
-${interview.profession || "Not specified"}
-
-Core Values:
-${interview.values.join(", ")}
-
-Faith:
-${interview.faith || "Not specified"}
-
-Zodiac:
-${interview.zodiac || "Not specified"}
-
-Favorite Animal:
-${interview.favoriteAnimal || "Not specified"}
-
-Preferred Style:
-${interview.preferredStyle}
+EXISTING BUILDER GUIDANCE:
 
 Suggested Symbols From Style:
 ${styleSymbols || "None"}
@@ -89,7 +101,7 @@ ${styleSymbols || "None"}
 Suggested Symbols From Values:
 ${valueSymbols || "None"}
 
-Preferred Motto:
+SELECTED MOTTO:
 
 Latin:
 ${motto.latin}
@@ -100,13 +112,17 @@ ${motto.english}
 Return:
 
 1. Shield recommendation
-2. Primary symbol
-3. Secondary symbol
-4. Heraldic colors
-5. Crown recommendation
-6. Banner placement
-7. Short symbolism explanation
-8. Manufacturing notes
+2. Primary heraldic element
+3. Secondary heraldic element
+4. Recommended tinctures
+5. Ordinary recommendation, if appropriate
+6. Crest or upper-achievement recommendation, if appropriate
+7. Banner placement
+8. Short symbolism explanation grounded in the supplied Canon
+9. Manufacturing notes
+10. Any historical or heraldic limitations that should be disclosed
+
+Do not claim that a symbol has a meaning unless that meaning is supported by the supplied Canon context.
 `.trim(),
   };
 }

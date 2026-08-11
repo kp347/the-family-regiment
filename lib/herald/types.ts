@@ -247,36 +247,51 @@ export const defaultBuilderCrestSpec: BuilderCrestSpec = {
   banner: true,
 };
 
-export function isCrestAnimal(value: string): value is CrestAnimal {
-  return crestAnimals.includes(value as CrestAnimal);
+export function isCrestAnimal(
+  value: string,
+): value is CrestAnimal {
+  return crestAnimals.includes(
+    value as CrestAnimal,
+  );
 }
 
 export function isBuilderShieldStyle(
   value: string,
 ): value is BuilderShieldStyle {
-  return builderShieldStyles.includes(value as BuilderShieldStyle);
+  return builderShieldStyles.includes(
+    value as BuilderShieldStyle,
+  );
 }
 
-export function isCrestCrown(value: string): value is CrestCrown {
-  return crestCrowns.includes(value as CrestCrown);
+export function isCrestCrown(
+  value: string,
+): value is CrestCrown {
+  return crestCrowns.includes(
+    value as CrestCrown,
+  );
 }
 
 export function normalizeBuilderCrestSpec(
-  crest: Partial<BuilderCrestSpec> | undefined,
+  crest:
+    | Partial<BuilderCrestSpec>
+    | undefined,
 ): BuilderCrestSpec {
   return {
     animal:
-      crest?.animal && isCrestAnimal(crest.animal)
+      crest?.animal &&
+      isCrestAnimal(crest.animal)
         ? crest.animal
         : defaultBuilderCrestSpec.animal,
 
     shield:
-      crest?.shield && isBuilderShieldStyle(crest.shield)
+      crest?.shield &&
+      isBuilderShieldStyle(crest.shield)
         ? crest.shield
         : defaultBuilderCrestSpec.shield,
 
     crown:
-      crest?.crown && isCrestCrown(crest.crown)
+      crest?.crown &&
+      isCrestCrown(crest.crown)
         ? crest.crown
         : defaultBuilderCrestSpec.crown,
 
@@ -304,13 +319,16 @@ export function normalizeBuilderCrestSpec(
       metallic:
         crest?.colors?.metallic === "silver"
           ? "silver"
-          : defaultBuilderCrestSpec.colors.metallic,
+          : defaultBuilderCrestSpec.colors
+              .metallic,
     },
 
     supporters:
-      crest?.supporters?.filter((supporter) =>
-        crestAnimals.includes(supporter),
-      ) ?? defaultBuilderCrestSpec.supporters,
+      crest?.supporters?.filter(
+        (supporter) =>
+          crestAnimals.includes(supporter),
+      ) ??
+      defaultBuilderCrestSpec.supporters,
 
     wreath:
       crest?.wreath ??
@@ -325,7 +343,10 @@ export function normalizeBuilderCrestSpec(
 export function toShieldShape(
   shield: BuilderShieldStyle,
 ): ShieldShape {
-  const shieldMap: Record<BuilderShieldStyle, ShieldShape> = {
+  const shieldMap: Record<
+    BuilderShieldStyle,
+    ShieldShape
+  > = {
     "Heater Shield": "heater",
     "Norman Shield": "kite",
     "Tournament Shield": "spanish",
@@ -344,17 +365,23 @@ export function toEmbroideryFinish(
   > = {
     "Regiment Gold": "regiment-gold",
     "Heritage Ivory": "heritage-ivory",
-    "Tactical Subdued": "tactical-subdued",
+    "Tactical Subdued":
+      "tactical-subdued",
   };
 
   return finishMap[finish];
 }
+
 /*
+ * =========================================================
  * Heraldic Canon
+ * =========================================================
  *
- * These types define The Family Regiment's curated heraldic
- * knowledge base. They intentionally remain separate from
- * CrestSpec and BuilderCrestSpec, which describe actual designs.
+ * These types define The Family Regiment's curated
+ * heraldic knowledge base.
+ *
+ * They intentionally remain separate from CrestSpec
+ * and BuilderCrestSpec, which describe actual designs.
  */
 
 export type CanonCategory =
@@ -390,11 +417,13 @@ export interface CanonEntry {
    * chevron
    * oak-tree
    */
+
   id: string;
 
   /*
    * Customer-facing name.
    */
+
   name: string;
 
   category: CanonCategory;
@@ -403,24 +432,29 @@ export interface CanonEntry {
    * Brief plain-English explanation suitable for
    * Herald Reports, tooltips, and Academy previews.
    */
+
   summary: string;
 
   /*
    * Traditional associations should be presented as
-   * associations rather than absolute universal meanings.
+   * associations rather than absolute universal
+   * meanings.
    */
+
   traditionalAssociations: string[];
 
   /*
    * Longer educational explanation for the Academy
    * and expandable Herald Report sections.
    */
+
   historicalNotes: string;
 
   /*
    * Concepts that help connect a Family Record to
    * this Canon entry.
    */
+
   associatedVirtues: string[];
 
   associatedThemes: string[];
@@ -429,34 +463,46 @@ export interface CanonEntry {
    * IDs of other Canon entries that pair naturally
    * with this entry.
    */
+
   relatedEntries: string[];
 
   /*
    * Optional production guidance prevents the AI
    * from recommending symbols that cannot translate
-   * cleanly to embroidery, patches, print, or engraving.
+   * cleanly to embroidery, patches, print, or
+   * engraving.
    */
+
   designGuidance?: string;
 
   /*
    * Search terminology used internally by the Herald
    * and eventually by the Academy.
    */
+
   keywords?: string[];
 
   /*
-   * Curated references supporting the educational
-   * material. We can populate these gradually as the
-   * Canon is researched and reviewed.
+   * Curated references supporting educational
+   * material.
    */
+
   sources?: CanonSource[];
 
   /*
    * Allows entries to evolve without rewriting old
    * Herald Reports.
    */
+
   canonVersion: string;
 }
+
+/*
+ * =========================================================
+ * Specialized Charge Canon Types
+ * =========================================================
+ */
+
 export interface ChargeVariant {
   id: string;
 
@@ -465,14 +511,103 @@ export interface ChargeVariant {
   summary: string;
 }
 
-export interface ChargeEntry extends CanonEntry {
+export interface ChargeEntry
+  extends CanonEntry {
   variants: ChargeVariant[];
+
+  /*
+   * Canon IDs rather than display names.
+   *
+   * Examples:
+   * or
+   * argent
+   * gules
+   */
 
   compatibleTinctures: string[];
 
+  /*
+   * Canon IDs for compatible ordinaries.
+   *
+   * Examples:
+   * chief
+   * fess
+   * chevron
+   */
+
   compatibleOrdinaries: string[];
 
-  embroideryComplexity: 1 | 2 | 3 | 4 | 5;
+  /*
+   * Relative production complexity:
+   *
+   * 1 = very simple
+   * 2 = simple
+   * 3 = moderate
+   * 4 = complex
+   * 5 = highly complex
+   */
+
+  embroideryComplexity:
+    | 1
+    | 2
+    | 3
+    | 4
+    | 5;
+
+  productionNotes?: string;
+}
+
+/*
+ * =========================================================
+ * Specialized Crest Canon Types
+ * =========================================================
+ *
+ * In formal heraldic terminology, a crest is the
+ * device displayed above the helm.
+ *
+ * These entries describe components and traditions
+ * belonging to the upper achievement rather than
+ * duplicating charges shown on the shield.
+ */
+
+export interface CrestComponentEntry
+  extends CanonEntry {
+  /*
+   * Helm forms with which this component can
+   * reasonably be displayed.
+   *
+   * These remain string IDs for now so we can expand
+   * the Canon incrementally without introducing
+   * premature cross-module dependencies.
+   */
+
+  compatibleHelmStyles: string[];
+
+  /*
+   * Mantling forms or presentation styles compatible
+   * with the component.
+   */
+
+  compatibleMantlingStyles: string[];
+
+  /*
+   * Wreath or torse styles compatible with the
+   * component.
+   */
+
+  compatibleWreaths: string[];
+
+  /*
+   * Relative embroidery complexity using the same
+   * production scale as charges.
+   */
+
+  embroideryComplexity:
+    | 1
+    | 2
+    | 3
+    | 4
+    | 5;
 
   productionNotes?: string;
 }

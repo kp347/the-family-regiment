@@ -1,11 +1,11 @@
 import Link from "next/link";
 
 const navigationItems = [
-  { label: "Mission", href: "/mission" },
-  { label: "The Journey", href: "/journey" },
-  { label: "Heraldry", href: "/heraldry" },
-  { label: "The Great Hall", href: "/great-hall" },
-  { label: "Registry", href: "/registry" },
+  { label: "Mission", href: "/#mission" },
+  { label: "The Journey", href: "/#founding-journey" },
+  { label: "Heraldry", href: "/#heraldry" },
+  { label: "The Great Hall", href: "/#great-hall" },
+  { label: "Registry", href: "/#registry" },
 ];
 
 export default function Navigation() {
@@ -38,10 +38,10 @@ export default function Navigation() {
 
         <Link
           href="/begin"
-          className="inline-flex shrink-0 items-center justify-center border border-[#a7723f] bg-[#7a4728] px-5 py-2.5 text-xs font-semibold uppercase tracking-[0.12em] text-white transition-colors duration-300 hover:bg-[#925a32]"
+          className="inline-flex shrink-0 items-center justify-center border border-[#a9824b] bg-[#a9824b] px-5 py-2.5 text-xs font-semibold uppercase tracking-[0.14em] text-[#171813] transition-colors duration-300 hover:bg-[#c09a60]"
         >
-          Begin
-          <span className="hidden sm:inline">&nbsp;Your Journey</span>
+          Establish
+          <span className="hidden sm:inline">&nbsp;Your House</span>
         </Link>
       </div>
     </header>

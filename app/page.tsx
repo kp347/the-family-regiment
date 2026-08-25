@@ -5,7 +5,7 @@ import Mission from "@/components/sections/Mission";
 import Journey from "@/components/sections/Journey";
 import GreatHall from "@/components/sections/GreatHall";
 import FamilyRegistry from "@/components/sections/FamilyRegistry";
-import GreatHall from "@/components/sections/GreatHall";
+
 export default function Home() {
   return (
     <>

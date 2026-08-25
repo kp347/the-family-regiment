@@ -10,12 +10,12 @@ export default function ReportActions() {
           Next Step
         </p>
 
-        <h2 className="mt-2 text-3xl font-serif">
+        <h2 className="mt-2 font-serif text-3xl">
           Continue the Heraldic Process
         </h2>
 
         <p className="mt-3 max-w-3xl leading-7 text-stone-600">
-          Review the Herald's recommendations before moving into design.
+          Review the Herald&apos;s recommendations before moving into design.
           The report should remain the foundation for every visual decision
           that follows.
         </p>

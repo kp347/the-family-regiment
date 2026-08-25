@@ -3,7 +3,10 @@ import RegistryCard from "@/components/registry/RegistryCard";
 
 export default function FamilyRegistry() {
   return (
-    <section className="relative overflow-hidden bg-[#efe5d6] py-28 text-[#2d2822]">
+    <section
+      id="registry"
+      className="relative scroll-mt-20 overflow-hidden bg-[#efe5d6] py-28 text-[#2d2822]"
+    >
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(184,149,89,0.12),transparent_32%)]" />
 
       <div className="relative mx-auto max-w-[1500px] px-7 lg:px-12">
@@ -40,7 +43,7 @@ export default function FamilyRegistry() {
             Every crest, charter, jacket, and future family artifact originates
             from this permanent record. The registry becomes the official
             historical foundation from which each generation continues the
-            family's story.
+            family&apos;s story.
           </p>
 
           <Link

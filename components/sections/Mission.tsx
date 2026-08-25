@@ -1,5 +1,3 @@
-import Link from "next/link";
-
 const principles = [
   {
     number: "01",
@@ -23,7 +21,10 @@ const principles = [
 
 export default function Mission() {
   return (
-    <section className="relative overflow-hidden bg-[#171813] py-24 text-[#f3eadc] lg:py-32">
+    <section
+      id="mission"
+      className="relative scroll-mt-20 overflow-hidden bg-[#171813] py-24 text-[#f3eadc] lg:py-32"
+    >
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_82%_18%,rgba(184,149,89,0.12),transparent_30%)]" />
 
       <div className="pointer-events-none absolute inset-5 border border-[#b89559]/15 sm:inset-8" />
@@ -84,17 +85,6 @@ export default function Mission() {
               </p>
             </article>
           ))}
-        </div>
-
-        <div className="mt-12 flex justify-end">
-          <Link
-            href="/mission"
-            className="group inline-flex items-center gap-4 text-xs font-semibold uppercase tracking-[0.2em] text-[#d6bd8c]"
-          >
-            Explore our mission
-
-            <span className="h-px w-10 bg-[#b89559] transition-all duration-300 group-hover:w-16" />
-          </Link>
         </div>
       </div>
     </section>

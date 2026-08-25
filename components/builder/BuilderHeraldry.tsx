@@ -62,14 +62,13 @@ export default function BuilderHeraldry({
 }: BuilderHeraldryProps) {
   return (
     <div className="space-y-10">
-
       <div>
         <h3 className="text-lg font-semibold text-white">
           Primary Heraldic Animal
         </h3>
 
         <p className="mt-2 text-sm text-[#8B867D]">
-          Choose the figure that best represents your family's identity.
+          Choose the figure that best represents your family&apos;s identity.
         </p>
 
         <div className="mt-6 grid gap-4 md:grid-cols-3">
@@ -84,7 +83,9 @@ export default function BuilderHeraldry({
                   : "border-white/10 bg-[#1A1B1C] hover:border-[#B08D57]/50"
               }`}
             >
-              <div className="text-4xl">{option.icon}</div>
+              <div className="text-4xl">
+                {option.icon}
+              </div>
 
               <div className="mt-4 text-lg font-semibold">
                 {option.name}
@@ -99,41 +100,60 @@ export default function BuilderHeraldry({
       </div>
 
       <div className="grid gap-8 md:grid-cols-2">
-
         <div>
-          <label className="mb-3 block text-xs uppercase tracking-[0.25em] text-[#B08D57]">
+          <label
+            htmlFor="builder-shield-style"
+            className="mb-3 block text-xs uppercase tracking-[0.25em] text-[#B08D57]"
+          >
             Shield Style
           </label>
 
           <select
+            id="builder-shield-style"
             value={shield}
-            onChange={(e) => onShieldChange(e.target.value)}
+            onChange={(event) =>
+              onShieldChange(event.target.value)
+            }
             className="w-full rounded-xl border border-white/10 bg-[#1B1C1D] px-4 py-3"
           >
             {shields.map((item) => (
-              <option key={item}>{item}</option>
+              <option
+                key={item}
+                value={item}
+              >
+                {item}
+              </option>
             ))}
           </select>
         </div>
 
         <div>
-          <label className="mb-3 block text-xs uppercase tracking-[0.25em] text-[#B08D57]">
+          <label
+            htmlFor="builder-crown-style"
+            className="mb-3 block text-xs uppercase tracking-[0.25em] text-[#B08D57]"
+          >
             Crown
           </label>
 
           <select
+            id="builder-crown-style"
             value={crown}
-            onChange={(e) => onCrownChange(e.target.value)}
+            onChange={(event) =>
+              onCrownChange(event.target.value)
+            }
             className="w-full rounded-xl border border-white/10 bg-[#1B1C1D] px-4 py-3"
           >
             {crowns.map((item) => (
-              <option key={item}>{item}</option>
+              <option
+                key={item}
+                value={item}
+              >
+                {item}
+              </option>
             ))}
           </select>
         </div>
-
       </div>
-
     </div>
   );
 }

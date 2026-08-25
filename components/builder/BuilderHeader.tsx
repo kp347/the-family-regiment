@@ -1,5 +1,7 @@
 // components/builder/BuilderHeader.tsx
 
+import Link from "next/link";
+
 type BuilderHeaderProps = {
   saveMessage: string;
   onSave: () => void;
@@ -15,12 +17,12 @@ export default function BuilderHeader({
     <>
       <header className="border-b border-white/10 px-6 py-6">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-6">
-          <a
+          <Link
             href="/"
             className="text-sm font-semibold uppercase tracking-[0.22em]"
           >
             The Family Regiment
-          </a>
+          </Link>
 
           <div className="flex items-center gap-5">
             <button
@@ -31,12 +33,12 @@ export default function BuilderHeader({
               Save Draft
             </button>
 
-            <a
+            <Link
               href="/"
               className="text-xs uppercase tracking-[0.25em] text-[#8F8B82] transition hover:text-[#B08D57]"
             >
               Exit Builder
-            </a>
+            </Link>
           </div>
         </div>
       </header>

@@ -415,7 +415,6 @@ export interface CanonEntry {
    * azure
    * lion
    * chevron
-   * oak-tree
    */
 
   id: string;

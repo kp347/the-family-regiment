@@ -75,7 +75,10 @@ const stages: JourneyStage[] = [
 
 export default function Journey() {
   return (
-    <section className="overflow-hidden bg-[#f4ede1] py-24 text-[#2d2822] lg:py-32">
+    <section
+      id="founding-journey"
+      className="scroll-mt-20 overflow-hidden bg-[#f4ede1] py-24 text-[#2d2822] lg:py-32"
+    >
       <div className="mx-auto max-w-[1440px] px-7 lg:px-12">
         <div className="grid gap-12 lg:grid-cols-[0.62fr_1.38fr]">
           <div>
@@ -110,7 +113,8 @@ export default function Journey() {
             return (
               <article
                 key={stage.number}
-                className="grid items-center gap-12 lg:grid-cols-2 lg:gap-20"
+                id={stage.title === "Heraldry" ? "heraldry" : undefined}
+                className={`grid scroll-mt-24 items-center gap-12 lg:grid-cols-2 lg:gap-20`}
               >
                 <div className={imageFirst ? "lg:order-1" : "lg:order-2"}>
                   <div className="relative">
@@ -143,7 +147,7 @@ export default function Journey() {
 
                       <div className="absolute bottom-0 left-0 right-0 border-t border-white/10 bg-black/35 px-5 py-4 backdrop-blur-sm">
                         <p className="text-[0.62rem] font-semibold uppercase tracking-[0.27em] text-[#d3b77f]">
-                          The Family Journey · {stage.number}
+                          The Founding Journey · {stage.number}
                         </p>
                       </div>
                     </div>

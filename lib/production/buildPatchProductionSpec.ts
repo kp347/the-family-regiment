@@ -52,6 +52,10 @@ type BuildPatchProductionSpecOptions = {
     masterFormat?: ProductionArtworkFormat;
 
     artworkVersion?: string;
+
+    referenceLabel?: string;
+
+    notes?: string;
   };
 };
 
@@ -85,11 +89,30 @@ export function buildPatchProductionSpec(
   );
 
   return {
-    productionSpecId: options.productionSpecId,
+    productionSpecId:
+      options.productionSpecId,
 
     version: 1,
 
     status: "ready-for-quote",
+
+    approval: {
+      currentStage:
+        "quote-review",
+
+      records: [
+        {
+          stage:
+            "quote-review",
+
+          approved:
+            false,
+
+          notes:
+            "Awaiting manufacturer quote and feasibility review.",
+        },
+      ],
+    },
 
     artwork: {
       masterArtworkUrl:
@@ -104,6 +127,14 @@ export function buildPatchProductionSpec(
       artworkVersion:
         options.artwork?.artworkVersion ??
         "1.0",
+
+      referenceLabel:
+        options.artwork?.referenceLabel ??
+        "Approved Family Regiment Crest Reference",
+
+      notes:
+        options.artwork?.notes ??
+        "Final production artwork remains subject to manufacturer digitization and physical sample approval.",
     },
 
     garment: {
@@ -145,7 +176,8 @@ export function buildPatchProductionSpec(
         ),
     },
 
-    construction: "embroidered",
+    construction:
+      "embroidered",
 
     materials: {
       baseMaterial:
@@ -177,9 +209,11 @@ export function buildPatchProductionSpec(
         placement.label,
       ),
 
-    createdAt: now,
+    createdAt:
+      now,
 
-    updatedAt: now,
+    updatedAt:
+      now,
   };
 }
 
@@ -192,21 +226,28 @@ function buildProductionColors(
   if (structuredColors) {
     return [
       {
-        role: "Primary",
+        role:
+          "Primary",
+
         hex:
           structuredColors.primary,
       },
 
       {
-        role: "Secondary",
+        role:
+          "Secondary",
+
         hex:
           structuredColors.secondary,
       },
 
       {
-        role: "Metallic Accent",
+        role:
+          "Metallic Accent",
+
         threadSystem:
           "Vendor selection required",
+
         threadCode:
           structuredColors.metallic,
       },
@@ -215,7 +256,9 @@ function buildProductionColors(
 
   return legacyColors.map(
     (color, index) => ({
-      role: `Color ${index + 1}`,
+      role:
+        `Color ${index + 1}`,
+
       hex:
         normalizeHex(color),
     }),
@@ -254,7 +297,8 @@ function buildProductionNotes(
   }
 
   if (
-    options.garment?.manufacturerStyleNumber
+    options.garment
+      ?.manufacturerStyleNumber
   ) {
     notes.push(
       `Garment style: ${options.garment.manufacturerStyleNumber}.`,
@@ -296,6 +340,10 @@ function buildProductionNotes(
 
   notes.push(
     "Garment placement must be verified against the actual production garment and full size run before final authorization.",
+  );
+
+  notes.push(
+    "Production may not advance beyond the current approval stage until the required authorization has been recorded.",
   );
 
   if (

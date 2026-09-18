@@ -1,25 +1,14 @@
-// lib/herald/svg/svgRenderer.ts
-
 import type {
   HeraldDesign,
 } from "../design";
 
-/*
- * =========================================================
- * SVG Renderer
- *
- * Converts a HeraldDesign into a complete SVG string.
- *
- * This first version intentionally stays simple:
- * - Shield
- * - Primary charge label
- * - Crown
- * - Motto banner
- *
- * We will replace the placeholder charge text with
- * real vector charge artwork in the next steps.
- * =========================================================
- */
+import {
+  HEATER_SHIELD_PATH,
+} from "./shields/heater";
+
+import {
+  renderLionRampantSvg,
+} from "./animals/lion";
 
 function escapeXml(
   value: string,
@@ -43,6 +32,9 @@ function renderShield(
       ? "#C8A969"
       : "#D8D8D8";
 
+  const secondaryStroke =
+    design.colors.secondary;
+
   switch (design.shield) {
     case "Norman Shield":
       return `
@@ -55,6 +47,7 @@ function renderShield(
           fill="${fill}"
           stroke="${stroke}"
           stroke-width="8"
+          stroke-linejoin="round"
         />
       `;
 
@@ -69,6 +62,7 @@ function renderShield(
           fill="${fill}"
           stroke="${stroke}"
           stroke-width="8"
+          stroke-linejoin="round"
         />
       `;
 
@@ -83,22 +77,33 @@ function renderShield(
           fill="${fill}"
           stroke="${stroke}"
           stroke-width="8"
+          stroke-linejoin="round"
         />
       `;
 
     case "Heater Shield":
     default:
       return `
-        <path
-          d="M45 50
-             H255
-             V190
-             C255 285 210 345 150 385
-             C90 345 45 285 45 190Z"
-          fill="${fill}"
-          stroke="${stroke}"
-          stroke-width="8"
-        />
+        <g transform="translate(45 45) scale(2.1 3)">
+          <path
+            d="${HEATER_SHIELD_PATH}"
+            fill="${fill}"
+            stroke="${stroke}"
+            stroke-width="3.2"
+            stroke-linejoin="round"
+            vector-effect="non-scaling-stroke"
+          />
+
+          <path
+            d="${HEATER_SHIELD_PATH}"
+            transform="translate(5 6) scale(0.9)"
+            fill="none"
+            stroke="${secondaryStroke}"
+            stroke-width="1.4"
+            stroke-linejoin="round"
+            vector-effect="non-scaling-stroke"
+          />
+        </g>
       `;
   }
 }
@@ -107,7 +112,26 @@ function renderCharge(
   design: HeraldDesign,
 ): string {
   const chargeColor =
+    design.colors.metallic === "gold"
+      ? "#C8A969"
+      : "#D8D8D8";
+
+  const accent =
     design.colors.secondary;
+
+  if (
+    design.primaryCharge === "Lion"
+  ) {
+    return renderLionRampantSvg({
+      fill:
+        chargeColor,
+
+      accent,
+
+      transform:
+        "translate(88 105) scale(1.25)",
+    });
+  }
 
   return `
     <g>
@@ -116,7 +140,7 @@ function renderCharge(
         cy="190"
         r="68"
         fill="none"
-        stroke="${chargeColor}"
+        stroke="${accent}"
         stroke-width="4"
         opacity="0.35"
       />
@@ -128,7 +152,7 @@ function renderCharge(
         font-size="30"
         font-family="serif"
         font-weight="700"
-        fill="${chargeColor}"
+        fill="${accent}"
       >
         ${escapeXml(
           design.primaryCharge,

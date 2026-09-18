@@ -1,8 +1,13 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import {
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 
+import BuilderComposition from "./BuilderComposition";
 import BuilderHeader from "./BuilderHeader";
 import BuilderHeraldry from "./BuilderHeraldry";
 import BuilderHeritage from "./BuilderHeritage";
@@ -16,7 +21,11 @@ import BuilderValues from "./BuilderValues";
 
 import ProductionStatus from "@/components/herald/ProductionStatus";
 
-import type { HeraldDesign } from "@/lib/herald/design";
+import type {
+  HeraldDesign,
+  HeraldQuadrant,
+  HeraldShieldComposition,
+} from "@/lib/herald/design";
 
 import {
   isBuilderShieldStyle,
@@ -43,6 +52,7 @@ type BuilderDraft = {
   embroideryFinish: string;
   includeNameTape: boolean;
   includeSleevePatch: boolean;
+  composition?: HeraldShieldComposition;
 };
 
 const steps = [
@@ -62,7 +72,7 @@ const steps = [
     number: "03",
     name: "Heraldry",
     description:
-      "Choose the animal, shield, and crown that define your family crest.",
+      "Choose the heraldic form, then compose the four fields that tell your family story.",
   },
   {
     number: "04",
@@ -86,7 +96,7 @@ const steps = [
     number: "07",
     name: "Regiment",
     description:
-      "Review the identity that will guide your finished jacket.",
+      "Review the identity that will guide your finished heirloom.",
   },
 ];
 
@@ -152,31 +162,26 @@ const mottoOptions: Record<
     "Virtus Nos Ducit",
     "Audentes Fortuna Iuvat",
   ],
-
   Honor: [
     "Honore et Virtute",
     "Fides Ante Omnia",
     "Semper Cum Honore",
   ],
-
   Unity: [
     "Uniti Fortiores",
     "Una Familia, Una Fortitudo",
     "Concordia Vincimus",
   ],
-
   Legacy: [
     "Per Saecula",
     "Ad Posteros",
     "Memoria Manet",
   ],
-
   Resilience: [
     "Per Aspera Fortis",
     "Nunquam Fracti",
     "Fortitudo Permanet",
   ],
-
   Service: [
     "Servire Cum Honore",
     "Officium Ante Se",
@@ -189,11 +194,6 @@ const jacketViews = [
     name: "Front",
     image:
       "/images/products/studio/jacket-front-clean.png",
-  },
-  {
-    name: "Back",
-    image:
-      "/images/products/studio/jacket-back-clean.png",
   },
 ];
 
@@ -215,6 +215,95 @@ const embroideryFinishes = [
   },
 ];
 
+function createDefaultComposition(
+  heritage: string,
+  animal: string,
+  value: string,
+): HeraldShieldComposition {
+  return {
+    layout: "quartered",
+    quadrants: [
+      {
+        id: "I",
+        type: "heritage",
+        label: heritage,
+        heritage,
+      },
+      createAnimalQuadrant(
+        animal,
+      ),
+      {
+        id: "III",
+        type: "symbol",
+        label: value,
+        meaning: value,
+      },
+      {
+        id: "IV",
+        type: "empty",
+      },
+    ],
+  };
+}
+
+function createAnimalQuadrant(
+  animal: string,
+): HeraldQuadrant {
+  const assetId =
+    getAnimalAssetId(
+      animal,
+    );
+
+  return {
+    id: "II",
+    type: "animal",
+    label: animal,
+    assetId,
+    variantId:
+      animal === "Lion"
+        ? "rampant"
+        : undefined,
+  };
+}
+
+function getAnimalAssetId(
+  animal: string,
+):
+  | "lion"
+  | "eagle"
+  | "wolf"
+  | "bear"
+  | "stag"
+  | "griffin"
+  | "salmon"
+  | undefined {
+  switch (animal) {
+    case "Lion":
+      return "lion";
+
+    case "Eagle":
+      return "eagle";
+
+    case "Wolf":
+      return "wolf";
+
+    case "Bear":
+      return "bear";
+
+    case "Stag":
+      return "stag";
+
+    case "Griffin":
+      return "griffin";
+
+    case "Salmon":
+      return "salmon";
+
+    default:
+      return undefined;
+  }
+}
+
 const defaultDraft: BuilderDraft = {
   familyName: "Laurent",
   initials: "LR",
@@ -225,44 +314,91 @@ const defaultDraft: BuilderDraft = {
   value: "Courage",
   motto: "Fortis in Familia",
   jacketView: "Front",
-  crestPlacement: "Left Chest",
-  embroideryFinish: "Regiment Gold",
+  crestPlacement:
+    "Left Chest",
+  embroideryFinish:
+    "Regiment Gold",
   includeNameTape: true,
   includeSleevePatch: true,
+  composition:
+    createDefaultComposition(
+      "France",
+      "Lion",
+      "Courage",
+    ),
 };
 
 export default function RegimentBuilder() {
-  const router = useRouter();
+  const router =
+    useRouter();
 
-  const [currentStep, setCurrentStep] =
-    useState(0);
+  const [
+    currentStep,
+    setCurrentStep,
+  ] = useState(0);
 
-  const [familyName, setFamilyName] =
-    useState(defaultDraft.familyName);
+  const [
+    familyName,
+    setFamilyName,
+  ] = useState(
+    defaultDraft.familyName,
+  );
 
-  const [initials, setInitials] =
-    useState(defaultDraft.initials);
+  const [
+    initials,
+    setInitials,
+  ] = useState(
+    defaultDraft.initials,
+  );
 
-  const [heritage, setHeritage] =
-    useState(defaultDraft.heritage);
+  const [
+    heritage,
+    setHeritage,
+  ] = useState(
+    defaultDraft.heritage,
+  );
 
-  const [animal, setAnimal] =
-    useState(defaultDraft.animal);
+  const [
+    animal,
+    setAnimal,
+  ] = useState(
+    defaultDraft.animal,
+  );
 
-  const [shield, setShield] =
-    useState(defaultDraft.shield);
+  const [
+    shield,
+    setShield,
+  ] = useState(
+    defaultDraft.shield,
+  );
 
-  const [crown, setCrown] =
-    useState(defaultDraft.crown);
+  const [
+    crown,
+    setCrown,
+  ] = useState(
+    defaultDraft.crown,
+  );
 
-  const [value, setValue] =
-    useState(defaultDraft.value);
+  const [
+    value,
+    setValue,
+  ] = useState(
+    defaultDraft.value,
+  );
 
-  const [motto, setMotto] =
-    useState(defaultDraft.motto);
+  const [
+    motto,
+    setMotto,
+  ] = useState(
+    defaultDraft.motto,
+  );
 
-  const [jacketView, setJacketView] =
-    useState(defaultDraft.jacketView);
+  const [
+    jacketView,
+    setJacketView,
+  ] = useState(
+    defaultDraft.jacketView,
+  );
 
   const [
     crestPlacement,
@@ -293,6 +429,20 @@ export default function RegimentBuilder() {
   );
 
   const [
+    composition,
+    setComposition,
+  ] =
+    useState<HeraldShieldComposition>(
+      () =>
+        defaultDraft.composition ??
+        createDefaultComposition(
+          defaultDraft.heritage,
+          defaultDraft.animal,
+          defaultDraft.value,
+        ),
+    );
+
+  const [
     draftLoaded,
     setDraftLoaded,
   ] = useState(false);
@@ -302,10 +452,6 @@ export default function RegimentBuilder() {
     setSaveMessage,
   ] = useState("");
 
-  /*
-   * Keep the design creation timestamp stable
-   * during the current builder session.
-   */
   const [designCreatedAt] =
     useState(
       () =>
@@ -321,25 +467,22 @@ export default function RegimentBuilder() {
       ? `The House of ${familyName.trim()}`
       : `The ${heritage} ${animal}`;
 
-  /*
-   * =========================================================
-   * Canonical HeraldDesign
-   *
-   * The builder UI, production validator, and future
-   * vendor export now share the same design model.
-   * =========================================================
-   */
-
   const heraldDesign =
     useMemo<HeraldDesign>(() => {
       const resolvedAnimal =
-        normalizeAnimal(animal);
+        normalizeAnimal(
+          animal,
+        );
 
       const resolvedShield =
-        normalizeShield(shield);
+        normalizeShield(
+          shield,
+        );
 
       const resolvedCrown =
-        normalizeCrown(crown);
+        normalizeCrown(
+          crown,
+        );
 
       const resolvedFinish =
         normalizeEmbroideryFinish(
@@ -353,64 +496,45 @@ export default function RegimentBuilder() {
 
       return {
         version: 1,
-
         familyName:
           familyName.trim() ||
           "Family",
-
         shield:
           resolvedShield,
-
         primaryCharge:
           resolvedAnimal,
-
         supporters: [],
-
         crown:
           resolvedCrown,
-
-        wreath:
-          false,
-
-        banner:
-          true,
-
+        wreath: false,
+        banner: true,
         motto: {
           latin:
             motto.trim(),
-
           english: "",
         },
-
         colors,
-
+        composition,
         patch: {
           border:
             "merrow",
-
           backing:
             "hook-loop",
-
           size: 4,
         },
-
         embroidery: {
           finish:
             toEmbroideryFinish(
               resolvedFinish,
             ),
         },
-
         metadata: {
           createdAt:
             designCreatedAt,
-
           updatedAt:
             new Date().toISOString(),
-
           canonVersion:
             "1.0.0",
-
           approved:
             false,
         },
@@ -422,6 +546,7 @@ export default function RegimentBuilder() {
       embroideryFinish,
       familyName,
       motto,
+      composition,
       designCreatedAt,
     ]);
 
@@ -442,6 +567,19 @@ export default function RegimentBuilder() {
             }
           >;
 
+        const loadedHeritage =
+          parsedDraft.heritage ??
+          defaultDraft.heritage;
+
+        const loadedAnimal =
+          parsedDraft.animal ??
+          parsedDraft.symbol ??
+          defaultDraft.animal;
+
+        const loadedValue =
+          parsedDraft.value ??
+          defaultDraft.value;
+
         setFamilyName(
           parsedDraft.familyName ??
             defaultDraft.familyName,
@@ -453,14 +591,11 @@ export default function RegimentBuilder() {
         );
 
         setHeritage(
-          parsedDraft.heritage ??
-            defaultDraft.heritage,
+          loadedHeritage,
         );
 
         setAnimal(
-          parsedDraft.animal ??
-            parsedDraft.symbol ??
-            defaultDraft.animal,
+          loadedAnimal,
         );
 
         setShield(
@@ -474,8 +609,7 @@ export default function RegimentBuilder() {
         );
 
         setValue(
-          parsedDraft.value ??
-            defaultDraft.value,
+          loadedValue,
         );
 
         setMotto(
@@ -484,8 +618,7 @@ export default function RegimentBuilder() {
         );
 
         setJacketView(
-          parsedDraft.jacketView ??
-            defaultDraft.jacketView,
+          "Front",
         );
 
         setCrestPlacement(
@@ -507,6 +640,15 @@ export default function RegimentBuilder() {
           parsedDraft.includeSleevePatch ??
             defaultDraft.includeSleevePatch,
         );
+
+        setComposition(
+          parsedDraft.composition ??
+            createDefaultComposition(
+              loadedHeritage,
+              loadedAnimal,
+              loadedValue,
+            ),
+        );
       } catch {
         window.localStorage.removeItem(
           "family-regiment-draft",
@@ -514,7 +656,9 @@ export default function RegimentBuilder() {
       }
     }
 
-    setDraftLoaded(true);
+    setDraftLoaded(
+      true,
+    );
   }, []);
 
   useEffect(() => {
@@ -543,9 +687,11 @@ export default function RegimentBuilder() {
     embroideryFinish,
     includeNameTape,
     includeSleevePatch,
+    composition,
   ]);
 
-  function createDraft(): BuilderDraft {
+  function createDraft():
+    BuilderDraft {
     return {
       familyName,
       initials,
@@ -560,18 +706,134 @@ export default function RegimentBuilder() {
       embroideryFinish,
       includeNameTape,
       includeSleevePatch,
+      composition,
     };
+  }
+
+  function chooseHeritage(
+    nextHeritage: string,
+  ) {
+    setHeritage(
+      nextHeritage,
+    );
+
+    setComposition(
+      (current) => ({
+        ...current,
+        quadrants:
+          current.quadrants.map(
+            (quadrant) => {
+              if (
+                quadrant.id !==
+                "I"
+              ) {
+                return quadrant;
+              }
+
+              return {
+                ...quadrant,
+                type:
+                  "heritage",
+                label:
+                  nextHeritage,
+                heritage:
+                  nextHeritage,
+              };
+            },
+          ) as HeraldShieldComposition["quadrants"],
+      }),
+    );
+  }
+
+  function chooseAnimal(
+    nextAnimal: string,
+  ) {
+    setAnimal(
+      nextAnimal,
+    );
+
+    setComposition(
+      (current) => ({
+        ...current,
+        quadrants:
+          current.quadrants.map(
+            (quadrant) => {
+              if (
+                quadrant.id !==
+                "II"
+              ) {
+                return quadrant;
+              }
+
+              return createAnimalQuadrant(
+                nextAnimal,
+              );
+            },
+          ) as HeraldShieldComposition["quadrants"],
+      }),
+    );
   }
 
   function chooseValue(
     nextValue: string,
   ) {
-    setValue(nextValue);
+    setValue(
+      nextValue,
+    );
 
     setMotto(
-      mottoOptions[nextValue]?.[0] ??
+      mottoOptions[
+        nextValue
+      ]?.[0] ??
         mottoOptions.Courage[0],
     );
+
+    setComposition(
+      (current) => ({
+        ...current,
+        quadrants:
+          current.quadrants.map(
+            (quadrant) => {
+              if (
+                quadrant.id !==
+                "III"
+              ) {
+                return quadrant;
+              }
+
+              return {
+                ...quadrant,
+                type:
+                  "symbol",
+                label:
+                  nextValue,
+                meaning:
+                  nextValue,
+              };
+            },
+          ) as HeraldShieldComposition["quadrants"],
+      }),
+    );
+  }
+
+  function handleCompositionChange(
+    nextComposition:
+      HeraldShieldComposition,
+  ) {
+    setComposition(
+      nextComposition,
+    );
+
+    /*
+     * Direct quadrant editing now takes precedence.
+     *
+     * We intentionally do not rewrite the legacy Heritage,
+     * Animal, or Value selections from arbitrary quadrant
+     * changes. Those fields remain useful recommendations
+     * and backward-compatible builder data.
+     *
+     * The composition itself is the canonical shield layout.
+     */
   }
 
   function nextStep() {
@@ -601,20 +863,9 @@ export default function RegimentBuilder() {
       nextPlacement,
     );
 
-    if (
-      nextPlacement ===
-        "Left Chest" ||
-      nextPlacement ===
-        "Right Chest" ||
-      nextPlacement ===
-        "Sleeve Patch"
-    ) {
-      setJacketView("Front");
-
-      return;
-    }
-
-    setJacketView("Back");
+    setJacketView(
+      "Front",
+    );
   }
 
   function saveDraft() {
@@ -625,19 +876,14 @@ export default function RegimentBuilder() {
       ),
     );
 
-    showMessage("Draft saved");
+    showMessage(
+      "Draft saved",
+    );
   }
 
   function createCrest() {
     saveDraft();
 
-    /*
-     * Persist the canonical design separately
-     * from the legacy builder draft.
-     *
-     * This becomes the bridge to Studio,
-     * production validation, and vendor export.
-     */
     window.localStorage.setItem(
       "family-regiment-herald-design",
       JSON.stringify(
@@ -645,7 +891,9 @@ export default function RegimentBuilder() {
       ),
     );
 
-    router.push("/studio");
+    router.push(
+      "/studio",
+    );
   }
 
   function resetDraft() {
@@ -682,7 +930,7 @@ export default function RegimentBuilder() {
     );
 
     setJacketView(
-      defaultDraft.jacketView,
+      "Front",
     );
 
     setCrestPlacement(
@@ -701,7 +949,17 @@ export default function RegimentBuilder() {
       defaultDraft.includeSleevePatch,
     );
 
-    setCurrentStep(0);
+    setComposition(
+      createDefaultComposition(
+        defaultDraft.heritage,
+        defaultDraft.animal,
+        defaultDraft.value,
+      ),
+    );
+
+    setCurrentStep(
+      0,
+    );
 
     window.localStorage.removeItem(
       "family-regiment-draft",
@@ -711,17 +969,26 @@ export default function RegimentBuilder() {
       "family-regiment-herald-design",
     );
 
-    showMessage("Builder reset");
+    showMessage(
+      "Builder reset",
+    );
   }
 
   function showMessage(
     message: string,
   ) {
-    setSaveMessage(message);
+    setSaveMessage(
+      message,
+    );
 
-    window.setTimeout(() => {
-      setSaveMessage("");
-    }, 2000);
+    window.setTimeout(
+      () => {
+        setSaveMessage(
+          "",
+        );
+      },
+      2000,
+    );
   }
 
   return (
@@ -811,33 +1078,46 @@ export default function RegimentBuilder() {
                       heritageOptions
                     }
                     onHeritageChange={
-                      setHeritage
+                      chooseHeritage
                     }
                   />
                 )}
 
                 {currentStep ===
                   2 && (
-                  <BuilderHeraldry
-                    animal={
-                      animal
-                    }
-                    shield={
-                      shield
-                    }
-                    crown={
-                      crown
-                    }
-                    onAnimalChange={
-                      setAnimal
-                    }
-                    onShieldChange={
-                      setShield
-                    }
-                    onCrownChange={
-                      setCrown
-                    }
-                  />
+                  <div className="space-y-12">
+                    <BuilderHeraldry
+                      animal={
+                        animal
+                      }
+                      shield={
+                        shield
+                      }
+                      crown={
+                        crown
+                      }
+                      onAnimalChange={
+                        chooseAnimal
+                      }
+                      onShieldChange={
+                        setShield
+                      }
+                      onCrownChange={
+                        setCrown
+                      }
+                    />
+
+                    <div className="border-t border-white/10 pt-12">
+                      <BuilderComposition
+                        composition={
+                          composition
+                        }
+                        onCompositionChange={
+                          handleCompositionChange
+                        }
+                      />
+                    </div>
+                  </div>
                 )}
 
                 {currentStep ===
@@ -1020,19 +1300,13 @@ export default function RegimentBuilder() {
               }
               jacketViews={
                 jacketViews
+                
+              }
+              composition={
+                composition
               }
             />
           </div>
-
-          {/*
-           * ===================================================
-           * Live Production Review
-           * ===================================================
-           *
-           * This panel uses the exact same HeraldDesign
-           * that is persisted for the Studio and eventual
-           * vendor export.
-           */}
 
           <div className="mt-6">
             <ProductionStatus
@@ -1089,17 +1363,13 @@ function BuilderNavigation({
   );
 }
 
-/*
- * ===========================================================
- * HeraldDesign Normalization
- * ===========================================================
- */
-
 function normalizeAnimal(
   value: string,
 ): CrestAnimal {
   if (
-    isCrestAnimal(value)
+    isCrestAnimal(
+      value,
+    )
   ) {
     return value;
   }
@@ -1125,7 +1395,9 @@ function normalizeCrown(
   value: string,
 ): CrestCrown {
   if (
-    isCrestCrown(value)
+    isCrestCrown(
+      value,
+    )
   ) {
     return value;
   }
@@ -1158,10 +1430,8 @@ function getDesignColors(
       return {
         primary:
           "#303429",
-
         secondary:
           "#C1C3B2",
-
         metallic:
           "silver",
       };
@@ -1170,10 +1440,8 @@ function getDesignColors(
       return {
         primary:
           "#24251F",
-
         secondary:
           "#F1E7CF",
-
         metallic:
           "gold",
       };
@@ -1183,10 +1451,8 @@ function getDesignColors(
       return {
         primary:
           "#20231C",
-
         secondary:
           "#E8D7AE",
-
         metallic:
           "gold",
       };

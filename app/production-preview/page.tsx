@@ -8,10 +8,31 @@ const sampleSpec: PatchProductionSpec = {
 
   status: "ready-for-quote",
 
+  approval: {
+    currentStage: "quote-review",
+
+    records: [
+      {
+        stage: "quote-review",
+
+        approved: false,
+
+        notes:
+          "Awaiting manufacturer quote and feasibility review.",
+      },
+    ],
+  },
+
   artwork: {
     masterFormat: "svg",
 
     artworkVersion: "1.0",
+
+    referenceLabel:
+      "Approved Family Regiment Crest Reference",
+
+    notes:
+      "Final production artwork remains subject to manufacturer digitization and sample approval.",
   },
 
   garment: {
@@ -54,19 +75,24 @@ const sampleSpec: PatchProductionSpec = {
 
     colors: [
       {
-        role: "Shield Field",
+        role:
+          "Shield Field",
 
-        hex: "#1F2A1F",
+        hex:
+          "#1F2A1F",
       },
 
       {
-        role: "Secondary",
+        role:
+          "Secondary",
 
-        hex: "#E8D7AE",
+        hex:
+          "#E8D7AE",
       },
 
       {
-        role: "Metallic Accent",
+        role:
+          "Metallic Accent",
 
         threadSystem:
           "Vendor selection required",
@@ -78,18 +104,20 @@ const sampleSpec: PatchProductionSpec = {
   },
 
   finishing: {
-    border: "merrow",
+    border:
+      "merrow",
 
-    backing: "hook-loop",
+    backing:
+      "hook-loop",
   },
 
   deadline: {
     notes:
-      "Target date to be confirmed after sampling.",
+      "Target completion date to be confirmed after quote and physical sampling.",
   },
 
   productionNotes:
-    "Production specification generated from an approved Family Regiment design. Garment placement and finished crest dimensions must be verified against the actual production garment before final sample authorization. Any proposed simplification must preserve the approved heraldic identity and be submitted for approval before production.",
+    "Production specification generated from an approved Family Regiment design. Garment placement and finished crest dimensions must be verified against the actual production garment before final sample authorization. Any proposed artwork simplification must preserve the approved heraldic identity and must be submitted for approval before production. Final thread codes, stitch density, digitization, border execution, and construction details remain subject to physical sampling and manufacturer approval.",
 
   createdAt:
     new Date().toISOString(),
@@ -117,9 +145,7 @@ export default function ProductionPreviewPage() {
           </p>
         </div>
 
-        <ProductionSpecification
-          spec={sampleSpec}
-        />
+        <ProductionSpecification spec={sampleSpec} />
       </div>
     </main>
   );

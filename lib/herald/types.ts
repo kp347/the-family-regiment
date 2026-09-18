@@ -43,7 +43,9 @@ export type CrestAnimal =
   | "Eagle"
   | "Wolf"
   | "Bear"
-  | "Stag";
+  | "Stag"
+  | "Griffin"
+  | "Salmon";
 
 export type CrestCrown =
   | "None"
@@ -202,6 +204,8 @@ export const crestAnimals: CrestAnimal[] = [
   "Wolf",
   "Bear",
   "Stag",
+  "Griffin",
+  "Salmon",
 ];
 
 export const builderShieldStyles: BuilderShieldStyle[] = [

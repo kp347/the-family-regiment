@@ -1,5 +1,12 @@
 // components/builder/BuilderHeritage.tsx
 
+import {
+  getHeritageFlagComponent,
+  type HeritageFlagComponent,
+} from "@/lib/herald/svg/flags/registry";
+
+import type { HeritageFlagVisualCanonAssetId } from "@/lib/herald/visualCanon/references";
+
 type BuilderHeritageProps = {
   heritage: string;
   options: string[];
@@ -7,53 +14,184 @@ type BuilderHeritageProps = {
 };
 
 type HeritageVisual = {
-  flag: string;
+  assetId: HeritageFlagVisualCanonAssetId;
   code: string;
   subtitle: string;
 };
 
 const heritageVisuals: Record<string, HeritageVisual> = {
-  France: {
-    flag: "🇫🇷",
-    code: "FR",
-    subtitle: "French heritage",
-  },
   "United States": {
-    flag: "🇺🇸",
+    assetId: "united-states",
     code: "US",
     subtitle: "American heritage",
   },
-  Ireland: {
-    flag: "🇮🇪",
-    code: "IE",
-    subtitle: "Irish heritage",
+
+  Canada: {
+    assetId: "canada",
+    code: "CA",
+    subtitle: "Canadian heritage",
   },
-  Italy: {
-    flag: "🇮🇹",
-    code: "IT",
-    subtitle: "Italian heritage",
+
+  Mexico: {
+    assetId: "mexico",
+    code: "MX",
+    subtitle: "Mexican heritage",
   },
+
+  Brazil: {
+    assetId: "brazil",
+    code: "BR",
+    subtitle: "Brazilian heritage",
+  },
+
+  France: {
+    assetId: "france",
+    code: "FR",
+    subtitle: "French heritage",
+  },
+
+  "United Kingdom": {
+    assetId: "united-kingdom",
+    code: "GB",
+    subtitle: "British heritage",
+  },
+
   England: {
-    flag: "🏴",
+    assetId: "england",
     code: "ENG",
     subtitle: "English heritage",
   },
+
   Scotland: {
-    flag: "🏴",
+    assetId: "scotland",
     code: "SCO",
     subtitle: "Scottish heritage",
   },
+
+  Ireland: {
+    assetId: "ireland",
+    code: "IE",
+    subtitle: "Irish heritage",
+  },
+
+  Italy: {
+    assetId: "italy",
+    code: "IT",
+    subtitle: "Italian heritage",
+  },
+
   Germany: {
-    flag: "🇩🇪",
+    assetId: "germany",
     code: "DE",
     subtitle: "German heritage",
   },
+
   Spain: {
-    flag: "🇪🇸",
+    assetId: "spain",
     code: "ES",
     subtitle: "Spanish heritage",
   },
+
+  Portugal: {
+    assetId: "portugal",
+    code: "PT",
+    subtitle: "Portuguese heritage",
+  },
+
+  Netherlands: {
+    assetId: "netherlands",
+    code: "NL",
+    subtitle: "Dutch heritage",
+  },
+
+  Belgium: {
+    assetId: "belgium",
+    code: "BE",
+    subtitle: "Belgian heritage",
+  },
+
+  Switzerland: {
+    assetId: "switzerland",
+    code: "CH",
+    subtitle: "Swiss heritage",
+  },
+
+  Sweden: {
+    assetId: "sweden",
+    code: "SE",
+    subtitle: "Swedish heritage",
+  },
+
+  Norway: {
+    assetId: "norway",
+    code: "NO",
+    subtitle: "Norwegian heritage",
+  },
+
+  Poland: {
+    assetId: "poland",
+    code: "PL",
+    subtitle: "Polish heritage",
+  },
+
+  Greece: {
+    assetId: "greece",
+    code: "GR",
+    subtitle: "Greek heritage",
+  },
+
+  Japan: {
+    assetId: "japan",
+    code: "JP",
+    subtitle: "Japanese heritage",
+  },
+
+  "South Korea": {
+    assetId: "south-korea",
+    code: "KR",
+    subtitle: "South Korean heritage",
+  },
+
+  Nigeria: {
+    assetId: "nigeria",
+    code: "NG",
+    subtitle: "Nigerian heritage",
+  },
+
+  Ghana: {
+    assetId: "ghana",
+    code: "GH",
+    subtitle: "Ghanaian heritage",
+  },
+
+  "South Africa": {
+    assetId: "south-africa",
+    code: "ZA",
+    subtitle: "South African heritage",
+  },
+
+  Egypt: {
+    assetId: "egypt",
+    code: "EG",
+    subtitle: "Egyptian heritage",
+  },
+
+  Kenya: {
+    assetId: "kenya",
+    code: "KE",
+    subtitle: "Kenyan heritage",
+  },
 };
+
+function getFlagComponent(
+  visual: HeritageVisual | undefined,
+): HeritageFlagComponent | undefined {
+  if (!visual) {
+    return undefined;
+  }
+
+  return getHeritageFlagComponent(visual.assetId);
+}
 
 export default function BuilderHeritage({
   heritage,
@@ -86,23 +224,15 @@ export default function BuilderHeritage({
 
       <div className="grid gap-4 sm:grid-cols-2">
         {options.map((option) => {
-          const active =
-            heritage === option;
-
-          const visual =
-            heritageVisuals[option] ?? {
-              flag: "⚑",
-              code: "",
-              subtitle: "Family heritage",
-            };
+          const active = heritage === option;
+          const visual = heritageVisuals[option];
+          const Flag = getFlagComponent(visual);
 
           return (
             <button
               key={option}
               type="button"
-              onClick={() =>
-                onHeritageChange(option)
-              }
+              onClick={() => onHeritageChange(option)}
               aria-pressed={active}
               className={[
                 "group relative min-h-[150px] overflow-hidden rounded-[1.35rem] border p-5 text-left transition duration-200",
@@ -112,7 +242,7 @@ export default function BuilderHeritage({
               ].join(" ")}
             >
               {active && (
-                <div className="absolute right-4 top-4 flex h-6 w-6 items-center justify-center rounded-full border border-[#C6A15B] bg-[#C6A15B] text-[11px] font-bold text-[#151515]">
+                <div className="absolute right-4 top-4 z-10 flex h-6 w-6 items-center justify-center rounded-full border border-[#C6A15B] bg-[#C6A15B] text-[11px] font-bold text-[#151515]">
                   ✓
                 </div>
               )}
@@ -120,14 +250,26 @@ export default function BuilderHeritage({
               <div className="flex items-start gap-4">
                 <div
                   className={[
-                    "flex h-[58px] w-[76px] shrink-0 items-center justify-center rounded-xl border text-[2rem] shadow-sm transition",
+                    "flex h-[58px] w-[76px] shrink-0 items-center justify-center overflow-hidden rounded-xl border bg-[#777777] p-1.5 shadow-sm transition",
                     active
-                      ? "border-[#C6A15B]/60 bg-[#F5F0E6]"
-                      : "border-white/10 bg-[#ECE7DD]",
+                      ? "border-[#C6A15B]/60"
+                      : "border-white/10",
                   ].join(" ")}
-                  aria-hidden="true"
                 >
-                  {visual.flag}
+                  {Flag ? (
+                    <Flag
+                      width="100%"
+                      height="100%"
+                      title={`Flag of ${option}`}
+                    />
+                  ) : (
+                    <span
+                      className="text-xl text-[#D8D0C3]"
+                      aria-hidden="true"
+                    >
+                      ⚑
+                    </span>
+                  )}
                 </div>
 
                 <div className="min-w-0 pt-1">
@@ -136,7 +278,7 @@ export default function BuilderHeritage({
                       {option}
                     </p>
 
-                    {visual.code && (
+                    {visual?.code && (
                       <span className="rounded-full border border-white/10 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.16em] text-[#8E8A81]">
                         {visual.code}
                       </span>
@@ -144,7 +286,7 @@ export default function BuilderHeritage({
                   </div>
 
                   <p className="mt-1 text-sm text-[#8E8A81]">
-                    {visual.subtitle}
+                    {visual?.subtitle ?? "Family heritage"}
                   </p>
                 </div>
               </div>
@@ -170,9 +312,9 @@ export default function BuilderHeritage({
 
       <div className="mt-5 rounded-xl border border-white/8 bg-black/10 px-4 py-3">
         <p className="text-xs leading-5 text-[#77736A]">
-          This is the beginning of the new visual Builder system.
-          The small country code is now secondary; the flag is the
-          primary visual cue.
+          Heritage selections use controlled Family Regiment
+          Visual Canon artwork. Country codes remain secondary;
+          the approved flag asset is the primary visual cue.
         </p>
       </div>
     </div>

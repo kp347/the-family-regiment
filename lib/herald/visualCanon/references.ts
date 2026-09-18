@@ -3,18 +3,54 @@
 import { getVisualCanonAsset } from "./registry";
 import type { VisualCanonAsset } from "./types";
 
-export type VisualCanonAssetId =
+export type PrimaryChargeVisualCanonAssetId =
   | "lion"
   | "eagle"
   | "wolf"
   | "bear"
   | "stag"
   | "griffin"
-  | "salmon"
+  | "salmon";
+
+export type ShieldVisualCanonAssetId =
   | "heater-shield"
   | "norman-shield"
   | "tournament-shield"
   | "crusader-shield";
+
+export type HeritageFlagVisualCanonAssetId =
+  | "united-states"
+  | "canada"
+  | "mexico"
+  | "brazil"
+  | "france"
+  | "united-kingdom"
+  | "england"
+  | "scotland"
+  | "ireland"
+  | "italy"
+  | "germany"
+  | "spain"
+  | "portugal"
+  | "netherlands"
+  | "belgium"
+  | "switzerland"
+  | "sweden"
+  | "norway"
+  | "poland"
+  | "greece"
+  | "japan"
+  | "south-korea"
+  | "nigeria"
+  | "ghana"
+  | "south-africa"
+  | "egypt"
+  | "kenya";
+
+export type VisualCanonAssetId =
+  | PrimaryChargeVisualCanonAssetId
+  | ShieldVisualCanonAssetId
+  | HeritageFlagVisualCanonAssetId;
 
 export interface VisualCanonReference {
   assetId: VisualCanonAssetId;
@@ -22,10 +58,7 @@ export interface VisualCanonReference {
   artworkVersion?: string;
 }
 
-const legacyPrimaryChargeMap: Record<
-  string,
-  VisualCanonReference
-> = {
+const legacyPrimaryChargeMap: Record<string, VisualCanonReference> = {
   Lion: {
     assetId: "lion",
     variantId: "rampant",
@@ -56,10 +89,7 @@ const legacyPrimaryChargeMap: Record<
   },
 };
 
-const legacyShieldMap: Record<
-  string,
-  VisualCanonReference
-> = {
+const legacyShieldMap: Record<string, VisualCanonReference> = {
   "Heater Shield": {
     assetId: "heater-shield",
   },
@@ -77,6 +107,119 @@ const legacyShieldMap: Record<
   },
 };
 
+const heritageFlagMap: Record<
+  HeritageFlagVisualCanonAssetId,
+  VisualCanonReference
+> = {
+  "united-states": {
+    assetId: "united-states",
+  },
+
+  canada: {
+    assetId: "canada",
+  },
+
+  mexico: {
+    assetId: "mexico",
+  },
+
+  brazil: {
+    assetId: "brazil",
+  },
+
+  france: {
+    assetId: "france",
+  },
+
+  "united-kingdom": {
+    assetId: "united-kingdom",
+  },
+
+  england: {
+    assetId: "england",
+  },
+
+  scotland: {
+    assetId: "scotland",
+  },
+
+  ireland: {
+    assetId: "ireland",
+  },
+
+  italy: {
+    assetId: "italy",
+  },
+
+  germany: {
+    assetId: "germany",
+  },
+
+  spain: {
+    assetId: "spain",
+  },
+
+  portugal: {
+    assetId: "portugal",
+  },
+
+  netherlands: {
+    assetId: "netherlands",
+  },
+
+  belgium: {
+    assetId: "belgium",
+  },
+
+  switzerland: {
+    assetId: "switzerland",
+  },
+
+  sweden: {
+    assetId: "sweden",
+  },
+
+  norway: {
+    assetId: "norway",
+  },
+
+  poland: {
+    assetId: "poland",
+  },
+
+  greece: {
+    assetId: "greece",
+  },
+
+  japan: {
+    assetId: "japan",
+  },
+
+  "south-korea": {
+    assetId: "south-korea",
+  },
+
+  nigeria: {
+    assetId: "nigeria",
+  },
+
+  ghana: {
+    assetId: "ghana",
+  },
+
+  "south-africa": {
+    assetId: "south-africa",
+  },
+
+  egypt: {
+    assetId: "egypt",
+  },
+
+  kenya: {
+    assetId: "kenya",
+  },
+};
+
 export function resolvePrimaryChargeReference(
   legacyValue: string,
 ): VisualCanonReference | undefined {
@@ -89,21 +232,22 @@ export function resolveShieldReference(
   return legacyShieldMap[legacyValue];
 }
 
+export function resolveHeritageFlagReference(
+  assetId: HeritageFlagVisualCanonAssetId,
+): VisualCanonReference {
+  return heritageFlagMap[assetId];
+}
+
 export function resolveVisualCanonReference(
   reference: VisualCanonReference,
 ): VisualCanonAsset | undefined {
-  return getVisualCanonAsset(
-    reference.assetId,
-  );
+  return getVisualCanonAsset(reference.assetId);
 }
 
 export function isCurrentArtworkVersion(
   reference: VisualCanonReference,
 ): boolean {
-  const asset =
-    resolveVisualCanonReference(
-      reference,
-    );
+  const asset = resolveVisualCanonReference(reference);
 
   if (!asset) {
     return false;
@@ -113,10 +257,7 @@ export function isCurrentArtworkVersion(
     return true;
   }
 
-  return (
-    reference.artworkVersion ===
-    asset.artworkVersion
-  );
+  return reference.artworkVersion === asset.artworkVersion;
 }
 
 export interface VisualCanonReferenceSnapshot {
@@ -124,8 +265,7 @@ export interface VisualCanonReferenceSnapshot {
 
   assetName: string;
 
-  category:
-    VisualCanonAsset["category"];
+  category: VisualCanonAsset["category"];
 
   canonVersion: string;
 
@@ -137,10 +277,7 @@ export interface VisualCanonReferenceSnapshot {
 export function createVisualCanonReferenceSnapshot(
   reference: VisualCanonReference,
 ): VisualCanonReferenceSnapshot | undefined {
-  const asset =
-    resolveVisualCanonReference(
-      reference,
-    );
+  const asset = resolveVisualCanonReference(reference);
 
   if (!asset) {
     return undefined;
@@ -153,13 +290,10 @@ export function createVisualCanonReferenceSnapshot(
 
     category: asset.category,
 
-    canonVersion:
-      asset.canonVersion,
+    canonVersion: asset.canonVersion,
 
-    artworkVersion:
-      asset.artworkVersion,
+    artworkVersion: asset.artworkVersion,
 
-    variantId:
-      reference.variantId,
+    variantId: reference.variantId,
   };
 }

@@ -27,6 +27,9 @@ import type {
   HeraldShieldComposition,
 } from "@/lib/herald/design";
 
+import { heritageFlagAssets } from "@/lib/herald/visualCanon/assets/heritageFlags";
+import type { HeritageFlagVisualCanonAssetId } from "@/lib/herald/visualCanon/references";
+
 import {
   isBuilderShieldStyle,
   isCrestAnimal,
@@ -100,16 +103,19 @@ const steps = [
   },
 ];
 
-const heritageOptions = [
-  "France",
-  "United States",
-  "Ireland",
-  "Italy",
-  "England",
-  "Scotland",
-  "Germany",
-  "Spain",
-];
+const heritageOptions = heritageFlagAssets.map(
+  (asset) => asset.countryName,
+);
+
+function getHeritageAssetId(
+  heritage: string,
+): HeritageFlagVisualCanonAssetId | undefined {
+  const asset = heritageFlagAssets.find(
+    (candidate) => candidate.countryName === heritage,
+  );
+
+  return asset?.id as HeritageFlagVisualCanonAssetId | undefined;
+}
 
 const symbolOptions = [
   {
@@ -228,6 +234,7 @@ function createDefaultComposition(
         type: "heritage",
         label: heritage,
         heritage,
+        assetId: getHeritageAssetId(heritage),
       },
       createAnimalQuadrant(
         animal,
@@ -738,6 +745,12 @@ export default function RegimentBuilder() {
                   nextHeritage,
                 heritage:
                   nextHeritage,
+                assetId:
+                  getHeritageAssetId(
+                    nextHeritage,
+                  ),
+                variantId:
+                  undefined,
               };
             },
           ) as HeraldShieldComposition["quadrants"],

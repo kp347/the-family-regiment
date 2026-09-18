@@ -15,6 +15,12 @@ import {
 } from "@/lib/herald/types";
 
 import { LionRampant } from "@/lib/herald/svg/animals/lion";
+import {
+  getHeritageFlagComponent,
+  type HeritageFlagComponent,
+} from "@/lib/herald/svg/flags/registry";
+import { heritageFlagAssets } from "@/lib/herald/visualCanon/assets/heritageFlags";
+import type { HeritageFlagVisualCanonAssetId } from "@/lib/herald/visualCanon/references";
 
 import { jacketLayout } from "@/lib/jacketLayout";
 
@@ -41,7 +47,8 @@ type BuilderPreviewProps = {
   crestPlacement: string;
   embroideryFinish: string;
   includeNameTape: boolean;
-  includeSleevePatch: boolean;
+  leftShoulderHeritage: string;
+  rightShoulderHeritage: string;
   symbolOptions: PreviewSymbolOption[];
   jacketViews: PreviewJacketOption[];
   composition: HeraldShieldComposition;
@@ -70,16 +77,31 @@ const fallbackJacket: PreviewJacketOption = {
   image: "/images/jackets/m65-front.png",
 };
 
-const heritageFlags: Record<string, string> = {
-  France: "🇫🇷",
-  "United States": "🇺🇸",
-  Ireland: "🇮🇪",
-  Italy: "🇮🇹",
-  England: "🏴",
-  Scotland: "🏴",
-  Germany: "🇩🇪",
-  Spain: "🇪🇸",
-};
+function getHeritageAssetId(
+  heritage: string,
+): HeritageFlagVisualCanonAssetId | undefined {
+  const asset = heritageFlagAssets.find(
+    (candidate) => candidate.countryName === heritage,
+  );
+
+  return asset?.id as HeritageFlagVisualCanonAssetId | undefined;
+}
+
+function resolveHeritageFlagComponent(
+  assetId: string | undefined,
+  heritage: string,
+): HeritageFlagComponent | undefined {
+  const resolvedAssetId =
+    (assetId as HeritageFlagVisualCanonAssetId | undefined) ??
+    getHeritageAssetId(heritage);
+
+  if (!resolvedAssetId) {
+    return undefined;
+  }
+
+  return getHeritageFlagComponent(resolvedAssetId);
+}
+
 
 export default function BuilderPreview({
   familyName,
@@ -94,7 +116,8 @@ export default function BuilderPreview({
   crestPlacement,
   embroideryFinish,
   includeNameTape,
-  includeSleevePatch,
+  leftShoulderHeritage,
+  rightShoulderHeritage,
   jacketViews,
   composition,
 }: BuilderPreviewProps) {
@@ -165,10 +188,17 @@ export default function BuilderPreview({
     jacketLayout.front
       .sleevePatch;
 
-  const heritageFlag =
-    heritageFlags[
-      displayHeritage
-    ] ?? "⚑";
+  const LeftShoulderFlag =
+    resolveHeritageFlagComponent(
+      getHeritageAssetId(leftShoulderHeritage),
+      leftShoulderHeritage,
+    );
+
+  const RightShoulderFlag =
+    resolveHeritageFlagComponent(
+      getHeritageAssetId(rightShoulderHeritage),
+      rightShoulderHeritage,
+    );
 
   return (
     <aside className="relative min-h-[720px] overflow-hidden border-t border-white/10 bg-[#20211E] lg:border-l lg:border-t-0">
@@ -259,23 +289,25 @@ export default function BuilderPreview({
               </div>
             </div>
 
-            {includeSleevePatch && (
+            {leftShoulderHeritage && LeftShoulderFlag && (
               <div
                 style={{
-                  left:
-                    sleevePatchLayout.left,
-                  top:
-                    sleevePatchLayout.top,
+                  left: sleevePatchLayout.left,
+                  top: sleevePatchLayout.top,
                   width: `${sleevePatchLayout.size}px`,
                   height: `${sleevePatchLayout.size}px`,
-                  transform:
-                    "rotate(-5deg)",
+                  transform: "rotate(-5deg)",
                 }}
-                className="absolute z-10 flex items-center justify-center rounded-full border-2 border-[#B08D57] bg-[#20231C] shadow-xl"
+                className="absolute z-10 flex items-center justify-center overflow-hidden rounded-full border-2 border-[#B08D57] bg-[#20231C] shadow-xl"
+                title={`Left shoulder heritage: ${leftShoulderHeritage}`}
               >
-                <span className="text-[12px]">
-                  {heritageFlag}
-                </span>
+                <div className="flex h-[72%] w-[72%] items-center justify-center overflow-hidden rounded-full">
+                  <LeftShoulderFlag
+                    width="100%"
+                    height="100%"
+                    title={`Flag of ${leftShoulderHeritage}`}
+                  />
+                </div>
               </div>
             )}
 
@@ -362,9 +394,26 @@ export default function BuilderPreview({
             )}
           </div>
 
+          <div className="mt-4 grid grid-cols-2 gap-3">
+            <PreviewStat
+              label="Left Shoulder"
+              value={leftShoulderHeritage || "None"}
+            />
+            <PreviewStat
+              label="Right Shoulder"
+              value={rightShoulderHeritage || "None"}
+            />
+          </div>
+
           <p className="mt-5 text-center text-[9px] uppercase tracking-[0.28em] text-[#65625D]">
             Live preview follows the saved shield composition
           </p>
+
+          <div className="sr-only">
+            {RightShoulderFlag && rightShoulderHeritage
+              ? `Right shoulder heritage flag selected: ${rightShoulderHeritage}`
+              : "No right shoulder heritage flag selected"}
+          </div>
 
           <div className="sr-only">
             {displaySymbol}
@@ -752,25 +801,46 @@ function QuadrantContent({
       quadrant.label ??
       "";
 
-    const flag =
-      heritageFlags[
-        heritage
-      ] ?? "⚑";
+    const Flag =
+      resolveHeritageFlagComponent(
+        quadrant.assetId,
+        heritage,
+      );
+
+    if (!Flag) {
+      return (
+        <text
+          x={centerX}
+          y={centerY}
+          textAnchor="middle"
+          dominantBaseline="middle"
+          fill={palette.metallic}
+          fontSize="12"
+          fontWeight="700"
+        >
+          FR
+        </text>
+      );
+    }
 
     return (
-      <text
-        x={
-          centerX
-        }
-        y={
-          centerY
-        }
-        textAnchor="middle"
-        dominantBaseline="middle"
-        fontSize="34"
+      <foreignObject
+        x={centerX - 38}
+        y={centerY - 28}
+        width="76"
+        height="56"
       >
-        {flag}
-      </text>
+        <div
+          
+          className="flex h-full w-full items-center justify-center overflow-hidden"
+        >
+          <Flag
+            width="100%"
+            height="100%"
+            title={`Flag of ${heritage}`}
+          />
+        </div>
+      </foreignObject>
     );
   }
 

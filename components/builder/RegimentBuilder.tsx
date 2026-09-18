@@ -54,7 +54,12 @@ type BuilderDraft = {
   crestPlacement: string;
   embroideryFinish: string;
   includeNameTape: boolean;
-  includeSleevePatch: boolean;
+  leftShoulderHeritage: string;
+  rightShoulderHeritage: string;
+  /**
+   * Legacy V1 field retained only so older localStorage drafts can migrate.
+   */
+  includeSleevePatch?: boolean;
   composition?: HeraldShieldComposition;
 };
 
@@ -222,7 +227,7 @@ const embroideryFinishes = [
 ];
 
 function createDefaultComposition(
-  heritage: string,
+  _heritage: string,
   animal: string,
   value: string,
 ): HeraldShieldComposition {
@@ -231,10 +236,7 @@ function createDefaultComposition(
     quadrants: [
       {
         id: "I",
-        type: "heritage",
-        label: heritage,
-        heritage,
-        assetId: getHeritageAssetId(heritage),
+        type: "empty",
       },
       createAnimalQuadrant(
         animal,
@@ -326,7 +328,8 @@ const defaultDraft: BuilderDraft = {
   embroideryFinish:
     "Regiment Gold",
   includeNameTape: true,
-  includeSleevePatch: true,
+  leftShoulderHeritage: "France",
+  rightShoulderHeritage: "",
   composition:
     createDefaultComposition(
       "France",
@@ -429,10 +432,17 @@ export default function RegimentBuilder() {
   );
 
   const [
-    includeSleevePatch,
-    setIncludeSleevePatch,
+    leftShoulderHeritage,
+    setLeftShoulderHeritage,
   ] = useState(
-    defaultDraft.includeSleevePatch,
+    defaultDraft.leftShoulderHeritage,
+  );
+
+  const [
+    rightShoulderHeritage,
+    setRightShoulderHeritage,
+  ] = useState(
+    defaultDraft.rightShoulderHeritage,
   );
 
   const [
@@ -643,18 +653,64 @@ export default function RegimentBuilder() {
             defaultDraft.includeNameTape,
         );
 
-        setIncludeSleevePatch(
-          parsedDraft.includeSleevePatch ??
-            defaultDraft.includeSleevePatch,
+        const migratedLeftShoulder =
+          parsedDraft.leftShoulderHeritage ??
+          (parsedDraft.includeSleevePatch
+            ? loadedHeritage
+            : defaultDraft.leftShoulderHeritage);
+
+        setLeftShoulderHeritage(
+          migratedLeftShoulder,
         );
 
-        setComposition(
+        setRightShoulderHeritage(
+          parsedDraft.rightShoulderHeritage ??
+            defaultDraft.rightShoulderHeritage,
+        );
+
+        const loadedComposition =
           parsedDraft.composition ??
-            createDefaultComposition(
-              loadedHeritage,
-              loadedAnimal,
-              loadedValue,
-            ),
+          createDefaultComposition(
+            loadedHeritage,
+            loadedAnimal,
+            loadedValue,
+          );
+
+        const migratedComposition: HeraldShieldComposition = {
+          ...loadedComposition,
+          quadrants: loadedComposition.quadrants.map(
+            (quadrant) => {
+              /*
+               * Phase 2 migration:
+               * Older Builder drafts automatically placed the selected
+               * heritage flag in Quadrant I. Heritage flags now belong to
+               * independent shoulder-patch selections, so remove only that
+               * legacy auto-generated Quadrant I heritage field.
+               *
+               * Other quadrant choices are preserved.
+               */
+              if (
+                quadrant.id === "I" &&
+                quadrant.type === "heritage" &&
+                (
+                  quadrant.heritage === loadedHeritage ||
+                  quadrant.assetId ===
+                    getHeritageAssetId(loadedHeritage)
+                )
+              ) {
+                return {
+                  id: "I",
+                  type: "empty",
+                };
+              }
+
+              return quadrant;
+            },
+          ) as HeraldShieldComposition["quadrants"],
+        };
+
+        setComposition(
+          migratedComposition,
         );
       } catch {
         window.localStorage.removeItem(
@@ -693,7 +749,8 @@ export default function RegimentBuilder() {
     crestPlacement,
     embroideryFinish,
     includeNameTape,
-    includeSleevePatch,
+    leftShoulderHeritage,
+    rightShoulderHeritage,
     composition,
   ]);
 
@@ -712,7 +769,8 @@ export default function RegimentBuilder() {
       crestPlacement,
       embroideryFinish,
       includeNameTape,
-      includeSleevePatch,
+      leftShoulderHeritage,
+      rightShoulderHeritage,
       composition,
     };
   }
@@ -722,39 +780,6 @@ export default function RegimentBuilder() {
   ) {
     setHeritage(
       nextHeritage,
-    );
-
-    setComposition(
-      (current) => ({
-        ...current,
-        quadrants:
-          current.quadrants.map(
-            (quadrant) => {
-              if (
-                quadrant.id !==
-                "I"
-              ) {
-                return quadrant;
-              }
-
-              return {
-                ...quadrant,
-                type:
-                  "heritage",
-                label:
-                  nextHeritage,
-                heritage:
-                  nextHeritage,
-                assetId:
-                  getHeritageAssetId(
-                    nextHeritage,
-                  ),
-                variantId:
-                  undefined,
-              };
-            },
-          ) as HeraldShieldComposition["quadrants"],
-      }),
     );
   }
 
@@ -958,8 +983,12 @@ export default function RegimentBuilder() {
       defaultDraft.includeNameTape,
     );
 
-    setIncludeSleevePatch(
-      defaultDraft.includeSleevePatch,
+    setLeftShoulderHeritage(
+      defaultDraft.leftShoulderHeritage,
+    );
+
+    setRightShoulderHeritage(
+      defaultDraft.rightShoulderHeritage,
     );
 
     setComposition(
@@ -1178,8 +1207,14 @@ export default function RegimentBuilder() {
                     includeNameTape={
                       includeNameTape
                     }
-                    includeSleevePatch={
-                      includeSleevePatch
+                    leftShoulderHeritage={
+                      leftShoulderHeritage
+                    }
+                    rightShoulderHeritage={
+                      rightShoulderHeritage
+                    }
+                    heritageOptions={
+                      heritageOptions
                     }
                     jacketViews={
                       jacketViews
@@ -1199,8 +1234,11 @@ export default function RegimentBuilder() {
                     onNameTapeChange={
                       setIncludeNameTape
                     }
-                    onSleevePatchChange={
-                      setIncludeSleevePatch
+                    onLeftShoulderHeritageChange={
+                      setLeftShoulderHeritage
+                    }
+                    onRightShoulderHeritageChange={
+                      setRightShoulderHeritage
                     }
                   />
                 )}
@@ -1239,7 +1277,10 @@ export default function RegimentBuilder() {
                       includeNameTape
                     }
                     includeSleevePatch={
-                      includeSleevePatch
+                      Boolean(
+                        leftShoulderHeritage ||
+                          rightShoulderHeritage,
+                      )
                     }
                     onCreateCrest={
                       createCrest
@@ -1305,8 +1346,11 @@ export default function RegimentBuilder() {
               includeNameTape={
                 includeNameTape
               }
-              includeSleevePatch={
-                includeSleevePatch
+              leftShoulderHeritage={
+                leftShoulderHeritage
+              }
+              rightShoulderHeritage={
+                rightShoulderHeritage
               }
               symbolOptions={
                 symbolOptions

@@ -19,16 +19,18 @@ export const jacketLayout = {
     },
 
     nameTape: {
-      // opposite LEFT crest
+      // Name tape positioned on the opposite pocket flap
+      // when the crest is on the left chest.
       leftChest: {
-        left: "23%",
-        top: "34%",
+        left: "31%",
+        top: "30%",
       },
 
-      // opposite RIGHT crest
+      // Name tape positioned on the opposite pocket flap
+      // when the crest is on the right chest.
       rightChest: {
-        left: "63%",
-        top: "34%",
+        left: "69%",
+        top: "30%",
       },
     },
 

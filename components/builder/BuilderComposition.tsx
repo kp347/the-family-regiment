@@ -23,12 +23,6 @@ type QuadrantPreset = {
 
 const quadrantPresets: QuadrantPreset[] = [
   {
-    type: "heritage",
-    label: "Heritage",
-    description:
-      "Country, region, or cultural origin.",
-  },
-  {
     type: "animal",
     label: "Animal",
     description:
@@ -57,12 +51,6 @@ const quadrantPresets: QuadrantPreset[] = [
     label: "Profession",
     description:
       "A meaningful family trade, craft, or profession.",
-  },
-  {
-    type: "custom",
-    label: "Custom",
-    description:
-      "Reserved for an approved custom family element.",
   },
   {
     type: "empty",
@@ -114,39 +102,33 @@ export default function BuilderComposition({
     preset: QuadrantPreset,
   ) {
     if (
+      preset.type === selectedQuadrant.type
+    ) {
+      return;
+    }
+
+    if (
       preset.type === "empty"
     ) {
       updateQuadrant({
-        id:
-          selectedQuadrant.id,
+        id: selectedQuadrant.id,
         type: "empty",
       });
 
       return;
     }
 
+    /*
+     * Changing a quadrant's purpose creates a clean semantic field.
+     *
+     * Asset, variant, heritage, and meaning data belong to the previous
+     * content class and must never leak into the new one. The curated
+     * Visual Canon picker will attach the correct asset later.
+     */
     updateQuadrant({
-      ...selectedQuadrant,
-      type:
-        preset.type,
-
-      /*
-       * We deliberately preserve an existing label when
-       * changing the content class.
-       *
-       * The actual Visual Canon picker will later replace
-       * this temporary editing behavior.
-       */
-
-      label:
-        selectedQuadrant.label ??
-        preset.label,
-
-      assetId:
-        selectedQuadrant.assetId,
-
-      variantId:
-        selectedQuadrant.variantId,
+      id: selectedQuadrant.id,
+      type: preset.type,
+      label: preset.label,
     });
   }
 

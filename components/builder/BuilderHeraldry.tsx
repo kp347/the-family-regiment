@@ -1,5 +1,7 @@
 "use client";
 
+import { getAnimalReferenceByName } from "@/lib/herald/visualCanon/animalReferences";
+
 type BuilderHeraldryProps = {
   animal: string;
   shield: string;
@@ -12,7 +14,6 @@ type BuilderHeraldryProps = {
 type AnimalOption = {
   name: string;
   meaning: string;
-  artworkPending?: boolean;
 };
 
 type ShieldOption = {
@@ -48,12 +49,10 @@ const animals: AnimalOption[] = [
   {
     name: "Griffin",
     meaning: "Guardianship, vigilance, courage, and strength",
-    artworkPending: true,
   },
   {
     name: "Salmon",
     meaning: "Perseverance, return, journey, and continuity",
-    artworkPending: true,
   },
 ];
 
@@ -186,7 +185,7 @@ export default function BuilderHeraldry({
         <SectionHeader
           eyebrow="Primary Charge"
           title="Choose your heraldic figure"
-          description="The Family Regiment uses a deliberately limited Canon of approved heraldic figures. Your selected figure initially occupies Quadrant II."
+          description="The Family Regiment uses a deliberately limited collection of curated heraldic figures. Your selected figure initially occupies Quadrant II."
         />
 
         <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
@@ -211,17 +210,9 @@ export default function BuilderHeraldry({
                 {active && <SelectedMark />}
 
                 <div className="relative flex h-28 items-center justify-center rounded-xl border border-white/8 bg-[#171815]">
-                  {option.artworkPending ? (
-                    <PendingCanonArtwork
-                      name={option.name}
-                      active={active}
-                    />
-                  ) : (
-                    <AnimalPreview
-                      name={option.name}
-                      active={active}
-                    />
-                  )}
+                  <AnimalReferencePreview
+                    name={option.name}
+                  />
                 </div>
 
                 <div className="mt-5">
@@ -230,11 +221,6 @@ export default function BuilderHeraldry({
                       {option.name}
                     </p>
 
-                    {option.artworkPending && (
-                      <span className="rounded-full border border-[#B08D57]/35 bg-[#B08D57]/10 px-2.5 py-1 text-[9px] font-semibold uppercase tracking-[0.16em] text-[#BFA46D]">
-                        Art Pending
-                      </span>
-                    )}
                   </div>
 
                   <p className="mt-2 text-sm leading-6 text-[#89847A]">
@@ -252,10 +238,10 @@ export default function BuilderHeraldry({
           </p>
 
           <p className="mt-2 max-w-3xl text-sm leading-6 text-[#8E8A81]">
-            Standard crests are assembled exclusively from curated
-            Family Regiment Canon artwork. Additional animals are not
-            generated on demand. New artwork enters the collection only
-            through the Family Regiment design and approval process.
+            Standard crests are assembled from the controlled Family
+            Regiment Visual Canon. These images are presentation references
+            while production artwork remains subject to design review,
+            manufacturing validation, and physical sample approval.
           </p>
         </div>
       </section>
@@ -347,222 +333,39 @@ function SelectedMark() {
   );
 }
 
-function PendingCanonArtwork({
+function AnimalReferencePreview({
   name,
-  active,
 }: {
   name: string;
-  active: boolean;
 }) {
-  return (
-    <div className="flex flex-col items-center justify-center px-5 text-center">
-      <div
-        className={[
-          "flex h-12 w-12 items-center justify-center rounded-full border",
-          active
-            ? "border-[#C8A969]/60 bg-[#C8A969]/10"
-            : "border-[#806C4A]/40 bg-[#806C4A]/5",
-        ].join(" ")}
-      >
-        <span
-          className={[
-            "font-serif text-xl",
-            active
-              ? "text-[#D7B66E]"
-              : "text-[#806C4A]",
-          ].join(" ")}
-        >
-          {name.charAt(0)}
+  const artwork =
+    getAnimalReferenceByName(name);
+
+  if (!artwork) {
+    return (
+      <div className="flex h-full w-full items-center justify-center px-5 text-center">
+        <span className="text-[9px] font-semibold uppercase tracking-[0.22em] text-[#756E61]">
+          Reference unavailable
         </span>
       </div>
-
-      <p className="mt-3 text-[9px] font-semibold uppercase tracking-[0.22em] text-[#756E61]">
-        Canon Artwork Pending
-      </p>
-    </div>
-  );
-}
-
-function AnimalPreview({
-  name,
-  active,
-}: {
-  name: string;
-  active: boolean;
-}) {
-  const stroke =
-    active
-      ? "#D7B66E"
-      : "#9C845A";
-
-  const fill =
-    active
-      ? "#C8A969"
-      : "#806C4A";
-
-  switch (name) {
-    case "Lion":
-      return (
-        <svg
-          viewBox="0 0 100 120"
-          className="h-24 w-20"
-          aria-hidden="true"
-        >
-          <path
-            d="M55 26 C63 20 73 24 77 31 C82 41 76 50 67 54 C72 64 70 75 63 84 C59 89 54 94 51 103 L45 103 C43 95 45 88 49 82 C40 81 33 75 30 67 C27 58 31 49 39 43 C43 40 48 37 53 36 C50 31 51 28 55 26 Z"
-            fill={fill}
-            stroke={stroke}
-            strokeWidth="2"
-          />
-
-          <path
-            d="M41 50 L26 35 L20 29 M42 58 L22 57 L14 53 M61 77 L78 91 L85 99"
-            fill="none"
-            stroke={stroke}
-            strokeWidth="4"
-            strokeLinecap="round"
-          />
-
-          <path
-            d="M63 69 C79 67 85 56 82 46 C80 38 85 30 93 28"
-            fill="none"
-            stroke={stroke}
-            strokeWidth="5"
-            strokeLinecap="round"
-          />
-
-          <circle
-            cx="67"
-            cy="36"
-            r="2"
-            fill="#171815"
-          />
-        </svg>
-      );
-
-    case "Eagle":
-      return (
-        <svg
-          viewBox="0 0 100 100"
-          className="h-20 w-24"
-          aria-hidden="true"
-        >
-          <path
-            d="M49 27 C36 15 21 14 7 22 C21 28 31 37 39 50 C27 45 17 47 7 55 C22 59 34 68 44 82 L50 62 Z"
-            fill={fill}
-            stroke={stroke}
-            strokeWidth="2"
-          />
-
-          <path
-            d="M51 27 C64 15 79 14 93 22 C79 28 69 37 61 50 C73 45 83 47 93 55 C78 59 66 68 56 82 L50 62 Z"
-            fill={fill}
-            stroke={stroke}
-            strokeWidth="2"
-          />
-
-          <path
-            d="M44 30 C48 23 52 23 56 30 L55 67 L50 82 L45 67 Z"
-            fill={fill}
-            stroke={stroke}
-            strokeWidth="2"
-          />
-        </svg>
-      );
-
-    case "Wolf":
-      return (
-        <svg
-          viewBox="0 0 100 100"
-          className="h-20 w-20"
-          aria-hidden="true"
-        >
-          <path
-            d="M25 28 L15 8 L32 22 C42 16 58 16 68 22 L85 8 L75 29 C82 37 84 48 80 58 C74 74 61 83 50 84 C37 82 25 74 20 59 C17 48 19 37 25 28 Z"
-            fill={fill}
-            stroke={stroke}
-            strokeWidth="2"
-          />
-
-          <path
-            d="M37 55 C44 50 56 50 63 55 C59 64 54 68 50 68 C46 68 41 64 37 55 Z"
-            fill="#171815"
-          />
-        </svg>
-      );
-
-    case "Bear":
-      return (
-        <svg
-          viewBox="0 0 100 100"
-          className="h-20 w-20"
-          aria-hidden="true"
-        >
-          <circle
-            cx="30"
-            cy="26"
-            r="12"
-            fill={fill}
-            stroke={stroke}
-            strokeWidth="2"
-          />
-
-          <circle
-            cx="70"
-            cy="26"
-            r="12"
-            fill={fill}
-            stroke={stroke}
-            strokeWidth="2"
-          />
-
-          <path
-            d="M24 35 C29 19 41 15 50 15 C59 15 71 19 76 35 C83 56 71 80 50 84 C29 80 17 56 24 35 Z"
-            fill={fill}
-            stroke={stroke}
-            strokeWidth="2"
-          />
-
-          <path
-            d="M37 57 C43 52 57 52 63 57 C60 66 55 70 50 70 C45 70 40 66 37 57 Z"
-            fill="#171815"
-          />
-        </svg>
-      );
-
-    case "Stag":
-    default:
-      return (
-        <svg
-          viewBox="0 0 100 110"
-          className="h-24 w-20"
-          aria-hidden="true"
-        >
-          <path
-            d="M34 38 C25 45 23 59 29 70 C34 80 43 85 51 84 C61 82 69 72 69 61 C69 49 62 40 53 37 C47 35 40 35 34 38 Z"
-            fill={fill}
-            stroke={stroke}
-            strokeWidth="2"
-          />
-
-          <path
-            d="M35 35 C24 25 20 13 23 1 M25 21 L13 14 M27 13 L34 3"
-            fill="none"
-            stroke={stroke}
-            strokeWidth="5"
-            strokeLinecap="round"
-          />
-
-          <path
-            d="M56 35 C67 25 71 13 68 1 M66 21 L78 14 M64 13 L57 3"
-            fill="none"
-            stroke={stroke}
-            strokeWidth="5"
-            strokeLinecap="round"
-          />
-        </svg>
-      );
+    );
   }
+
+  const scale =
+    artwork.scale ?? 1.22;
+
+  return (
+    <img
+      src={artwork.src}
+      alt={artwork.alt}
+      className="h-full w-full object-contain"
+      style={{
+        objectPosition:
+          artwork.objectPosition ?? "center",
+        transform: `scale(${scale})`,
+      }}
+    />
+  );
 }
 
 function CrownPreview({

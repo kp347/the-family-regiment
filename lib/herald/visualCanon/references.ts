@@ -14,9 +14,10 @@ export type PrimaryChargeVisualCanonAssetId =
 
 export type ShieldVisualCanonAssetId =
   | "heater-shield"
+  | "french-shield"
   | "norman-shield"
-  | "tournament-shield"
-  | "crusader-shield";
+  | "spanish-shield"
+  | "targe-shield";
 
 export type HeritageFlagVisualCanonAssetId =
   | "united-states"
@@ -58,7 +59,10 @@ export interface VisualCanonReference {
   artworkVersion?: string;
 }
 
-const legacyPrimaryChargeMap: Record<string, VisualCanonReference> = {
+const legacyPrimaryChargeMap: Record<
+  string,
+  VisualCanonReference
+> = {
   Lion: {
     assetId: "lion",
     variantId: "rampant",
@@ -89,21 +93,63 @@ const legacyPrimaryChargeMap: Record<string, VisualCanonReference> = {
   },
 };
 
-const legacyShieldMap: Record<string, VisualCanonReference> = {
+/*
+ * =========================================================
+ * Shield Reference Migration
+ * =========================================================
+ *
+ * The five V1 shield families are:
+ *
+ * Heater
+ * French
+ * Norman
+ * Spanish
+ * Targe
+ *
+ * Tournament and Crusader are retained here only as legacy
+ * Builder aliases so older saved drafts can resolve into
+ * the current Canon instead of becoming invalid.
+ *
+ * They are NOT members of the current V1 Shield Canon.
+ * =========================================================
+ */
+
+const shieldReferenceMap: Record<
+  string,
+  VisualCanonReference
+> = {
   "Heater Shield": {
     assetId: "heater-shield",
+  },
+
+  "French Shield": {
+    assetId: "french-shield",
   },
 
   "Norman Shield": {
     assetId: "norman-shield",
   },
 
+  "Spanish Shield": {
+    assetId: "spanish-shield",
+  },
+
+  Targe: {
+    assetId: "targe-shield",
+  },
+
+  /*
+   * Legacy migration aliases.
+   *
+   * These mappings preserve old customer drafts while the
+   * live Builder moves to the V1 shield collection.
+   */
   "Tournament Shield": {
-    assetId: "tournament-shield",
+    assetId: "french-shield",
   },
 
   "Crusader Shield": {
-    assetId: "crusader-shield",
+    assetId: "spanish-shield",
   },
 };
 
@@ -227,9 +273,9 @@ export function resolvePrimaryChargeReference(
 }
 
 export function resolveShieldReference(
-  legacyValue: string,
+  value: string,
 ): VisualCanonReference | undefined {
-  return legacyShieldMap[legacyValue];
+  return shieldReferenceMap[value];
 }
 
 export function resolveHeritageFlagReference(

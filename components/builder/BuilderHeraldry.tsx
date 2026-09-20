@@ -1,6 +1,7 @@
 "use client";
 
 import { getAnimalReferenceByName } from "@/lib/herald/visualCanon/animalReferences";
+import { getShieldReferenceByName } from "@/lib/herald/visualCanon/shieldReferences";
 
 type BuilderHeraldryProps = {
   animal: string;
@@ -18,7 +19,7 @@ type AnimalOption = {
 
 type ShieldOption = {
   name: string;
-  path: string;
+  description: string;
 };
 
 type CrownOption = {
@@ -59,23 +60,23 @@ const animals: AnimalOption[] = [
 const shields: ShieldOption[] = [
   {
     name: "Heater Shield",
-    path:
-      "M50 8 C72 8 88 13 92 18 V48 C92 72 76 91 50 106 C24 91 8 72 8 48 V18 C12 13 28 8 50 8 Z",
+    description: "Classic, balanced, and traditionally heraldic",
+  },
+  {
+    name: "French Shield",
+    description: "Broad, formal, and continental in character",
   },
   {
     name: "Norman Shield",
-    path:
-      "M50 7 C72 7 88 12 92 18 V43 C92 70 74 94 50 110 C26 94 8 70 8 43 V18 C12 12 28 7 50 7 Z",
+    description: "Elongated, medieval, and strongly vertical",
   },
   {
-    name: "Tournament Shield",
-    path:
-      "M12 10 H88 L94 24 L86 76 L50 108 L14 76 L6 24 Z",
+    name: "Spanish Shield",
+    description: "Balanced with a softer rounded lower field",
   },
   {
-    name: "Crusader Shield",
-    path:
-      "M9 10 H91 L95 22 L84 78 L50 109 L16 78 L5 22 Z",
+    name: "Targe",
+    description: "Circular, distinctive, and strongly geometric",
   },
 ];
 
@@ -111,10 +112,10 @@ export default function BuilderHeraldry({
         <SectionHeader
           eyebrow="Shield Library"
           title="Choose the foundation"
-          description="Select the shield silhouette that will carry the four-part family composition."
+          description="Select one of the five controlled Family Regiment shield families to carry the four-part family composition."
         />
 
-        <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
           {shields.map((option) => {
             const active = shield === option.name;
 
@@ -122,12 +123,10 @@ export default function BuilderHeraldry({
               <button
                 key={option.name}
                 type="button"
-                onClick={() =>
-                  onShieldChange(option.name)
-                }
+                onClick={() => onShieldChange(option.name)}
                 aria-pressed={active}
                 className={[
-                  "group relative rounded-[1.35rem] border p-5 text-center transition duration-200",
+                  "group relative overflow-hidden rounded-[1.35rem] border p-4 text-center transition duration-200",
                   active
                     ? "border-[#C8A969] bg-[#C8A969]/10 shadow-[inset_0_0_0_1px_rgba(200,169,105,0.16)]"
                     : "border-white/10 bg-[#20211F] hover:-translate-y-0.5 hover:border-[#B08D57]/55",
@@ -135,49 +134,34 @@ export default function BuilderHeraldry({
               >
                 {active && <SelectedMark />}
 
-                <div className="flex h-32 items-center justify-center">
-                  <svg
-                    viewBox="0 0 100 114"
-                    className="h-28 w-24"
-                    aria-hidden="true"
-                  >
-                    <path
-                      d={option.path}
-                      fill={
-                        active
-                          ? "#20231C"
-                          : "#181917"
-                      }
-                      stroke={
-                        active
-                          ? "#D0AE69"
-                          : "#8C7A58"
-                      }
-                      strokeWidth="4"
-                      strokeLinejoin="round"
-                    />
-
-                    <path
-                      d={option.path}
-                      transform="translate(5 6) scale(0.9)"
-                      fill="none"
-                      stroke={
-                        active
-                          ? "#E8D7AE"
-                          : "#5D584D"
-                      }
-                      strokeWidth="1.5"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
+                <div className="relative flex h-36 items-center justify-center overflow-hidden rounded-xl border border-white/8 bg-[#171815]">
+                  <ShieldReferencePreview name={option.name} />
                 </div>
 
-                <p className="mt-3 text-sm font-semibold text-[#F3EEE4]">
+                <p className="mt-4 text-sm font-semibold text-[#F3EEE4]">
                   {option.name}
+                </p>
+
+                <p className="mt-2 text-xs leading-5 text-[#89847A]">
+                  {option.description}
                 </p>
               </button>
             );
           })}
+        </div>
+
+        <div className="mt-5 rounded-xl border border-[#B08D57]/20 bg-[#B08D57]/5 px-5 py-4">
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#B08D57]">
+            Shield Visual Canon
+          </p>
+
+          <p className="mt-2 max-w-3xl text-sm leading-6 text-[#8E8A81]">
+            These shield images are controlled presentation references.
+            Production masters remain subject to Family Regiment design review,
+            manufacturing validation, and physical sample approval. Decorative
+            details shown in reference artwork are not automatically structural
+            shield geometry.
+          </p>
         </div>
       </section>
 
@@ -196,9 +180,7 @@ export default function BuilderHeraldry({
               <button
                 key={option.name}
                 type="button"
-                onClick={() =>
-                  onAnimalChange(option.name)
-                }
+                onClick={() => onAnimalChange(option.name)}
                 aria-pressed={active}
                 className={[
                   "group relative min-h-[220px] overflow-hidden rounded-[1.35rem] border p-5 text-left transition duration-200",
@@ -209,10 +191,8 @@ export default function BuilderHeraldry({
               >
                 {active && <SelectedMark />}
 
-                <div className="relative flex h-28 items-center justify-center rounded-xl border border-white/8 bg-[#171815]">
-                  <AnimalReferencePreview
-                    name={option.name}
-                  />
+                <div className="relative flex h-28 items-center justify-center overflow-hidden rounded-xl border border-white/8 bg-[#171815]">
+                  <AnimalReferencePreview name={option.name} />
                 </div>
 
                 <div className="mt-5">
@@ -220,7 +200,6 @@ export default function BuilderHeraldry({
                     <p className="text-lg font-semibold text-[#F3EEE4]">
                       {option.name}
                     </p>
-
                   </div>
 
                   <p className="mt-2 text-sm leading-6 text-[#89847A]">
@@ -238,10 +217,10 @@ export default function BuilderHeraldry({
           </p>
 
           <p className="mt-2 max-w-3xl text-sm leading-6 text-[#8E8A81]">
-            Standard crests are assembled from the controlled Family
-            Regiment Visual Canon. These images are presentation references
-            while production artwork remains subject to design review,
-            manufacturing validation, and physical sample approval.
+            Standard crests are assembled from the controlled Family Regiment
+            Visual Canon. These images are presentation references while
+            production artwork remains subject to design review, manufacturing
+            validation, and physical sample approval.
           </p>
         </div>
       </section>
@@ -261,9 +240,7 @@ export default function BuilderHeraldry({
               <button
                 key={option.name}
                 type="button"
-                onClick={() =>
-                  onCrownChange(option.name)
-                }
+                onClick={() => onCrownChange(option.name)}
                 aria-pressed={active}
                 className={[
                   "group relative rounded-[1.35rem] border p-4 text-center transition duration-200",
@@ -333,13 +310,12 @@ function SelectedMark() {
   );
 }
 
-function AnimalReferencePreview({
+function ShieldReferencePreview({
   name,
 }: {
   name: string;
 }) {
-  const artwork =
-    getAnimalReferenceByName(name);
+  const artwork = getShieldReferenceByName(name);
 
   if (!artwork) {
     return (
@@ -351,8 +327,7 @@ function AnimalReferencePreview({
     );
   }
 
-  const scale =
-    artwork.scale ?? 1.22;
+  const scale = artwork.scale ?? 1;
 
   return (
     <img
@@ -360,8 +335,39 @@ function AnimalReferencePreview({
       alt={artwork.alt}
       className="h-full w-full object-contain"
       style={{
-        objectPosition:
-          artwork.objectPosition ?? "center",
+        objectPosition: artwork.objectPosition ?? "center",
+        transform: `scale(${scale})`,
+      }}
+    />
+  );
+}
+
+function AnimalReferencePreview({
+  name,
+}: {
+  name: string;
+}) {
+  const artwork = getAnimalReferenceByName(name);
+
+  if (!artwork) {
+    return (
+      <div className="flex h-full w-full items-center justify-center px-5 text-center">
+        <span className="text-[9px] font-semibold uppercase tracking-[0.22em] text-[#756E61]">
+          Reference unavailable
+        </span>
+      </div>
+    );
+  }
+
+  const scale = artwork.scale ?? 1.22;
+
+  return (
+    <img
+      src={artwork.src}
+      alt={artwork.alt}
+      className="h-full w-full object-contain"
+      style={{
+        objectPosition: artwork.objectPosition ?? "center",
         transform: `scale(${scale})`,
       }}
     />
@@ -387,15 +393,13 @@ function CrownPreview({
     );
   }
 
-  const fill =
-    active
-      ? "#C8A969"
-      : "#856F49";
+  const fill = active
+    ? "#C8A969"
+    : "#856F49";
 
-  const stroke =
-    active
-      ? "#E8D7AE"
-      : "#A58B5A";
+  const stroke = active
+    ? "#E8D7AE"
+    : "#A58B5A";
 
   const peak =
     name === "Royal"

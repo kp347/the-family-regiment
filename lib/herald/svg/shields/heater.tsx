@@ -1,5 +1,3 @@
-// lib/herald/svg/shields/heater.tsx
-
 /*
  * =========================================================
  * The Family Regiment
@@ -22,6 +20,12 @@
  *
  * Visual Canon status remains the authority for production
  * eligibility.
+ *
+ * V1 GEOMETRY:
+ *
+ * The Heater Shield uses broad shoulders, controlled
+ * tapering sides, and a distinct pointed base. The interior
+ * field remains uninterrupted for the dominant Canon charge.
  * =========================================================
  */
 
@@ -33,12 +37,21 @@ export const HEATER_SHIELD_VIEWBOX = {
 /*
  * Normalized canonical path.
  *
- * Keeping the geometry normalized lets renderers scale and
- * position the shield without rewriting its shape.
+ * The upper edge uses a shallow center rise rather than the
+ * rounded upper body of the legacy geometry. This keeps the
+ * Heater visually distinct while preserving a broad usable
+ * field for the dominant charge.
  */
 
-export const HEATER_SHIELD_PATH =
-  "M50 8 C72 8 88 13 92 18 V48 C92 72 76 91 50 106 C24 91 8 72 8 48 V18 C12 13 28 8 50 8 Z";
+export const HEATER_SHIELD_PATH = [
+  "M10 18",
+  "Q30 16 50 8",
+  "Q70 16 90 18",
+  "V48",
+  "C90 73 74 92 50 108",
+  "C26 92 10 73 10 48",
+  "Z",
+].join(" ");
 
 /*
  * Production artwork should remain free of presentation
@@ -47,19 +60,12 @@ export const HEATER_SHIELD_PATH =
 
 export interface HeaterShieldProps {
   fill: string;
-
   borderColor: string;
-
   innerBorderColor?: string;
-
   borderWidth?: number;
-
   innerBorderWidth?: number;
-
   showInnerBorder?: boolean;
-
   transform?: string;
-
   className?: string;
 }
 
@@ -120,17 +126,11 @@ export function HeaterShield({
 
 export interface RenderHeaterShieldSvgOptions {
   fill: string;
-
   borderColor: string;
-
   innerBorderColor?: string;
-
   borderWidth?: number;
-
   innerBorderWidth?: number;
-
   showInnerBorder?: boolean;
-
   transform?: string;
 }
 

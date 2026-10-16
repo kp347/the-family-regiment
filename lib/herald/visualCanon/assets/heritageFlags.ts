@@ -12,6 +12,8 @@ export type HeritageFlagRegion =
   | "africa";
 
 export interface HeritageFlagAsset extends VisualCanonAsset {
+  id: string;
+
   category: "heritage-flag";
 
   isoCode?: string;

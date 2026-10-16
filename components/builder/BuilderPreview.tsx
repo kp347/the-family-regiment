@@ -4,1647 +4,1660 @@ import Image from "next/image";
 
 import NameTape from "@/components/patches/NameTape";
 
+import FamilyCrestPreview from "@/components/builder/FamilyCrestPreview";
+
 import type {
-  HeraldQuadrant,
+
   HeraldShieldComposition,
+
 } from "@/lib/herald/design";
 
 import {
-  type BuilderShieldStyle,
-  type CrestCrown,
+
+  normalizeBuilderShieldStyle,
+
+  normalizeCrestCrown,
+
 } from "@/lib/herald/types";
 
-import { LionRampant } from "@/lib/herald/svg/animals/lion";
 import {
+
   getHeritageFlagComponent,
+
   type HeritageFlagComponent,
+
 } from "@/lib/herald/svg/flags/registry";
+
 import { heritageFlagAssets } from "@/lib/herald/visualCanon/assets/heritageFlags";
+
+import { getMilitaryBranchCanonAsset } from "@/lib/herald/visualCanon/assets/militaryBranches";
+
+import { getSportCanonAsset } from "@/lib/herald/visualCanon/assets/sports";
+
+import { getZodiacCanonAsset } from "@/lib/herald/visualCanon/assets/zodiac";
+
 import type { HeritageFlagVisualCanonAssetId } from "@/lib/herald/visualCanon/references";
 
-import { jacketLayout } from "@/lib/jacketLayout";
+import { getJacketViewLayout } from "@/lib/jacketLayout";
+
+import type {
+
+  IdentityPatchCategory,
+
+  MilitaryBranch,
+
+  Sport,
+
+  ZodiacSign,
+
+} from "./BuilderJacket";
 
 export type PreviewSymbolOption = {
+
   name: string;
+
   character: string;
+
 };
 
 export type PreviewJacketOption = {
+
   name: string;
+
   image: string;
+
 };
 
 type BuilderPreviewProps = {
+
   familyName: string;
+
   initials: string;
+
   heritage: string;
+
   symbol: string;
+
   shield?: string;
+
   crown?: string;
+
   value: string;
+
   motto: string;
+
   jacketView: string;
-  crestPlacement: string;
+
   embroideryFinish: string;
-  includeNameTape: boolean;
-  leftShoulderHeritage: string;
-  rightShoulderHeritage: string;
+
+  nameTapeText: string;
+
+  rightShoulderHeritage: string[];
+
+  leftChestIdentity: IdentityPatchCategory;
+
+  militaryBranch?: MilitaryBranch;
+
+  sport?: Sport;
+
+  zodiacSign?: ZodiacSign;
+
   symbolOptions: PreviewSymbolOption[];
+
   jacketViews: PreviewJacketOption[];
+
   composition: HeraldShieldComposition;
+
 };
 
 type PreviewStatProps = {
+
   label: string;
+
   value: string;
+
 };
 
 type SupportedFinish =
+
   | "Regiment Gold"
+
   | "Tactical Subdued"
+
   | "Heritage Ivory";
 
-type CrestPalette = {
-  primary: string;
-  secondary: string;
-  metallic: string;
-  ivory: string;
-  dark: string;
-};
-
 const fallbackJacket: PreviewJacketOption = {
+
   name: "Front",
+
   image: "/images/jackets/m65-front.png",
+
 };
 
 function getHeritageAssetId(
+
   heritage: string,
+
 ): HeritageFlagVisualCanonAssetId | undefined {
+
   const asset = heritageFlagAssets.find(
-    (candidate) => candidate.countryName === heritage,
+
+    (candidate) =>
+
+      candidate.countryName === heritage,
+
   );
 
-  return asset?.id as HeritageFlagVisualCanonAssetId | undefined;
+  return asset?.id as
+
+    | HeritageFlagVisualCanonAssetId
+
+    | undefined;
+
 }
 
 function resolveHeritageFlagComponent(
+
   assetId: string | undefined,
+
   heritage: string,
+
 ): HeritageFlagComponent | undefined {
+
   const resolvedAssetId =
-    (assetId as HeritageFlagVisualCanonAssetId | undefined) ??
+
+    (assetId as
+
+      | HeritageFlagVisualCanonAssetId
+
+      | undefined) ??
+
     getHeritageAssetId(heritage);
 
   if (!resolvedAssetId) {
+
     return undefined;
+
   }
 
-  return getHeritageFlagComponent(resolvedAssetId);
+  return getHeritageFlagComponent(
+
+    resolvedAssetId,
+
+  );
+
 }
 
-
 export default function BuilderPreview({
+
   familyName,
+
   initials,
+
   heritage,
+
   symbol,
+
   shield = "Heater Shield",
+
   crown = "None",
+
   value,
+
   motto,
+
   jacketView,
-  crestPlacement,
+
   embroideryFinish,
-  includeNameTape,
-  leftShoulderHeritage,
+
+  nameTapeText,
+
   rightShoulderHeritage,
+
+  leftChestIdentity,
+
+  militaryBranch = "None",
+
+  sport = "None",
+
+  zodiacSign = "None",
+
   jacketViews,
-  composition,
+
+  composition: _composition,
+
 }: BuilderPreviewProps) {
+
   const selectedJacket =
+
     jacketViews.find(
+
       (option) =>
+
         option.name === jacketView,
+
     ) ??
+
     jacketViews[0] ??
+
     fallbackJacket;
 
   const finish =
+
     normalizeFinish(
+
       embroideryFinish,
+
     );
 
   const displayFamilyName =
-    familyName.trim() ||
-    "Family";
+
+    familyName.trim() || "Family";
 
   const displayInitials =
-    initials.trim() ||
-    "FR";
+
+    initials.trim() || "FR";
 
   const displayHeritage =
-    heritage.trim() ||
-    "Heritage";
+
+    heritage.trim() || "Heritage";
 
   const displaySymbol =
-    symbol.trim() ||
-    "Lion";
+
+    symbol.trim() || "Lion";
 
   const displayValue =
-    value.trim() ||
-    "Legacy";
+
+    value.trim() || "Legacy";
 
   const displayMotto =
+
     motto.trim() ||
+
     "Fortis in Familia";
 
+  const displayNameTape =
+
+    nameTapeText.trim();
+
   const normalizedShield =
-    normalizeShield(
+
+    normalizeBuilderShieldStyle(
+
       shield,
+
     );
 
   const normalizedCrown =
-    normalizeCrown(
+
+    normalizeCrestCrown(
+
       crown,
+
     );
 
-  const crestLayout =
-    crestPlacement ===
-    "Right Chest"
-      ? jacketLayout.front.crest
-          .rightChest
-      : jacketLayout.front.crest
-          .leftChest;
+  const activeLayout =
+
+    getJacketViewLayout(
+
+      jacketView,
+
+    );
+
+  const familyCrestLayout =
+
+    activeLayout.familyCrest
+
+      .leftShoulder;
+
+  const heritageLayout =
+
+    activeLayout.heritage
+
+      .rightShoulder;
 
   const nameTapeLayout =
-    crestPlacement ===
-    "Right Chest"
-      ? jacketLayout.front.nameTape
-          .rightChest
-      : jacketLayout.front.nameTape
-          .leftChest;
 
-  const sleevePatchLayout =
-    jacketLayout.front
-      .sleevePatch;
+    activeLayout.nameTape
 
-  const LeftShoulderFlag =
-    resolveHeritageFlagComponent(
-      getHeritageAssetId(leftShoulderHeritage),
-      leftShoulderHeritage,
-    );
+      .rightChest;
 
-  const RightShoulderFlag =
-    resolveHeritageFlagComponent(
-      getHeritageAssetId(rightShoulderHeritage),
-      rightShoulderHeritage,
+  const leftChestLayout =
+
+    activeLayout.identityPatch
+
+      .leftChest;
+
+  const rightShoulderHeritageSlots =
+
+    rightShoulderHeritage
+
+      .slice(0, 3)
+
+      .map((heritageName) => ({
+
+        heritageName,
+
+        Flag: resolveHeritageFlagComponent(
+
+          getHeritageAssetId(
+
+            heritageName,
+
+          ),
+
+          heritageName,
+
+        ),
+
+      }))
+
+      .filter(
+
+        (
+
+          slot,
+
+        ): slot is {
+
+          heritageName: string;
+
+          Flag: HeritageFlagComponent;
+
+        } => Boolean(slot.Flag),
+
+      );
+
+  const hasRenderableIdentityPatch =
+
+    leftChestIdentity !== "None" &&
+
+    !(
+
+      leftChestIdentity ===
+
+        "Military Branch" &&
+
+      militaryBranch === "None"
+
+    ) &&
+
+    !(
+
+      leftChestIdentity === "Sport" &&
+
+      sport === "None"
+
+    ) &&
+
+    !(
+
+      leftChestIdentity === "Zodiac" &&
+
+      zodiacSign === "None"
+
     );
 
   return (
+
     <aside className="relative min-h-[720px] overflow-hidden border-t border-white/10 bg-[#20211E] lg:border-l lg:border-t-0">
+
       <div className="sticky top-0 flex min-h-[720px] items-center justify-center p-6 md:p-10">
+
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_rgba(176,141,87,0.18),_transparent_65%)]" />
 
         <div className="relative w-full">
+
           <PreviewHeader
-            finish={
-              embroideryFinish
-            }
+
+            finish={embroideryFinish}
+
+            jacketView={jacketView}
+
           />
 
           <div className="relative mx-auto aspect-[4/5] w-full max-w-[540px] overflow-hidden rounded-[2rem] border border-white/10 bg-[#181916] shadow-[0_35px_80px_rgba(0,0,0,0.35)]">
+
             <Image
-              src={
-                selectedJacket.image
-              }
-              alt="Front view of the customized Regiment Jacket"
+
+              src={selectedJacket.image}
+
+              alt={`${jacketView} view of the customized Regiment Jacket`}
+
               fill
+
               priority
+
               className="object-cover"
+
               sizes="(max-width: 1024px) 100vw, 45vw"
+
             />
 
             <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-black/10" />
 
-            {includeNameTape && (
+            {/*
+
+             * ZONE 1
+
+             * WEARER LEFT SHOULDER — FAMILY CREST
+
+             */}
+
+            {familyCrestLayout.visible && (
+
               <div
+
                 style={{
+
                   left:
-                    nameTapeLayout.left,
+
+                    familyCrestLayout.left,
+
                   top:
-                    nameTapeLayout.top,
-                  transform:
-                    "translate(-50%, -50%)",
-                }}
-                className="absolute z-10"
-              >
-                <NameTape
-                  name={
-                    displayFamilyName
-                  }
-                  finish={
-                    finish
-                  }
-                  active
-                  className="min-w-[112px] px-3 py-1.5"
-                />
-              </div>
-            )}
 
-            <div
-              style={{
-                left:
-                  crestLayout.left,
-                top:
-                  crestLayout.top,
-                transform:
-                  "translate(-50%, -50%)",
-              }}
-              className="absolute z-20"
-            >
-              <div className="origin-center scale-[0.42]">
-                <FamilyCrestPreview
-                  familyName={
-                    displayFamilyName
-                  }
-                  initials={
-                    displayInitials
-                  }
-                  motto={
-                    displayMotto
-                  }
-                  shield={
-                    normalizedShield
-                  }
-                  crown={
-                    normalizedCrown
-                  }
-                  finish={
-                    finish
-                  }
-                  composition={
-                    composition
-                  }
-                />
-              </div>
-            </div>
+                    familyCrestLayout.top,
 
-            {leftShoulderHeritage && LeftShoulderFlag && (
-              <div
-                style={{
-                  left: sleevePatchLayout.left,
-                  top: sleevePatchLayout.top,
-                  width: `${sleevePatchLayout.size}px`,
-                  height: `${sleevePatchLayout.size}px`,
-                  transform: "rotate(-5deg)",
+                  transform: `translate(-50%, -50%) rotate(${familyCrestLayout.rotation}deg)`,
+
                 }}
-                className="absolute z-10 flex items-center justify-center overflow-hidden rounded-full border-2 border-[#B08D57] bg-[#20231C] shadow-xl"
-                title={`Left shoulder heritage: ${leftShoulderHeritage}`}
+
+                className="absolute z-20"
+
+                title="Left shoulder family crest"
+
               >
-                <div className="flex h-[72%] w-[72%] items-center justify-center overflow-hidden rounded-full">
-                  <LeftShoulderFlag
-                    width="100%"
-                    height="100%"
-                    title={`Flag of ${leftShoulderHeritage}`}
+
+                <div
+
+                  className="origin-center"
+
+                  style={{
+
+                    transform: `scale(${familyCrestLayout.scale})`,
+
+                  }}
+
+                >
+
+                  <FamilyCrestPreview
+
+                    familyName={
+
+                      displayFamilyName
+
+                    }
+
+                    initials={
+
+                      displayInitials
+
+                    }
+
+                    motto={
+
+                      displayMotto
+
+                    }
+
+                    symbol={
+
+                      displaySymbol
+
+                    }
+
+                    shield={
+
+                      normalizedShield
+
+                    }
+
+                    crown={
+
+                      normalizedCrown
+
+                    }
+
+                    finish={
+
+                      finish
+
+                    }
+
+                    showPresentationLabel={
+
+                      false
+
+                    }
+
                   />
+
                 </div>
+
               </div>
+
             )}
+
+            {/*
+
+             * ZONE 2
+
+             * WEARER RIGHT SHOULDER — HERITAGE STACK
+
+             */}
+
+            {heritageLayout.visible &&
+
+              rightShoulderHeritageSlots.map(
+
+                (
+
+                  {
+
+                    heritageName,
+
+                    Flag,
+
+                  },
+
+                  index,
+
+                ) => {
+
+                  const slotOffset =
+
+                    getHeritageSlotOffset(
+
+                      jacketView,
+
+                      index,
+
+                    );
+
+                  return (
+
+                    <div
+
+                      key={`${heritageName}-${index}`}
+
+                      style={{
+
+                        left:
+
+                          offsetPercent(
+
+                            heritageLayout.left,
+
+                            slotOffset.left,
+
+                          ),
+
+                        top:
+
+                          offsetPercent(
+
+                            heritageLayout.top,
+
+                            slotOffset.top,
+
+                          ),
+
+                        width: `${heritageLayout.width}px`,
+
+                        height: `${heritageLayout.height}px`,
+
+                        transform: `translate(-50%, -50%) rotate(${heritageLayout.rotation}deg) scale(${heritageLayout.scale})`,
+
+                        borderColor: getIdentityPatchPalette(finish).border,
+
+                      }}
+
+                      className="absolute z-20 flex items-center justify-center overflow-hidden rounded-full border-2 bg-[#20231C] shadow-xl"
+
+                      title={`Right shoulder heritage slot ${index + 1}: ${heritageName}`}
+
+                    >
+
+                      <div className="relative flex h-[72%] w-[72%] shrink-0 items-center justify-center overflow-hidden rounded-full [&_svg]:!block [&_svg]:!h-full [&_svg]:!w-full [&_svg]:!max-h-full [&_svg]:!max-w-full">
+
+                        <Flag
+
+                          width={34}
+
+                          height={34}
+
+                          title={`Flag of ${heritageName}`}
+
+                        />
+
+                      </div>
+
+                    </div>
+
+                  );
+
+                },
+
+              )}
+
+            {/*
+
+             * ZONE 3
+
+             * WEARER RIGHT CHEST — NAME TAPE
+
+             */}
+
+            {nameTapeLayout.visible &&
+
+              displayNameTape && (
+
+                <div
+
+                  style={{
+
+                    left:
+
+                      nameTapeLayout.left,
+
+                    top:
+
+                      nameTapeLayout.top,
+
+                    transform: `translate(-50%, -50%) rotate(${nameTapeLayout.rotation}deg) scale(${nameTapeLayout.scale})`,
+
+                  }}
+
+                  className="absolute z-20"
+
+                >
+
+                  <NameTape
+
+                    name={
+
+                      displayNameTape
+
+                    }
+
+                    finish={
+
+                      finish
+
+                    }
+
+                    active
+
+                    className="min-w-[112px] px-3 py-1.5"
+
+                  />
+
+                </div>
+
+              )}
+
+            {/*
+
+             * ZONE 4
+
+             * WEARER LEFT CHEST — IDENTITY PATCH
+
+             */}
+
+            {leftChestLayout.visible &&
+
+              hasRenderableIdentityPatch && (
+
+                <div
+
+                  style={{
+
+                    left:
+
+                      leftChestLayout.left,
+
+                    top:
+
+                      leftChestLayout.top,
+
+                    width: `${leftChestLayout.width}px`,
+
+                    minHeight: `${leftChestLayout.height}px`,
+
+                    transform: `translate(-50%, -50%) rotate(${leftChestLayout.rotation}deg) scale(${leftChestLayout.scale})`,
+
+                  }}
+
+                  className="absolute z-20"
+
+                >
+
+                  <IdentityPatchPreview
+
+                    category={
+
+                      leftChestIdentity
+
+                    }
+
+                    militaryBranch={
+
+                      militaryBranch
+
+                    }
+
+                    sport={sport}
+
+                    zodiacSign={zodiacSign}
+
+                    finish={
+
+                      finish
+
+                    }
+
+                  />
+
+                </div>
+
+              )}
 
             <div className="absolute bottom-5 left-5 right-5 z-20 flex items-end justify-between rounded-2xl border border-white/10 bg-black/45 px-5 py-4 backdrop-blur-md">
+
               <div className="min-w-0">
+
                 <p className="text-[9px] uppercase tracking-[0.3em] text-[#B08D57]">
+
                   Regiment Identity
+
                 </p>
 
                 <p className="mt-2 truncate text-lg text-white">
-                  {
-                    displayFamilyName
-                  }
+
+                  {displayFamilyName}
+
                 </p>
+
               </div>
 
               <p className="ml-4 shrink-0 text-xs uppercase tracking-[0.18em] text-[#D7D1C5]">
-                {
-                  displayInitials
-                }
+
+                {displayInitials}
+
               </p>
+
             </div>
+
           </div>
 
+          {/*
+
+           * LIVE CREST
+
+           */}
+
           <div className="mt-5 rounded-[1.5rem] border border-[#B08D57]/20 bg-[#181916] p-5">
+
             <div className="flex items-center justify-between gap-4">
+
               <div>
+
                 <p className="text-[9px] font-semibold uppercase tracking-[0.3em] text-[#B08D57]">
+
                   Live Crest
+
                 </p>
 
                 <p className="mt-1 text-sm text-[#D8D3CA]">
-                  Four-part family composition
+
+                  Regiment crest presentation
+
                 </p>
+
               </div>
 
               <span className="rounded-full border border-[#B08D57]/30 bg-[#B08D57]/5 px-3 py-1.5 text-[9px] uppercase tracking-[0.2em] text-[#C7A767]">
-                Quartered
+
+                Visual Canon
+
               </span>
+
             </div>
 
-            <div className="mt-5 flex justify-center overflow-hidden rounded-2xl border border-white/8 bg-[#11120F] py-6">
-              <FamilyCrestPreview
-                familyName={
-                  displayFamilyName
-                }
-                initials={
-                  displayInitials
-                }
-                motto={
-                  displayMotto
-                }
-                shield={
-                  normalizedShield
-                }
-                crown={
-                  normalizedCrown
-                }
-                finish={
-                  finish
-                }
-                composition={
-                  composition
-                }
-              />
-            </div>
-          </div>
+            <div className="mt-5 flex min-h-[390px] items-center justify-center overflow-hidden rounded-2xl border border-white/8 bg-[#11120F] px-4 py-5">
 
-          <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
-            {composition.quadrants.map(
-              (quadrant) => (
-                <PreviewStat
-                  key={
-                    quadrant.id
+              <div className="origin-center scale-[1.4]">
+
+                <FamilyCrestPreview
+
+                  familyName={
+
+                    displayFamilyName
+
                   }
-                  label={`Quadrant ${quadrant.id}`}
-                  value={
-                    getQuadrantDisplayName(
-                      quadrant,
-                    )
+
+                  initials={
+
+                    displayInitials
+
                   }
+
+                  motto={
+
+                    displayMotto
+
+                  }
+
+                  symbol={
+
+                    displaySymbol
+
+                  }
+
+                  shield={
+
+                    normalizedShield
+
+                  }
+
+                  crown={
+
+                    normalizedCrown
+
+                  }
+
+                  finish={
+
+                    finish
+
+                  }
+
                 />
-              ),
-            )}
+
+              </div>
+
+            </div>
+
           </div>
 
           <div className="mt-4 grid grid-cols-2 gap-3">
+
             <PreviewStat
+
+              label="View"
+
+              value={
+
+                jacketView
+
+              }
+
+            />
+
+            <PreviewStat
+
               label="Left Shoulder"
-              value={leftShoulderHeritage || "None"}
+
+              value={
+
+                familyCrestLayout.visible
+
+                  ? "Family Crest"
+
+                  : "Not visible"
+
+              }
+
             />
+
             <PreviewStat
+
               label="Right Shoulder"
-              value={rightShoulderHeritage || "None"}
+
+              value={
+
+                heritageLayout.visible
+
+                  ? rightShoulderHeritage.length >
+
+                    0
+
+                    ? rightShoulderHeritage.join(
+
+                        " · ",
+
+                      )
+
+                    : "None"
+
+                  : "Not visible"
+
+              }
+
             />
+
+            <PreviewStat
+
+              label="Name Tape"
+
+              value={
+
+                nameTapeLayout.visible
+
+                  ? displayNameTape ||
+
+                    "Blank"
+
+                  : "Not visible"
+
+              }
+
+            />
+
+            <PreviewStat
+
+              label="Left Chest"
+
+              value={
+
+                getLeftChestDisplayValue(
+
+                  leftChestLayout.visible,
+
+                  leftChestIdentity,
+
+                  militaryBranch,
+
+                  sport,
+
+                  zodiacSign,
+
+                )
+
+              }
+
+            />
+
           </div>
 
-          <p className="mt-5 text-center text-[9px] uppercase tracking-[0.28em] text-[#65625D]">
-            Live preview follows the saved shield composition
-          </p>
-
           <div className="sr-only">
-            {RightShoulderFlag && rightShoulderHeritage
-              ? `Right shoulder heritage flag selected: ${rightShoulderHeritage}`
-              : "No right shoulder heritage flag selected"}
-          </div>
 
-          <div className="sr-only">
+            {displayHeritage}
+
             {displaySymbol}
+
             {displayValue}
+
           </div>
+
         </div>
+
       </div>
+
     </aside>
+
   );
+
 }
 
-function PreviewHeader({
-  finish,
-}: {
-  finish: string;
-}) {
-  return (
-    <div className="mb-6 flex items-center justify-between">
-      <div>
-        <p className="text-xs uppercase tracking-[0.4em] text-[#B08D57]">
-          Regiment Workshop
-        </p>
+function getHeritageSlotOffset(
 
-        <p className="mt-2 text-sm text-[#77736A]">
-          Front view · {finish}
-        </p>
-      </div>
+  jacketView: string,
 
-      <span className="rounded-full border border-[#B08D57]/30 bg-[#B08D57]/5 px-4 py-2 text-[10px] uppercase tracking-[0.25em] text-[#BDA16F]">
-        Live Design
-      </span>
-    </div>
-  );
-}
+  index: number,
 
-function FamilyCrestPreview({
-  familyName,
-  initials,
-  motto,
-  shield,
-  crown,
-  finish,
-  composition,
-}: {
-  familyName: string;
-  initials: string;
-  motto: string;
-  shield: BuilderShieldStyle;
-  crown: CrestCrown;
-  finish: SupportedFinish;
-  composition: HeraldShieldComposition;
-}) {
-  const palette =
-    getPalette(
-      finish,
-    );
+): {
 
-  return (
-    <div className="relative flex w-[220px] flex-col items-center">
-      <CrownPreview
-        crown={
-          crown
-        }
-        metallic={
-          palette.metallic
-        }
-        ivory={
-          palette.ivory
-        }
-      />
+  left: number;
 
-      <div className="relative mt-1 h-[224px] w-[190px]">
-        <QuarteredShield
-          shield={
-            shield
-          }
-          composition={
-            composition
-          }
-          initials={
-            initials
-          }
-          palette={
-            palette
-          }
-        />
-      </div>
+  top: number;
 
-      <div className="relative -mt-1 flex min-h-[44px] w-[215px] items-center justify-center">
-        <svg
-          viewBox="0 0 240 58"
-          className="absolute inset-0 h-full w-full"
-          aria-hidden="true"
-        >
-          <path
-            d="M9 17 C42 4 76 9 120 18 C164 9 198 4 231 17 L218 43 C184 35 157 34 120 42 C83 34 56 35 22 43 Z"
-            fill={
-              palette.dark
-            }
-            stroke={
-              palette.metallic
-            }
-            strokeWidth="2.5"
-          />
-        </svg>
+} {
 
-        <p className="relative z-10 max-w-[170px] truncate px-3 text-center text-[9px] font-semibold uppercase tracking-[0.12em] text-[#E8D7AE]">
-          {motto}
-        </p>
-      </div>
+  if (index === 0) {
 
-      <p className="mt-2 max-w-[190px] truncate text-[8px] font-semibold uppercase tracking-[0.24em] text-[#8D7A58]">
-        House of {familyName}
-      </p>
-    </div>
-  );
-}
+    return {
 
-function QuarteredShield({
-  shield,
-  composition,
-  initials,
-  palette,
-}: {
-  shield: BuilderShieldStyle;
-  composition: HeraldShieldComposition;
-  initials: string;
-  palette: CrestPalette;
-}) {
-  const shieldPath =
-    getShieldPath(
-      shield,
-    );
+      left: 0,
 
-  const quadrantI =
-    composition.quadrants.find(
-      (quadrant) =>
-        quadrant.id === "I",
-    );
+      top: 0,
 
-  const quadrantII =
-    composition.quadrants.find(
-      (quadrant) =>
-        quadrant.id === "II",
-    );
+    };
 
-  const quadrantIII =
-    composition.quadrants.find(
-      (quadrant) =>
-        quadrant.id === "III",
-    );
-
-  const quadrantIV =
-    composition.quadrants.find(
-      (quadrant) =>
-        quadrant.id === "IV",
-    );
-
-  return (
-    <svg
-      viewBox="0 0 200 235"
-      className="h-full w-full drop-shadow-[0_14px_18px_rgba(0,0,0,0.45)]"
-      role="img"
-      aria-label="Quartered family shield"
-    >
-      <defs>
-        <clipPath id="builder-quarter-shield-clip">
-          <path
-            d={
-              shieldPath
-            }
-          />
-        </clipPath>
-
-        <linearGradient
-          id="builder-gold"
-          x1="0"
-          y1="0"
-          x2="1"
-          y2="1"
-        >
-          <stop
-            offset="0%"
-            stopColor={
-              palette.ivory
-            }
-          />
-
-          <stop
-            offset="45%"
-            stopColor={
-              palette.metallic
-            }
-          />
-
-          <stop
-            offset="100%"
-            stopColor="#80652F"
-          />
-        </linearGradient>
-      </defs>
-
-      <g clipPath="url(#builder-quarter-shield-clip)">
-        <rect
-          width="100"
-          height="118"
-          fill={
-            palette.primary
-          }
-        />
-
-        <rect
-          x="100"
-          width="100"
-          height="118"
-          fill={
-            palette.secondary
-          }
-        />
-
-        <rect
-          y="118"
-          width="100"
-          height="117"
-          fill={
-            palette.secondary
-          }
-        />
-
-        <rect
-          x="100"
-          y="118"
-          width="100"
-          height="117"
-          fill={
-            palette.primary
-          }
-        />
-
-        <line
-          x1="100"
-          y1="0"
-          x2="100"
-          y2="235"
-          stroke={
-            palette.metallic
-          }
-          strokeWidth="3"
-        />
-
-        <line
-          x1="0"
-          y1="118"
-          x2="200"
-          y2="118"
-          stroke={
-            palette.metallic
-          }
-          strokeWidth="3"
-        />
-
-        <QuadrantContent
-          quadrant={
-            quadrantI
-          }
-          centerX={50}
-          centerY={60}
-          palette={
-            palette
-          }
-          initials={
-            initials
-          }
-        />
-
-        <QuadrantContent
-          quadrant={
-            quadrantII
-          }
-          centerX={150}
-          centerY={60}
-          palette={
-            palette
-          }
-          initials={
-            initials
-          }
-        />
-
-        <QuadrantContent
-          quadrant={
-            quadrantIII
-          }
-          centerX={50}
-          centerY={172}
-          palette={
-            palette
-          }
-          initials={
-            initials
-          }
-        />
-
-        <QuadrantContent
-          quadrant={
-            quadrantIV
-          }
-          centerX={150}
-          centerY={172}
-          palette={
-            palette
-          }
-          initials={
-            initials
-          }
-        />
-      </g>
-
-      <path
-        d={
-          shieldPath
-        }
-        fill="none"
-        stroke="url(#builder-gold)"
-        strokeWidth="8"
-        strokeLinejoin="round"
-      />
-
-      <path
-        d={
-          shieldPath
-        }
-        fill="none"
-        stroke={
-          palette.dark
-        }
-        strokeWidth="2"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
-
-function QuadrantContent({
-  quadrant,
-  centerX,
-  centerY,
-  palette,
-  initials,
-}: {
-  quadrant?: HeraldQuadrant;
-  centerX: number;
-  centerY: number;
-  palette: CrestPalette;
-  initials: string;
-}) {
-  if (
-    !quadrant ||
-    quadrant.type === "empty"
-  ) {
-    return (
-      <EmptyQuadrantMark
-        x={
-          centerX
-        }
-        y={
-          centerY
-        }
-        palette={
-          palette
-        }
-        initials={
-          initials
-        }
-      />
-    );
   }
 
+  switch (jacketView) {
+
+    case "Left ¾":
+
+    case "Right ¾":
+
+    case "Front":
+
+    default:
+
+      return {
+
+        left: 0,
+
+        top: index * 4.5,
+
+      };
+
+  }
+
+}
+
+function offsetPercent(
+
+  value: string,
+
+  offset: number,
+
+): string {
+
+  const numericValue =
+
+    Number.parseFloat(value);
+
   if (
-    quadrant.type ===
-    "heritage"
+
+    Number.isNaN(
+
+      numericValue,
+
+    )
+
   ) {
-    const heritage =
-      quadrant.heritage ??
-      quadrant.label ??
-      "";
 
-    const Flag =
-      resolveHeritageFlagComponent(
-        quadrant.assetId,
-        heritage,
+    return value;
+
+  }
+
+  return `${numericValue + offset}%`;
+
+}
+
+function IdentityPatchPreview({
+
+  category,
+
+  militaryBranch,
+
+  sport,
+
+  zodiacSign,
+
+  finish,
+
+}: {
+
+  category: IdentityPatchCategory;
+
+  militaryBranch: MilitaryBranch;
+
+  sport: Sport;
+
+  zodiacSign: ZodiacSign;
+
+  finish: SupportedFinish;
+
+}) {
+
+  const palette =
+
+    getIdentityPatchPalette(
+
+      finish,
+
+    );
+
+  const silhouetteOutline = [
+
+    `drop-shadow(0.65px 0 0 ${palette.border})`,
+
+    `drop-shadow(-0.65px 0 0 ${palette.border})`,
+
+    `drop-shadow(0 0.65px 0 ${palette.border})`,
+
+    `drop-shadow(0 -0.65px 0 ${palette.border})`,
+
+    `drop-shadow(0.45px 0.45px 0 ${palette.border})`,
+
+    `drop-shadow(-0.45px 0.45px 0 ${palette.border})`,
+
+    `drop-shadow(0.45px -0.45px 0 ${palette.border})`,
+
+    `drop-shadow(-0.45px -0.45px 0 ${palette.border})`,
+
+  ].join(" ");
+
+  if (
+
+    category === "Military Branch"
+
+  ) {
+
+    const branchAsset =
+
+      getMilitaryBranchCanonAsset(
+
+        militaryBranch,
+
       );
 
-    if (!Flag) {
-      return (
-        <text
-          x={centerX}
-          y={centerY}
-          textAnchor="middle"
-          dominantBaseline="middle"
-          fill={palette.metallic}
-          fontSize="12"
-          fontWeight="700"
-        >
-          FR
-        </text>
-      );
+    if (!branchAsset) {
+
+      return null;
+
     }
 
     return (
-      <foreignObject
-        x={centerX - 38}
-        y={centerY - 28}
-        width="76"
-        height="56"
+
+      <div
+
+        className="flex min-h-[38px] w-full items-center justify-center"
+
+        title={`${branchAsset.label} identity patch`}
+
       >
+
         <div
-          
-          className="flex h-full w-full items-center justify-center overflow-hidden"
+
+          className="relative h-[50px] w-full origin-center"
+
+          style={{
+
+            transform: `scale(${branchAsset.previewScale})`,
+
+          }}
+
         >
-          <Flag
-            width="100%"
-            height="100%"
-            title={`Flag of ${heritage}`}
+
+          <Image
+
+            src={branchAsset.artworkSrc}
+
+            alt={`${branchAsset.label} military branch patch`}
+
+            fill
+
+            className="object-contain"
+
+            style={{
+
+              filter: silhouetteOutline,
+
+            }}
+
+            sizes="80px"
+
           />
+
         </div>
-      </foreignObject>
+
+      </div>
+
     );
+
   }
 
-  if (
-    quadrant.type ===
-    "animal"
-  ) {
+  if (category === "Sport") {
+
+    const sportAsset =
+
+      getSportCanonAsset(sport);
+
+    if (!sportAsset) {
+
+      return null;
+
+    }
+
     return (
-      <AnimalCharge
-        animal={
-          quadrant.label ??
-          assetIdToAnimal(
-            quadrant.assetId,
-          ) ??
-          "Lion"
-        }
-        x={
-          centerX
-        }
-        y={
-          centerY
-        }
-        fill={
-          palette.metallic
-        }
-        accent={
-          palette.dark
-        }
-      />
+
+      <div
+
+        className="flex min-h-[38px] w-full items-center justify-center"
+
+        title={`${sportAsset.label} identity patch`}
+
+      >
+
+        <div
+
+          className="relative h-[50px] w-full origin-center"
+
+          style={{
+
+            transform: `scale(${sportAsset.previewScale})`,
+
+          }}
+
+        >
+
+          <Image
+
+            src={sportAsset.artworkSrc}
+
+            alt={`${sportAsset.label} sport patch`}
+
+            fill
+
+            className="object-contain"
+
+            style={{
+
+              filter: silhouetteOutline,
+
+            }}
+
+            sizes="80px"
+
+          />
+
+        </div>
+
+      </div>
+
     );
+
   }
 
-  if (
-    quadrant.type ===
-    "symbol"
-  ) {
+  if (category === "Zodiac") {
+
+    const zodiacAsset =
+
+      getZodiacCanonAsset(zodiacSign);
+
+    if (!zodiacAsset) {
+
+      return null;
+
+    }
+
     return (
-      <ValueSymbol
-        value={
-          quadrant.label ??
-          quadrant.meaning ??
-          "Legacy"
-        }
-        x={
-          centerX
-        }
-        y={
-          centerY
-        }
-        fill={
-          palette.primary
-        }
-        metallic={
-          palette.metallic
-        }
-      />
+
+      <div
+
+        className="flex min-h-[38px] w-full items-center justify-center"
+
+        title={`${zodiacAsset.label} identity patch`}
+
+      >
+
+        <div
+
+          className="relative h-[50px] w-full origin-center"
+
+          style={{
+
+            transform: `scale(${zodiacAsset.previewScale})`,
+
+          }}
+
+        >
+
+          <Image
+
+            src={zodiacAsset.src}
+
+            alt={`${zodiacAsset.label} zodiac patch`}
+
+            fill
+
+            className="object-contain"
+
+            style={{
+
+              filter: silhouetteOutline,
+
+            }}
+
+            sizes="80px"
+
+          />
+
+        </div>
+
+      </div>
+
     );
+
+  }
+
+  const shortLabel =
+
+    getIdentityPatchShortLabel(
+
+      category,
+
+    );
+
+  if (!shortLabel) {
+
+    return null;
+
   }
 
   return (
-    <GenericQuadrantMark
-      quadrant={
-        quadrant
-      }
-      x={
-        centerX
-      }
-      y={
-        centerY
-      }
-      palette={
-        palette
-      }
-    />
-  );
-}
 
-function EmptyQuadrantMark({
-  x,
-  y,
-  palette,
-  initials,
-}: {
-  x: number;
-  y: number;
-  palette: CrestPalette;
-  initials: string;
-}) {
-  return (
-    <g opacity="0.28">
-      <circle
-        cx={
-          x
-        }
-        cy={
-          y
-        }
-        r="25"
-        fill="none"
-        stroke={
-          palette.metallic
-        }
-        strokeWidth="2"
-        strokeDasharray="4 5"
-      />
+    <div
 
-      <text
-        x={
-          x
-        }
-        y={
-          y + 1
-        }
-        textAnchor="middle"
-        dominantBaseline="middle"
-        fill={
-          palette.metallic
-        }
-        fontSize="11"
-        fontWeight="700"
-        letterSpacing="2"
-      >
-        {initials
-          .slice(0, 2)
-          .toUpperCase()}
-      </text>
-    </g>
-  );
-}
+      className="flex min-h-[38px] w-full items-center justify-center rounded-md border px-2 py-1.5 text-center shadow-lg"
 
-function GenericQuadrantMark({
-  quadrant,
-  x,
-  y,
-  palette,
-}: {
-  quadrant: HeraldQuadrant;
-  x: number;
-  y: number;
-  palette: CrestPalette;
-}) {
-  const mark =
-    getGenericTypeMark(
-      quadrant.type,
-    );
+      style={{
 
-  return (
-    <g>
-      <circle
-        cx={
-          x
-        }
-        cy={
-          y
-        }
-        r="27"
-        fill="none"
-        stroke={
-          palette.metallic
-        }
-        strokeWidth="2"
-      />
+        backgroundColor:
 
-      <text
-        x={
-          x
-        }
-        y={
-          y + 1
-        }
-        textAnchor="middle"
-        dominantBaseline="middle"
-        fill={
-          palette.metallic
-        }
-        fontSize="21"
-        fontWeight="700"
-      >
-        {mark}
-      </text>
-    </g>
-  );
-}
+          palette.background,
 
-function AnimalCharge({
-  animal,
-  x,
-  y,
-  fill,
-  accent,
-}: {
-  animal: string;
-  x: number;
-  y: number;
-  fill: string;
-  accent: string;
-}) {
-  /*
-   * =======================================================
-   * CANON ASSET
-   * =======================================================
-   *
-   * Lion is now rendered directly from the Visual Canon.
-   *
-   * The canonical lion uses a 100 x 120 coordinate system.
-   * We scale it to 44% and position the resulting artwork
-   * around the requested quadrant center.
-   *
-   * Eagle, Wolf, Bear and Stag remain transitional preview
-   * geometry until their canonical SVG modules are created.
-   * =======================================================
-   */
+        borderColor:
 
-  if (
-    animal === "Lion"
-  ) {
-    const scale = 0.44;
+          palette.border,
 
-    const lionWidth =
-      100 * scale;
+        color:
 
-    const lionHeight =
-      120 * scale;
+          palette.text,
 
-    const left =
-      x - lionWidth / 2;
+      }}
 
-    const top =
-      y - lionHeight / 2;
+      title={`${category} identity patch`}
 
-    return (
-      <LionRampant
-        fill={
-          fill
-        }
-        accent={
-          accent
-        }
-        transform={`translate(${left} ${top}) scale(${scale})`}
-      />
-    );
-  }
-
-  if (
-    animal === "Eagle"
-  ) {
-    return (
-      <g
-        transform={`translate(${x - 27} ${y - 28}) scale(0.7)`}
-        fill={fill}
-      >
-        <path d="M35 22 C20 7 6 10 -8 20 C6 23 17 31 25 42 C12 37 2 40 -8 48 C9 52 22 60 33 74 L39 50 Z" />
-
-        <path d="M43 22 C58 7 72 10 86 20 C72 23 61 31 53 42 C66 37 76 40 86 48 C69 52 56 60 45 74 L39 50 Z" />
-
-        <path d="M32 22 C36 14 42 14 46 22 L45 62 L39 77 L33 62 Z" />
-      </g>
-    );
-  }
-
-  if (
-    animal === "Wolf"
-  ) {
-    return (
-      <g
-        transform={`translate(${x - 25} ${y - 27}) scale(0.7)`}
-        fill={fill}
-      >
-        <path d="M9 20 L0 0 L17 14 C27 8 42 8 52 14 L69 0 L60 21 C68 31 69 42 65 52 C59 68 47 77 35 78 C22 76 10 68 5 53 C2 42 4 30 9 20 Z" />
-
-        <path
-          d="M22 50 C29 45 41 45 48 50 C44 59 39 63 35 63 C31 63 26 59 22 50 Z"
-          fill={accent}
-        />
-      </g>
-    );
-  }
-
-  if (
-    animal === "Bear"
-  ) {
-    return (
-      <g
-        transform={`translate(${x - 24} ${y - 27}) scale(0.7)`}
-        fill={fill}
-      >
-        <circle
-          cx="13"
-          cy="14"
-          r="10"
-        />
-
-        <circle
-          cx="55"
-          cy="14"
-          r="10"
-        />
-
-        <path d="M8 25 C13 10 25 7 34 7 C43 7 55 10 60 25 C67 46 55 69 34 73 C13 69 1 46 8 25 Z" />
-
-        <path
-          d="M21 49 C27 44 41 44 47 49 C44 58 39 62 34 62 C29 62 24 58 21 49 Z"
-          fill={accent}
-        />
-      </g>
-    );
-  }
-
-  if (
-    animal === "Stag"
-  ) {
-    return (
-      <g
-        transform={`translate(${x - 20} ${y - 27}) scale(0.7)`}
-        fill={fill}
-        stroke={fill}
-        strokeLinecap="round"
-      >
-        <path
-          d="M18 30 C10 38 9 52 15 63 C20 73 29 78 37 77 C47 75 55 65 55 54 C55 42 48 33 39 30 C33 28 24 28 18 30 Z"
-          stroke="none"
-        />
-
-        <path
-          d="M20 28 C9 18 5 8 8 -3 M10 15 L-1 8 M12 7 L19 -3 M38 28 C49 18 53 8 50 -3 M48 15 L59 8 M46 7 L39 -3"
-          fill="none"
-          strokeWidth="5"
-        />
-      </g>
-    );
-  }
-
-  /*
-   * Unknown animal values intentionally fall back to the
-   * canonical lion rather than creating another unofficial
-   * animal shape.
-   */
-
-  const scale = 0.44;
-
-  const lionWidth =
-    100 * scale;
-
-  const lionHeight =
-    120 * scale;
-
-  return (
-    <LionRampant
-      fill={
-        fill
-      }
-      accent={
-        accent
-      }
-      transform={`translate(${x - lionWidth / 2} ${
-        y - lionHeight / 2
-      }) scale(${scale})`}
-    />
-  );
-}
-
-function ValueSymbol({
-  value,
-  x,
-  y,
-  fill,
-  metallic,
-}: {
-  value: string;
-  x: number;
-  y: number;
-  fill: string;
-  metallic: string;
-}) {
-  if (
-    value === "Unity"
-  ) {
-    return (
-      <g
-        transform={`translate(${x} ${y})`}
-        fill="none"
-        stroke={fill}
-        strokeWidth="6"
-      >
-        <circle
-          cx="-9"
-          cy="0"
-          r="17"
-        />
-
-        <circle
-          cx="9"
-          cy="0"
-          r="17"
-        />
-      </g>
-    );
-  }
-
-  if (
-    value === "Honor"
-  ) {
-    return (
-      <g
-        transform={`translate(${x} ${y})`}
-      >
-        <path
-          d="M0 -29 L7 -8 L29 -8 L11 5 L18 27 L0 14 L-18 27 L-11 5 L-29 -8 L-7 -8 Z"
-          fill={fill}
-        />
-      </g>
-    );
-  }
-
-  if (
-    value === "Service"
-  ) {
-    return (
-      <g
-        transform={`translate(${x} ${y})`}
-        fill="none"
-        stroke={fill}
-        strokeWidth="7"
-        strokeLinecap="round"
-      >
-        <path d="M0 -29 V29 M-21 -8 H21" />
-      </g>
-    );
-  }
-
-  if (
-    value ===
-    "Resilience"
-  ) {
-    return (
-      <g
-        transform={`translate(${x} ${y})`}
-        fill="none"
-        stroke={fill}
-        strokeWidth="5"
-        strokeLinecap="round"
-      >
-        <path d="M0 27 V-25 M0 -9 C-12 -18 -20 -18 -27 -14 M0 2 C13 -7 21 -7 28 -2 M0 14 C-11 7 -19 7 -25 11" />
-      </g>
-    );
-  }
-
-  if (
-    value === "Legacy"
-  ) {
-    return (
-      <g
-        transform={`translate(${x} ${y})`}
-      >
-        <circle
-          r="28"
-          fill="none"
-          stroke={fill}
-          strokeWidth="4"
-        />
-
-        <circle
-          r="18"
-          fill="none"
-          stroke={metallic}
-          strokeWidth="3"
-        />
-
-        <circle
-          r="6"
-          fill={fill}
-        />
-      </g>
-    );
-  }
-
-  return (
-    <g
-      transform={`translate(${x} ${y})`}
-      fill={fill}
     >
-      <path d="M-6 -30 H6 V-7 H24 V5 H6 V30 H-6 V5 H-24 V-7 H-6 Z" />
 
-      <path
-        d="M0 -30 L7 -42 L14 -30 Z"
-        fill={metallic}
-      />
-    </g>
+      <span className="text-[7px] font-semibold uppercase leading-tight tracking-[0.12em]">
+
+        {shortLabel}
+
+      </span>
+
+    </div>
+
   );
+
 }
 
-function CrownPreview({
-  crown,
-  metallic,
-  ivory,
-}: {
-  crown: CrestCrown;
-  metallic: string;
-  ivory: string;
-}) {
-  if (
-    crown === "None"
-  ) {
-    return (
-      <div className="h-5" />
-    );
-  }
+function getIdentityPatchShortLabel(
 
-  const peak =
-    crown === "Royal"
-      ? 10
-      : crown === "Ducal"
-        ? 16
-        : crown === "Count"
-          ? 21
-          : 26;
+  category: IdentityPatchCategory,
 
-  return (
-    <svg
-      viewBox="0 0 100 64"
-      className="h-[48px] w-[82px]"
-      aria-hidden="true"
-    >
-      <path
-        d={`M14 44 L25 27 L37 41 L50 ${peak} L63 41 L75 27 L86 44 L81 55 H19 Z`}
-        fill={
-          metallic
-        }
-        stroke={
-          ivory
-        }
-        strokeWidth="2"
-        strokeLinejoin="round"
-      />
-
-      <rect
-        x="19"
-        y="44"
-        width="62"
-        height="11"
-        rx="2"
-        fill={
-          metallic
-        }
-        stroke={
-          ivory
-        }
-        strokeWidth="2"
-      />
-
-      <circle
-        cx="25"
-        cy="27"
-        r="3"
-        fill={
-          ivory
-        }
-      />
-
-      <circle
-        cx="50"
-        cy={peak}
-        r="3"
-        fill={
-          ivory
-        }
-      />
-
-      <circle
-        cx="75"
-        cy="27"
-        r="3"
-        fill={
-          ivory
-        }
-      />
-    </svg>
-  );
-}
-
-function getQuadrantDisplayName(
-  quadrant: HeraldQuadrant,
 ) {
-  if (
-    quadrant.type === "empty"
-  ) {
+
+  switch (category) {
+
+    case "Family Value":
+
+      return "Value";
+
+    case "Profession":
+
+      return "Profession";
+
+    case "Sport":
+
+      return "Sport";
+
+    case "Zodiac":
+
+      return "Zodiac";
+
+    case "Hometown":
+
+      return "Hometown";
+
+    case "Military Branch":
+
+    case "None":
+
+    default:
+
+      return "";
+
+  }
+
+}
+
+function getLeftChestDisplayValue(
+
+  visible: boolean,
+
+  category: IdentityPatchCategory,
+
+  militaryBranch: MilitaryBranch,
+
+  sport: Sport,
+
+  zodiacSign: ZodiacSign,
+
+): string {
+
+  if (!visible) {
+
+    return "Not visible";
+
+  }
+
+  if (category === "None") {
+
     return "Open";
+
   }
+
+  if (
+
+    category ===
+
+    "Military Branch"
+
+  ) {
+
+    return militaryBranch ===
+
+      "None"
+
+      ? "Military Branch · Choose branch"
+
+      : militaryBranch;
+
+  }
+
+  if (category === "Sport") {
+
+    return sport === "None"
+
+      ? "Sport · Choose sport"
+
+      : sport;
+
+  }
+
+  if (category === "Zodiac") {
+
+    return zodiacSign === "None"
+
+      ? "Zodiac · Choose sign"
+
+      : zodiacSign;
+
+  }
+
+  return category;
+
+}
+
+function getIdentityPatchPalette(
+
+  finish: SupportedFinish,
+
+) {
+
+  switch (finish) {
+
+    case "Tactical Subdued":
+
+      return {
+
+        background:
+
+          "#11120F",
+
+        border:
+
+          "#626A3A",
+
+        text:
+
+          "#626A3A",
+
+      };
+
+    case "Heritage Ivory":
+
+      return {
+
+        background:
+
+          "#24251F",
+
+        border:
+
+          "#F1E7CF",
+
+        text:
+
+          "#F1E7CF",
+
+      };
+
+    case "Regiment Gold":
+
+    default:
+
+      return {
+
+        background:
+
+          "#11120F",
+
+        border:
+
+          "#D4AF6A",
+
+        text:
+
+          "#D4AF6A",
+
+      };
+
+  }
+
+}
+
+function PreviewHeader({
+
+  finish,
+
+  jacketView,
+
+}: {
+
+  finish: string;
+
+  jacketView: string;
+
+}) {
 
   return (
-    quadrant.label ??
-    formatQuadrantType(
-      quadrant.type,
-    )
+
+    <div className="mb-6 flex items-center justify-between">
+
+      <div>
+
+        <p className="text-xs uppercase tracking-[0.4em] text-[#B08D57]">
+
+          Regiment Workshop
+
+        </p>
+
+        <p className="mt-2 text-sm text-[#77736A]">
+
+          {jacketView} view ·{" "}
+
+          {finish}
+
+        </p>
+
+      </div>
+
+      <span className="rounded-full border border-[#B08D57]/30 bg-[#B08D57]/5 px-4 py-2 text-[10px] uppercase tracking-[0.25em] text-[#BDA16F]">
+
+        Live Design
+
+      </span>
+
+    </div>
+
   );
-}
 
-function formatQuadrantType(
-  type: HeraldQuadrant["type"],
-) {
-  switch (type) {
-    case "family-branch":
-      return "Family Branch";
-
-    case "empty":
-      return "Open";
-
-    default:
-      return (
-        type
-          .charAt(0)
-          .toUpperCase() +
-        type.slice(1)
-      );
-  }
-}
-
-function getGenericTypeMark(
-  type: HeraldQuadrant["type"],
-) {
-  switch (type) {
-    case "family-branch":
-      return "Y";
-
-    case "service":
-      return "S";
-
-    case "profession":
-      return "P";
-
-    case "ordinary":
-      return "◇";
-
-    case "custom":
-      return "+";
-
-    default:
-      return "✦";
-  }
-}
-
-function assetIdToAnimal(
-  assetId:
-    | HeraldQuadrant["assetId"]
-    | undefined,
-) {
-  switch (assetId) {
-    case "lion":
-      return "Lion";
-
-    case "eagle":
-      return "Eagle";
-
-    case "wolf":
-      return "Wolf";
-
-    case "bear":
-      return "Bear";
-
-    case "stag":
-      return "Stag";
-
-    default:
-      return undefined;
-  }
-}
-
-function getPalette(
-  finish: SupportedFinish,
-): CrestPalette {
-  if (
-    finish ===
-    "Tactical Subdued"
-  ) {
-    return {
-      primary:
-        "#303429",
-      secondary:
-        "#777B63",
-      metallic:
-        "#A7AA91",
-      ivory:
-        "#C1C3B2",
-      dark:
-        "#181A16",
-    };
-  }
-
-  if (
-    finish ===
-    "Heritage Ivory"
-  ) {
-    return {
-      primary:
-        "#24251F",
-      secondary:
-        "#E7D8B4",
-      metallic:
-        "#B6A47C",
-      ivory:
-        "#F1E7CF",
-      dark:
-        "#171815",
-    };
-  }
-
-  return {
-    primary:
-      "#20231C",
-    secondary:
-      "#7A1E24",
-    metallic:
-      "#C8A969",
-    ivory:
-      "#E8D7AE",
-    dark:
-      "#171815",
-  };
-}
-
-function getShieldPath(
-  shield: BuilderShieldStyle,
-) {
-  switch (shield) {
-    case "Norman Shield":
-      return "M100 8 C145 8 177 18 184 31 V90 C184 145 148 193 100 225 C52 193 16 145 16 90 V31 C23 18 55 8 100 8 Z";
-
-    case "Tournament Shield":
-      return "M24 12 H176 L188 37 L172 154 L100 222 L28 154 L12 37 Z";
-
-    case "Crusader Shield":
-      return "M18 12 H182 L190 32 L168 158 L100 224 L32 158 L10 32 Z";
-
-    case "Heater Shield":
-    default:
-      return "M100 10 C144 10 176 20 184 34 V96 C184 150 152 194 100 224 C48 194 16 150 16 96 V34 C24 20 56 10 100 10 Z";
-  }
 }
 
 function PreviewStat({
+
   label,
+
   value,
+
 }: PreviewStatProps) {
+
   return (
+
     <div className="min-w-0 rounded-xl border border-white/10 bg-white/[0.025] p-4">
+
       <p className="text-[8px] uppercase tracking-[0.25em] text-[#65625D]">
+
         {label}
+
       </p>
 
       <p className="mt-2 truncate text-xs text-[#D8D3CA]">
+
         {value}
+
       </p>
+
     </div>
+
   );
+
 }
 
 function normalizeFinish(
+
   finish: string,
+
 ): SupportedFinish {
+
   if (
+
     finish ===
+
       "Tactical Subdued" ||
+
     finish ===
+
       "Heritage Ivory" ||
+
     finish ===
+
       "Regiment Gold"
+
   ) {
+
     return finish;
+
   }
 
   return "Regiment Gold";
-}
 
-function normalizeShield(
-  value: string,
-): BuilderShieldStyle {
-  if (
-    value ===
-      "Norman Shield" ||
-    value ===
-      "Tournament Shield" ||
-    value ===
-      "Crusader Shield" ||
-    value ===
-      "Heater Shield"
-  ) {
-    return value;
-  }
-
-  return "Heater Shield";
-}
-
-function normalizeCrown(
-  value: string,
-): CrestCrown {
-  if (
-    value === "Baron" ||
-    value === "Count" ||
-    value === "Ducal" ||
-    value === "Royal" ||
-    value === "None"
-  ) {
-    return value;
-  }
-
-  return "None";
 }

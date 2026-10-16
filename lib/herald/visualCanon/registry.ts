@@ -1,6 +1,7 @@
 // lib/herald/visualCanon/registry.ts
 
 import { heritageFlagAssets } from "./assets/heritageFlags";
+import { ornamentAssets } from "./assets/ornaments";
 import { primaryChargeAssets } from "./assets/primaryCharges";
 import { shieldAssets } from "./assets/shields";
 
@@ -30,6 +31,7 @@ export const visualCanonRegistry: readonly VisualCanonAsset[] =
     ...primaryChargeAssets,
     ...shieldAssets,
     ...heritageFlagAssets,
+    ...ornamentAssets,
   ]);
 
 /*

@@ -51,36 +51,6 @@ function renderShield(
         />
       `;
 
-    case "Tournament Shield":
-      return `
-        <path
-          d="M45 55
-             H255
-             V210
-             C255 285 215 340 150 380
-             C85 340 45 285 45 210Z"
-          fill="${fill}"
-          stroke="${stroke}"
-          stroke-width="8"
-          stroke-linejoin="round"
-        />
-      `;
-
-    case "Crusader Shield":
-      return `
-        <path
-          d="M55 45
-             H245
-             V210
-             C245 285 205 340 150 375
-             C95 340 55 285 55 210Z"
-          fill="${fill}"
-          stroke="${stroke}"
-          stroke-width="8"
-          stroke-linejoin="round"
-        />
-      `;
-
     case "Heater Shield":
     default:
       return `

@@ -37,6 +37,24 @@ import {
  * =========================================================
  * Heraldic Canon Registry
  * =========================================================
+ *
+ * This registry contains heraldic Canon entries that conform
+ * to the shared CanonEntry contract.
+ *
+ * Motto semantics intentionally live outside this registry.
+ *
+ * Motto architecture:
+ *
+ *   lib/herald/mottos.ts
+ *     -> semantic motto themes
+ *
+ *   lib/herald/motto.ts
+ *     -> approved Latin phrase library
+ *
+ * Semantic motto themes are still exported from this module,
+ * but they are not CanonEntry objects and therefore are not
+ * included in canonEntries.
+ * =========================================================
  */
 
 export const canonEntries: CanonEntry[] = [
@@ -45,7 +63,6 @@ export const canonEntries: CanonEntry[] = [
   ...ordinaries,
   ...symbols,
   ...crests,
-  ...mottos,
   ...shieldShapes,
 ];
 
@@ -71,43 +88,52 @@ const canonById: Record<
  * =========================================================
  */
 
-function normalize(value: string): string {
-  return value.trim().toLowerCase();
+function normalize(
+  value: string,
+): string {
+  return value
+    .trim()
+    .toLowerCase();
 }
 
 function get(
   id: string,
 ): CanonEntry | undefined {
-  return canonById[normalize(id)];
+  return canonById[
+    normalize(id)
+  ];
 }
 
 function search(
   query: string,
 ): CanonEntry[] {
-  const normalizedQuery = normalize(query);
+  const normalizedQuery =
+    normalize(query);
 
   if (!normalizedQuery) {
     return canonEntries;
   }
 
-  return canonEntries.filter((entry) => {
-    const searchableText = [
-      entry.id,
-      entry.name,
-      entry.summary,
-      entry.historicalNotes,
-      ...entry.traditionalAssociations,
-      ...entry.associatedVirtues,
-      ...entry.associatedThemes,
-      ...(entry.keywords ?? []),
-    ]
-      .join(" ")
-      .toLowerCase();
+  return canonEntries.filter(
+    (entry) => {
+      const searchableText = [
+        entry.id,
+        entry.name,
+        entry.summary,
+        entry.historicalNotes,
+        ...entry.traditionalAssociations,
+        ...entry.associatedVirtues,
+        ...entry.associatedThemes,
+        ...(entry.keywords ?? []),
+      ]
+        .join(" ")
+        .toLowerCase();
 
-    return searchableText.includes(
-      normalizedQuery,
-    );
-  });
+      return searchableText.includes(
+        normalizedQuery,
+      );
+    },
+  );
 }
 
 function byCategory(
@@ -129,12 +155,14 @@ function byVirtue(
     return [];
   }
 
-  return canonEntries.filter((entry) =>
-    entry.associatedVirtues.some(
-      (associatedVirtue) =>
-        normalize(associatedVirtue) ===
-        normalizedVirtue,
-    ),
+  return canonEntries.filter(
+    (entry) =>
+      entry.associatedVirtues.some(
+        (associatedVirtue) =>
+          normalize(
+            associatedVirtue,
+          ) === normalizedVirtue,
+      ),
   );
 }
 
@@ -148,12 +176,14 @@ function byTheme(
     return [];
   }
 
-  return canonEntries.filter((entry) =>
-    entry.associatedThemes.some(
-      (associatedTheme) =>
-        normalize(associatedTheme) ===
-        normalizedTheme,
-    ),
+  return canonEntries.filter(
+    (entry) =>
+      entry.associatedThemes.some(
+        (associatedTheme) =>
+          normalize(
+            associatedTheme,
+          ) === normalizedTheme,
+      ),
   );
 }
 
@@ -167,14 +197,16 @@ function related(
   }
 
   return entry.relatedEntries
-    .map((relatedId) =>
-      get(relatedId),
+    .map(
+      (relatedId) =>
+        get(relatedId),
     )
     .filter(
       (
         relatedEntry,
       ): relatedEntry is CanonEntry =>
-        relatedEntry !== undefined,
+        relatedEntry !==
+        undefined,
     );
 }
 
@@ -197,49 +229,79 @@ export interface CanonValidationResult {
   missingVersions: string[];
 }
 
-function validate(): CanonValidationResult {
-  const duplicateIds: string[] = [];
+function validate():
+  CanonValidationResult {
+  const duplicateIds:
+    string[] = [];
 
   const missingRelatedEntries: {
     entryId: string;
     relatedId: string;
   }[] = [];
 
-  const missingVersions: string[] = [];
+  const missingVersions:
+    string[] = [];
 
-  const seenIds = new Set<string>();
+  const seenIds =
+    new Set<string>();
 
-  for (const entry of canonEntries) {
-    if (seenIds.has(entry.id)) {
-      duplicateIds.push(entry.id);
+  for (
+    const entry
+    of canonEntries
+  ) {
+    if (
+      seenIds.has(entry.id)
+    ) {
+      duplicateIds.push(
+        entry.id,
+      );
     }
 
-    seenIds.add(entry.id);
+    seenIds.add(
+      entry.id,
+    );
 
-    if (!entry.canonVersion.trim()) {
-      missingVersions.push(entry.id);
+    if (
+      !entry.canonVersion.trim()
+    ) {
+      missingVersions.push(
+        entry.id,
+      );
     }
   }
 
-  for (const entry of canonEntries) {
+  for (
+    const entry
+    of canonEntries
+  ) {
     for (
       const relatedId
       of entry.relatedEntries
     ) {
-      if (!canonById[relatedId]) {
-        missingRelatedEntries.push({
-          entryId: entry.id,
-          relatedId,
-        });
+      if (
+        !canonById[
+          relatedId
+        ]
+      ) {
+        missingRelatedEntries.push(
+          {
+            entryId:
+              entry.id,
+            relatedId,
+          },
+        );
       }
     }
   }
 
   return {
     valid:
-      duplicateIds.length === 0 &&
-      missingRelatedEntries.length === 0 &&
-      missingVersions.length === 0,
+      duplicateIds.length ===
+        0 &&
+      missingRelatedEntries.length ===
+        0 &&
+      missingVersions.length ===
+        0,
 
     duplicateIds,
 
@@ -256,7 +318,8 @@ function validate(): CanonValidationResult {
  */
 
 export const HeraldCanon = {
-  entries: canonEntries,
+  entries:
+    canonEntries,
 
   get,
 

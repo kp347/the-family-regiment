@@ -111,6 +111,14 @@ const legacyPrimaryChargeMap: Record<
  * the current Canon instead of becoming invalid.
  *
  * They are NOT members of the current V1 Shield Canon.
+ *
+ * Locked legacy normalization:
+ *
+ * Tournament Shield -> Spanish Shield
+ * Crusader Shield   -> Heater Shield
+ *
+ * These aliases are migration rules only. They must not be
+ * exposed as additional customer-facing shield choices.
  * =========================================================
  */
 
@@ -140,16 +148,13 @@ const shieldReferenceMap: Record<
 
   /*
    * Legacy migration aliases.
-   *
-   * These mappings preserve old customer drafts while the
-   * live Builder moves to the V1 shield collection.
    */
   "Tournament Shield": {
-    assetId: "french-shield",
+    assetId: "spanish-shield",
   },
 
   "Crusader Shield": {
-    assetId: "spanish-shield",
+    assetId: "heater-shield",
   },
 };
 

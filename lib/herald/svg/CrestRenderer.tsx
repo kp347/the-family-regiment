@@ -1,107 +1,233 @@
 "use client";
 
-import type {
-  BuilderCrestSpec,
-} from "@/lib/herald/types";
+import { useId } from "react";
+
+import type { BuilderCrestSpec } from "@/lib/herald/types";
+
+import { HEATER_SHIELD_PATH } from "./shields/heater";
+import { FRENCH_SHIELD_PATH } from "./shields/french";
+import { NORMAN_SHIELD_PATH } from "./shields/norman";
+import { SPANISH_SHIELD_PATH } from "./shields/spanish";
+import { TARGE_SHIELD_PATH } from "./shields/targe";
 
 import {
-  HeaterShield,
-  HEATER_SHIELD_PATH,
-} from "./shields/heater";
+  getAnimalReferenceByName,
+} from "@/lib/herald/visualCanon/animalReferences";
 
-import {
-  LionRampant,
-} from "./animals/lion";
+/*
+ * =========================================================
+ * The Family Regiment
+ * Customer-Facing Crest Renderer
+ * =========================================================
+ *
+ * V1 PRESENTATION CANON
+ *
+ * TOP:
+ * Compact fitted surname rocker with pronounced curved text
+ *
+ * CENTER:
+ * Shield + one dominant approved Canon animal
+ *
+ * BOTTOM:
+ * Compact fitted motto rocker
+ *
+ * The three elements are intentionally composed as one
+ * unified military-inspired insignia.
+ *
+ * Crowns and initials are not rendered in the customer-facing
+ * V1 crest.
+ *
+ * This renderer DOES NOT replace the controlled SVG animal
+ * masters used by the production/export pipeline.
+ * =========================================================
+ */
 
 type CrestRendererProps = {
   crest: BuilderCrestSpec;
   className?: string;
   title?: string;
+  chargeColor?: string;
 };
 
-type Point =
-  readonly [number, number];
+const DEFAULT_FIELD = "#11120F";
+const DEFAULT_IVORY = "#E8D7AE";
+const DEFAULT_GOLD = "#D4AF6A";
 
-const legacyShieldPaths: Record<
-  Exclude<
-    BuilderCrestSpec["shield"],
-    "Heater Shield"
-  >,
+const shieldPaths: Record<
+  BuilderCrestSpec["shield"],
   string
 > = {
-  "Norman Shield":
-    "M50 7 C72 7 88 12 92 18 V43 C92 70 74 94 50 110 C26 94 8 70 8 43 V18 C12 12 28 7 50 7 Z",
-
-  "Tournament Shield":
-    "M12 10 H88 L94 24 L86 76 L50 108 L14 76 L6 24 Z",
-
-  "Crusader Shield":
-    "M9 10 H91 L95 22 L84 78 L50 109 L16 78 L5 22 Z",
-};
-
-const crownLabels: Record<
-  Exclude<
-    BuilderCrestSpec["crown"],
-    "None"
-  >,
-  string
-> = {
-  Baron: "BARON",
-  Count: "COUNT",
-  Ducal: "DUCAL",
-  Royal: "ROYAL",
+  "Heater Shield": HEATER_SHIELD_PATH,
+  "French Shield": FRENCH_SHIELD_PATH,
+  "Norman Shield": NORMAN_SHIELD_PATH,
+  "Spanish Shield": SPANISH_SHIELD_PATH,
+  Targe: TARGE_SHIELD_PATH,
 };
 
 function getShieldPath(
-  shield:
-    BuilderCrestSpec["shield"],
+  shield: BuilderCrestSpec["shield"],
 ): string {
-  if (
-    shield === "Heater Shield"
-  ) {
-    return HEATER_SHIELD_PATH;
+  return shieldPaths[shield];
+}
+
+function resolveFieldColor(
+  value: string | undefined,
+): string {
+  return value?.trim() || DEFAULT_FIELD;
+}
+
+function resolveSecondaryColor(
+  value: string | undefined,
+): string {
+  return value?.trim() || DEFAULT_IVORY;
+}
+
+function resolveMetallicColor(
+  value: string | undefined,
+): string {
+  if (value === "silver") {
+    return "#D8DCE2";
   }
 
-  return legacyShieldPaths[
-    shield
-  ];
+  return DEFAULT_GOLD;
+}
+
+function hexToRgb01(hex: string) {
+  const normalized =
+    hex.replace("#", "").trim();
+
+  const expanded =
+    normalized.length === 3
+      ? normalized
+          .split("")
+          .map((value) => value + value)
+          .join("")
+      : normalized;
+
+  const numeric =
+    Number.parseInt(expanded, 16);
+
+  if (
+    Number.isNaN(numeric) ||
+    expanded.length !== 6
+  ) {
+    return {
+      r: 0.83,
+      g: 0.69,
+      b: 0.42,
+    };
+  }
+
+  return {
+    r:
+      ((numeric >> 16) & 255) /
+      255,
+
+    g:
+      ((numeric >> 8) & 255) /
+      255,
+
+    b:
+      (numeric & 255) /
+      255,
+  };
+}
+
+function normalizeRockerText(
+  value: string | undefined,
+  fallback: string,
+  maxLength: number,
+): string {
+  const normalized =
+    value
+      ?.trim()
+      .replace(/\s+/g, " ");
+
+  return (
+    normalized || fallback
+  )
+    .slice(0, maxLength)
+    .toUpperCase();
 }
 
 export default function CrestRenderer({
   crest,
   className = "",
   title,
+  chargeColor,
 }: CrestRendererProps) {
+  const instanceId =
+    useId().replace(
+      /[^a-zA-Z0-9_-]/g,
+      "",
+    );
+
   const primary =
-    crest.colors.primary;
+    resolveFieldColor(
+      crest.colors?.primary,
+    );
 
   const secondary =
-    crest.colors.secondary;
+    resolveSecondaryColor(
+      crest.colors?.secondary,
+    );
 
   const metallic =
-    crest.colors.metallic ===
-    "silver"
-      ? "#D8DCE2"
-      : "#D4AF6A";
+    resolveMetallicColor(
+      crest.colors?.metallic,
+    );
+
+  const presentationColor =
+    chargeColor?.trim() ||
+    metallic;
+
+  const familyName =
+    normalizeRockerText(
+      crest.heritage,
+      "FAMILY",
+      18,
+    );
+
+  const motto =
+    normalizeRockerText(
+      crest.motto,
+      "FORTIS IN FAMILIA",
+      28,
+    );
 
   const accessibleTitle =
     title ??
-    `${crest.animal} crest with ${crest.shield} and ${crest.crown} crown`;
+    `${familyName} family crest featuring a ${crest.animal}`;
 
   const shieldPath =
     getShieldPath(
       crest.shield,
     );
 
+  const shadowId =
+    `crest-shadow-${instanceId}`;
+
+  const clipId =
+    `crest-shield-clip-${instanceId}`;
+
+  const chargeFilterId =
+    `crest-charge-filter-${instanceId}`;
+
+  const topTextPathId =
+    `crest-top-text-${instanceId}`;
+
+  const bottomTextPathId =
+    `crest-bottom-text-${instanceId}`;
+
   return (
     <svg
       viewBox="0 0 200 250"
       role="img"
-      aria-label={
-        accessibleTitle
-      }
+      aria-label={accessibleTitle}
       className={className}
-      xmlns="http://www.w3.org/2000/svg"
+      xmlns="http\\\\://www.w3.org/2000/svg"
+      shapeRendering="geometricPrecision"
+      textRendering="geometricPrecision"
     >
       <title>
         {accessibleTitle}
@@ -109,7 +235,7 @@ export default function CrestRenderer({
 
       <defs>
         <filter
-          id="crest-shadow"
+          id={shadowId}
           x="-20%"
           y="-20%"
           width="140%"
@@ -120,607 +246,455 @@ export default function CrestRenderer({
             dy="3"
             stdDeviation="3"
             floodColor="#000000"
-            floodOpacity="0.45"
+            floodOpacity="0.38"
           />
         </filter>
 
-        <clipPath id="crest-shield-clip">
+        <clipPath id={clipId}>
           <path
             d={shieldPath}
             transform="translate(50 64)"
           />
         </clipPath>
+
+        <CanonChargeFilter
+          id={chargeFilterId}
+          color={presentationColor}
+        />
+
+        {/*
+         * TOP TEXT PATH
+         *
+         * Deliberately more pronounced than the previous
+         * shallow arc. This makes the military-tab character
+         * visible even with short surnames such as LAURENT
+         * and more apparent with longer family names.
+         *
+         * The rocker geometry itself remains unchanged.
+         */}
+        <path
+          id={topTextPathId}
+          d="M63 64 Q100 52 137 64"
+          fill="none"
+        />
+
+        {/*
+         * Bottom motto path remains unchanged during this
+         * micro-pass.
+         */}
+        <path
+          id={bottomTextPathId}
+          d="M59 193 Q100 203 141 193"
+          fill="none"
+        />
       </defs>
 
-      <g filter="url(#crest-shadow)">
-        {crest.crown !==
-          "None" && (
-          <Crown
-            style={
-              crest.crown
-            }
-            fill={metallic}
-            stroke={
-              secondary
-            }
+      <g
+        filter={`url(#${shadowId})`}
+      >
+        <TopRocker
+          surname={familyName}
+          fill={primary}
+          stroke={presentationColor}
+          textColor={presentationColor}
+          textPathId={topTextPathId}
+        />
+
+        <Shield
+          path={shieldPath}
+          primary={primary}
+          secondary={presentationColor}
+        />
+
+        <g
+          clipPath={`url(#${clipId})`}
+        >
+          <CanonAnimalCharge
+            animal={crest.animal}
+            filterId={chargeFilterId}
           />
-        )}
-
-        <g transform="translate(0 2)">
-          {crest.shield ===
-          "Heater Shield" ? (
-            <HeaterShield
-              fill={primary}
-              borderColor={
-                metallic
-              }
-              innerBorderColor={
-                secondary
-              }
-              transform="translate(50 64)"
-            />
-          ) : (
-            <>
-              <path
-                d={
-                  shieldPath
-                }
-                transform="translate(50 64)"
-                fill={
-                  primary
-                }
-                stroke={
-                  metallic
-                }
-                strokeWidth="5"
-                strokeLinejoin="round"
-              />
-
-              <path
-                d={
-                  shieldPath
-                }
-                transform="translate(50 64) scale(0.9) translate(5 6)"
-                fill="none"
-                stroke={
-                  secondary
-                }
-                strokeWidth="1.8"
-                strokeLinejoin="round"
-                opacity="0.82"
-              />
-            </>
-          )}
-
-          <g clipPath="url(#crest-shield-clip)">
-            <path
-              d="M55 123 L145 79 L145 182 L55 226 Z"
-              fill={
-                secondary
-              }
-              opacity="0.12"
-            />
-
-            <AnimalCharge
-              animal={
-                crest.animal
-              }
-              fill={
-                metallic
-              }
-              accent={
-                secondary
-              }
-            />
-          </g>
         </g>
 
-        {crest.banner && (
-          <Banner
-            motto={
-              crest.motto
-            }
-            fill={
-              secondary
-            }
-            stroke={
-              metallic
-            }
-            textColor={
-              primary
-            }
-          />
-        )}
-
-        <Initials
-          value={
-            crest.initials
-          }
-          fill={
-            secondary
-          }
+        <BottomRocker
+          motto={motto}
+          fill={primary}
+          stroke={presentationColor}
+          textColor={presentationColor}
+          textPathId={bottomTextPathId}
         />
       </g>
     </svg>
   );
 }
 
-function Crown({
-  style,
-  fill,
-  stroke,
+function Shield({
+  path,
+  primary,
+  secondary,
 }: {
-  style: Exclude<
-    BuilderCrestSpec["crown"],
-    "None"
-  >;
-
-  fill: string;
-
-  stroke: string;
+  path: string;
+  primary: string;
+  secondary: string;
 }) {
-  const pointsByStyle: Record<
-    typeof style,
-    Point[]
-  > = {
-    Baron: [
-      [68, 54],
-      [78, 38],
-      [88, 54],
-      [100, 34],
-      [112, 54],
-      [122, 38],
-      [132, 54],
-    ],
-
-    Count: [
-      [66, 54],
-      [76, 34],
-      [88, 51],
-      [100, 25],
-      [112, 51],
-      [124, 34],
-      [134, 54],
-    ],
-
-    Ducal: [
-      [64, 54],
-      [75, 31],
-      [87, 49],
-      [100, 20],
-      [113, 49],
-      [125, 31],
-      [136, 54],
-    ],
-
-    Royal: [
-      [62, 55],
-      [73, 29],
-      [86, 48],
-      [100, 16],
-      [114, 48],
-      [127, 29],
-      [138, 55],
-    ],
-  };
-
-  const polygon =
-    pointsByStyle[style]
-      .map(
-        ([x, y]) =>
-          `${x},${y}`,
-      )
-      .join(" ");
-
   return (
-    <g>
-      <polygon
-        points={`${polygon} 132,64 68,64`}
-        fill={fill}
-        stroke={stroke}
-        strokeWidth="2.5"
+    <g transform="translate(0 2)">
+      <path
+        d={path}
+        transform="translate(50 64)"
+        fill={primary}
+        stroke={secondary}
+        strokeWidth="5"
         strokeLinejoin="round"
       />
 
-      <rect
-        x="68"
-        y="55"
-        width="64"
-        height="12"
-        rx="3"
+      <path
+        d={path}
+        transform="translate(50 64) scale(0.9) translate(5 6)"
+        fill="none"
+        stroke={secondary}
+        strokeWidth="1.8"
+        strokeLinejoin="round"
+        opacity="0.62"
+      />
+    </g>
+  );
+}
+
+/*
+ * =========================================================
+ * TOP SURNAME ROCKER
+ * =========================================================
+ */
+
+function TopRocker({
+  surname,
+  fill,
+  stroke,
+  textColor,
+  textPathId,
+}: {
+  surname: string;
+  fill: string;
+  stroke: string;
+  textColor: string;
+  textPathId: string;
+}) {
+  const fontSize =
+    surname.length > 14
+      ? 7.8
+      : surname.length > 10
+        ? 8.6
+        : 9.4;
+
+  const letterSpacing =
+    surname.length > 14
+      ? 0.35
+      : surname.length > 10
+        ? 0.65
+        : 0.95;
+
+  return (
+    <g>
+      <path
+        d="
+          M57 54
+          Q100 42 143 54
+          L140 68
+          Q100 58 60 68
+          Z
+        "
         fill={fill}
         stroke={stroke}
-        strokeWidth="2.5"
-      />
-
-      <circle
-        cx="100"
-        cy="21"
-        r="3.5"
-        fill={stroke}
-      />
-
-      <circle
-        cx="75"
-        cy="33"
-        r="3"
-        fill={stroke}
-      />
-
-      <circle
-        cx="125"
-        cy="33"
-        r="3"
-        fill={stroke}
+        strokeWidth="4"
+        strokeLinejoin="round"
       />
 
       <text
-        x="100"
-        y="62.5"
-        textAnchor="middle"
-        fontSize="5.5"
-        fontWeight="700"
-        letterSpacing="1.2"
-        fill="#1B1B18"
+        fontSize={fontSize}
+        fontWeight="900"
+        letterSpacing={letterSpacing}
+        fill={textColor}
       >
-        {
-          crownLabels[
-            style
-          ]
-        }
+        <textPath
+          href={`#${textPathId}`}
+          startOffset="50%"
+          textAnchor="middle"
+        >
+          {surname}
+        </textPath>
       </text>
     </g>
   );
 }
 
-function AnimalCharge({
-  animal,
-  fill,
-  accent,
-}: {
-  animal:
-    BuilderCrestSpec["animal"];
+/*
+ * =========================================================
+ * BOTTOM MOTTO ROCKER
+ * =========================================================
+ */
 
-  fill: string;
-
-  accent: string;
-}) {
-  switch (animal) {
-    case "Eagle":
-      return (
-        <Eagle
-          fill={fill}
-          accent={
-            accent
-          }
-        />
-      );
-
-    case "Wolf":
-      return (
-        <Wolf
-          fill={fill}
-          accent={
-            accent
-          }
-        />
-      );
-
-    case "Bear":
-      return (
-        <Bear
-          fill={fill}
-          accent={
-            accent
-          }
-        />
-      );
-
-    case "Stag":
-      return (
-        <Stag
-          fill={fill}
-          accent={
-            accent
-          }
-        />
-      );
-
-    case "Lion":
-    default:
-      return (
-        <LionRampant
-          fill={fill}
-          accent={
-            accent
-          }
-          transform="translate(66 83) scale(0.78)"
-        />
-      );
-  }
-}
-
-function Eagle({
-  fill,
-  accent,
-}: ChargeProps) {
-  return (
-    <g
-      transform="translate(66 102)"
-      fill={fill}
-      stroke={accent}
-      strokeWidth="2.1"
-      strokeLinejoin="round"
-    >
-      <path d="M34 9 C22 4 10 7 2 17 C15 18 24 24 31 35 C20 30 10 32 1 40 C14 41 25 48 33 59 L39 43 L34 9 Z" />
-
-      <path d="M66 9 C78 4 90 7 98 17 C85 18 76 24 69 35 C80 30 90 32 99 40 C86 41 75 48 67 59 L61 43 L66 9 Z" />
-
-      <path d="M38 14 C45 8 55 8 62 14 L61 49 C58 60 53 70 50 78 C47 70 42 60 39 49 Z" />
-
-      <path d="M42 12 L50 2 L58 12 Z" />
-
-      <path d="M42 74 L30 91 L45 84 L50 95 L55 84 L70 91 L58 74 Z" />
-
-      <circle
-        cx="53"
-        cy="15"
-        r="2"
-        fill={
-          accent
-        }
-        stroke="none"
-      />
-    </g>
-  );
-}
-
-function Wolf({
-  fill,
-  accent,
-}: ChargeProps) {
-  return (
-    <g
-      transform="translate(72 104)"
-      fill={fill}
-      stroke={accent}
-      strokeWidth="2.2"
-      strokeLinejoin="round"
-      strokeLinecap="round"
-    >
-      <path d="M22 14 L10 2 L12 28 C5 36 4 49 10 60 C16 71 29 77 41 73 C55 69 63 56 60 42 C58 32 51 24 42 21 L39 5 L31 17 Z" />
-
-      <path
-        d="M19 39 C28 34 39 34 48 39 C43 44 42 50 43 57 C35 53 27 48 19 39 Z"
-        fill={
-          accent
-        }
-      />
-
-      <path
-        d="M15 69 C8 83 10 94 21 103 C19 89 26 81 38 77"
-        fill="none"
-        strokeWidth="5"
-      />
-
-      <circle
-        cx="38"
-        cy="28"
-        r="2.3"
-        fill={
-          accent
-        }
-        stroke="none"
-      />
-    </g>
-  );
-}
-
-function Bear({
-  fill,
-  accent,
-}: ChargeProps) {
-  return (
-    <g
-      transform="translate(72 102)"
-      fill={fill}
-      stroke={accent}
-      strokeWidth="2.2"
-      strokeLinejoin="round"
-    >
-      <circle
-        cx="23"
-        cy="17"
-        r="9"
-      />
-
-      <circle
-        cx="55"
-        cy="17"
-        r="9"
-      />
-
-      <path d="M14 30 C17 16 30 10 39 10 C48 10 61 16 64 30 C69 51 60 73 39 79 C18 73 9 51 14 30 Z" />
-
-      <path
-        d="M24 47 C31 42 47 42 54 47 C50 57 45 62 39 63 C33 62 28 57 24 47 Z"
-        fill={
-          accent
-        }
-      />
-
-      <path
-        d="M20 70 L12 101 M35 77 L32 105 M52 75 L60 102"
-        fill="none"
-        strokeWidth="6"
-        strokeLinecap="round"
-      />
-
-      <circle
-        cx="31"
-        cy="31"
-        r="2.2"
-        fill={
-          accent
-        }
-        stroke="none"
-      />
-
-      <circle
-        cx="48"
-        cy="31"
-        r="2.2"
-        fill={
-          accent
-        }
-        stroke="none"
-      />
-    </g>
-  );
-}
-
-function Stag({
-  fill,
-  accent,
-}: ChargeProps) {
-  return (
-    <g
-      transform="translate(74 94)"
-      fill={fill}
-      stroke={accent}
-      strokeWidth="2.2"
-      strokeLinejoin="round"
-      strokeLinecap="round"
-    >
-      <path d="M30 30 C18 37 14 52 20 66 C25 77 35 83 46 81 C58 79 67 68 67 55 C67 43 60 33 50 29 C45 27 36 27 30 30 Z" />
-
-      <path d="M28 34 L17 20 L30 24 Z M52 32 L66 19 L59 38 Z" />
-
-      <path
-        d="M31 24 C21 15 18 5 22 -5 M24 13 L14 7 M24 7 L29 -2"
-        fill="none"
-        strokeWidth="5"
-      />
-
-      <path
-        d="M54 24 C64 15 67 5 63 -5 M61 13 L71 7 M61 7 L56 -2"
-        fill="none"
-        strokeWidth="5"
-      />
-
-      <path
-        d="M31 78 L22 105 M46 81 L46 108 M59 73 L68 101"
-        fill="none"
-        strokeWidth="5"
-      />
-
-      <path
-        d="M33 51 C39 47 48 47 53 51 C48 57 43 59 38 57 Z"
-        fill={
-          accent
-        }
-      />
-
-      <circle
-        cx="45"
-        cy="39"
-        r="2.2"
-        fill={
-          accent
-        }
-        stroke="none"
-      />
-    </g>
-  );
-}
-
-function Banner({
+function BottomRocker({
   motto,
   fill,
   stroke,
   textColor,
+  textPathId,
 }: {
   motto: string;
-
   fill: string;
-
   stroke: string;
-
   textColor: string;
+  textPathId: string;
 }) {
-  const displayMotto =
-    motto.trim() ||
-    "FORTIS IN FAMILIA";
+  const fontSize =
+    motto.length > 22
+      ? 6.1
+      : motto.length > 16
+        ? 6.8
+        : 7.8;
+
+  const letterSpacing =
+    motto.length > 22
+      ? 0.15
+      : motto.length > 16
+        ? 0.35
+        : 0.65;
 
   return (
-    <g transform="translate(0 2)">
+    <g>
       <path
-        d="M28 205 C52 196 148 196 172 205 L163 231 C135 225 65 225 37 231 Z"
+        d="
+          M54 181
+          Q100 193 146 181
+          L150 197
+          Q100 211 50 197
+          Z
+        "
         fill={fill}
         stroke={stroke}
-        strokeWidth="2.5"
-        strokeLinejoin="round"
-      />
-
-      <path
-        d="M28 205 L11 214 L30 220 M172 205 L189 214 L170 220"
-        fill={fill}
-        stroke={stroke}
-        strokeWidth="2.5"
+        strokeWidth="4"
         strokeLinejoin="round"
       />
 
       <text
-        x="100"
-        y="218"
-        textAnchor="middle"
-        fontSize="8.5"
-        fontWeight="800"
-        letterSpacing="1.1"
-        fill={
-          textColor
-        }
+        fontSize={fontSize}
+        fontWeight="900"
+        letterSpacing={letterSpacing}
+        fill={textColor}
       >
-        {displayMotto
-          .slice(0, 28)
-          .toUpperCase()}
+        <textPath
+          href={`#${textPathId}`}
+          startOffset="50%"
+          textAnchor="middle"
+        >
+          {motto}
+        </textPath>
       </text>
     </g>
   );
 }
 
-function Initials({
-  value,
-  fill,
-}: {
-  value: string;
+/*
+ * =========================================================
+ * CANON CHARGE COLOR TREATMENT
+ * =========================================================
+ */
 
-  fill: string;
+function CanonChargeFilter({
+  id,
+  color,
+}: {
+  id: string;
+  color: string;
 }) {
-  const initials =
-    value.trim() ||
-    "FR";
+  const {
+    r,
+    g,
+    b,
+  } = hexToRgb01(color);
 
   return (
-    <text
-      x="100"
-      y="193"
-      textAnchor="middle"
-      fontSize="8"
-      fontWeight="800"
-      letterSpacing="2.2"
-      fill={fill}
-      opacity="0.9"
+    <filter
+      id={id}
+      x="-10%"
+      y="-10%"
+      width="120%"
+      height="120%"
+      colorInterpolationFilters="sRGB"
     >
-      {initials
-        .slice(0, 5)
-        .toUpperCase()}
-    </text>
+      <feColorMatrix
+        type="matrix"
+        values="
+          0.299 0.587 0.114 0 0
+          0.299 0.587 0.114 0 0
+          0.299 0.587 0.114 0 0
+          0     0     0     1 0
+        "
+        result="luminance"
+      />
+
+      <feComponentTransfer
+        in="luminance"
+        result="contrast"
+      >
+        <feFuncR
+          type="gamma"
+          amplitude="1.28"
+          exponent="0.82"
+          offset="0"
+        />
+
+        <feFuncG
+          type="gamma"
+          amplitude="1.28"
+          exponent="0.82"
+          offset="0"
+        />
+
+        <feFuncB
+          type="gamma"
+          amplitude="1.28"
+          exponent="0.82"
+          offset="0"
+        />
+
+        <feFuncA
+          type="identity"
+        />
+      </feComponentTransfer>
+
+      <feColorMatrix
+        in="contrast"
+        type="matrix"
+        values={`
+          ${r} 0 0 0 0
+          0 ${g} 0 0 0
+          0 0 ${b} 0 0
+          0 0 0 1 0
+        `}
+      />
+    </filter>
   );
 }
 
-type ChargeProps = {
-  fill: string;
+/*
+ * =========================================================
+ * VISUAL CANON PRIMARY CHARGE
+ * =========================================================
+ */
 
-  accent: string;
+type AnimalPresentationCalibration = {
+  scale: number;
+  x: number;
+  y: number;
 };
+
+const animalPresentationCalibration: Partial<
+  Record<
+    BuilderCrestSpec["animal"],
+    AnimalPresentationCalibration
+  >
+> = {
+  Lion: {
+    scale: 1,
+    x: 0,
+    y: -10,
+  },
+  Eagle: {
+    scale: 0.88,
+    x: 0,
+    y: -28,
+  },
+  Wolf: {
+    scale: 0.82,
+    x: -3,
+    y: -26,
+  },
+  Bear: {
+    scale: 0.82,
+    x: -4,
+    y: -20,
+  },
+  Stag: {
+    scale: 0.86,
+    x: 0,
+    y: -28,
+  },
+  Griffin: {
+    scale: 0.76,
+    x: 0,
+    y: -29,
+  },
+  Salmon: {
+    scale: 0.72,
+    x: 2,
+    y: -25,
+  },
+};
+
+function CanonAnimalCharge({
+  animal,
+  filterId,
+}: {
+  animal:
+    BuilderCrestSpec["animal"];
+
+  filterId: string;
+}) {
+  const artwork =
+    getAnimalReferenceByName(
+      animal,
+    );
+
+  if (!artwork) {
+    return null;
+  }
+
+  const calibration =
+    animalPresentationCalibration[
+      animal
+    ] ?? {
+      scale: 1,
+      x: 0,
+      y: 0,
+    };
+
+  const sourceScale =
+    artwork.scale ?? 1;
+
+  const scale =
+    sourceScale *
+    calibration.scale;
+
+  const width =
+    106 * scale;
+
+  const height =
+    116 * scale;
+
+  const x =
+    100 -
+    width / 2 +
+    calibration.x;
+
+  const y =
+    105 -
+    (height - 96) / 2 +
+    calibration.y;
+
+  return (
+    <image
+      href={artwork.transparentSrc}
+      x={x}
+      y={y}
+      width={width}
+      height={height}
+      preserveAspectRatio="xMidYMid meet"
+      filter={`url(#${filterId})`}
+      opacity="1"
+      style={{
+        imageRendering: "auto",
+      }}
+    />
+  );
+}

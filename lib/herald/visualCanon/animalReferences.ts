@@ -1,23 +1,50 @@
-// lib/herald/visualCanon/animalReferences.ts
-
 import type { PrimaryChargeVisualCanonAssetId } from "./references";
+
+/*
+ * =========================================================
+ * The Family Regiment
+ * Animal Presentation Reference Artwork
+ * =========================================================
+ *
+ * Each Primary Charge maintains two controlled presentation
+ * assets:
+ *
+ * 1. src
+ *    The original Visual Canon reference artwork.
+ *
+ * 2. transparentSrc
+ *    A transparent presentation derivative used when the
+ *    Canon artwork must be composited into customer-facing
+ *    crest previews.
+ *
+ * Neither asset is a vendor-authoritative production master.
+ *
+ * Final production artwork will eventually use controlled
+ * vector masters and manufacturing-safe derivatives that
+ * have passed Family Regiment review and physical sampling.
+ * =========================================================
+ */
 
 export type AnimalReferenceArtwork = {
   assetId: PrimaryChargeVisualCanonAssetId;
   name: string;
+
+  /*
+   * Original Visual Canon presentation reference.
+   */
   src: string;
+
+  /*
+   * Transparent customer-facing presentation derivative.
+   * Used by browser crest previews and similar compositions.
+   */
+  transparentSrc: string;
+
   alt: string;
   objectPosition?: string;
   scale?: number;
 };
 
-/**
- * Controlled presentation artwork for the Primary Charge Visual Canon.
- *
- * These PNG files are customer-facing visual references only.
- * They are NOT vendor-authoritative production masters and must not
- * be treated as embroidery-ready artwork.
- */
 export const animalReferenceArtwork: Record<
   PrimaryChargeVisualCanonAssetId,
   AnimalReferenceArtwork
@@ -26,37 +53,45 @@ export const animalReferenceArtwork: Record<
     assetId: "lion",
     name: "Lion",
     src: "/canon/animals/lion.png",
-    alt: "Family Regiment Lion heraldic reference artwork",
+    transparentSrc:
+      "/canon/animals/lion-transparent.png",
+    alt: "Family Regiment Lion presentation reference",
   },
 
   eagle: {
     assetId: "eagle",
     name: "Eagle",
     src: "/canon/animals/eagle.png",
-    alt: "Family Regiment Eagle heraldic reference artwork",
+    transparentSrc:
+      "/canon/animals/eagle-transparent.png",
+    alt: "Family Regiment Eagle presentation reference",
   },
 
   wolf: {
     assetId: "wolf",
     name: "Wolf",
     src: "/canon/animals/wolf.png",
-    alt: "Family Regiment Wolf heraldic reference artwork",
+    transparentSrc:
+      "/canon/animals/wolf-transparent.png",
+    alt: "Family Regiment Wolf presentation reference",
   },
 
   bear: {
     assetId: "bear",
     name: "Bear",
     src: "/canon/animals/bear.png",
-    alt: "Family Regiment Bear heraldic reference artwork",
+    transparentSrc:
+      "/canon/animals/bear-transparent.png",
+    alt: "Family Regiment Bear presentation reference",
   },
 
   stag: {
     assetId: "stag",
     name: "Stag",
     src: "/canon/animals/stag.png",
-    alt: "Family Regiment Stag heraldic reference artwork",
-
-    // Stag needs slightly more room because of the antlers.
+    transparentSrc:
+      "/canon/animals/stag-transparent.png",
+    alt: "Family Regiment Stag presentation reference",
     scale: 1.08,
   },
 
@@ -64,16 +99,18 @@ export const animalReferenceArtwork: Record<
     assetId: "griffin",
     name: "Griffin",
     src: "/canon/animals/griffin.png",
-    alt: "Family Regiment Griffin heraldic reference artwork",
+    transparentSrc:
+      "/canon/animals/griffin-transparent.png",
+    alt: "Family Regiment Griffin presentation reference",
   },
 
   salmon: {
     assetId: "salmon",
     name: "Salmon",
     src: "/canon/animals/salmon.png",
-    alt: "Family Regiment Salmon heraldic reference artwork",
-
-    // Salmon is the intentional full-body composition.
+    transparentSrc:
+      "/canon/animals/salmon-transparent.png",
+    alt: "Family Regiment Salmon presentation reference",
     scale: 1.05,
   },
 };
@@ -88,7 +125,6 @@ export function getAnimalReferenceByName(
   name: string,
 ): AnimalReferenceArtwork | undefined {
   return Object.values(animalReferenceArtwork).find(
-    (artwork) =>
-      artwork.name.toLowerCase() === name.trim().toLowerCase(),
+    (artwork) => artwork.name === name,
   );
 }

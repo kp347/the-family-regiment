@@ -1,4 +1,5 @@
 // components/builder/BuilderHeritage.tsx
+// components/builder/BuilderHeritage.tsx
 
 import {
   getHeritageFlagComponent,
@@ -8,9 +9,9 @@ import {
 import type { HeritageFlagVisualCanonAssetId } from "@/lib/herald/visualCanon/references";
 
 type BuilderHeritageProps = {
-  heritage: string;
+  heritage: string[];
   options: string[];
-  onHeritageChange: (value: string) => void;
+  onHeritageChange: (value: string[]) => void;
 };
 
 type HeritageVisual = {
@@ -18,6 +19,8 @@ type HeritageVisual = {
   code: string;
   subtitle: string;
 };
+
+const MAX_HERITAGE_SELECTIONS = 3;
 
 const heritageVisuals: Record<string, HeritageVisual> = {
   "United States": {
@@ -198,6 +201,38 @@ export default function BuilderHeritage({
   options,
   onHeritageChange,
 }: BuilderHeritageProps) {
+  const selectedHeritage = heritage.slice(
+    0,
+    MAX_HERITAGE_SELECTIONS,
+  );
+
+  const selectionLimitReached =
+    selectedHeritage.length >= MAX_HERITAGE_SELECTIONS;
+
+  function toggleHeritage(option: string) {
+    const alreadySelected =
+      selectedHeritage.includes(option);
+
+    if (alreadySelected) {
+      onHeritageChange(
+        selectedHeritage.filter(
+          (item) => item !== option,
+        ),
+      );
+
+      return;
+    }
+
+    if (selectionLimitReached) {
+      return;
+    }
+
+    onHeritageChange([
+      ...selectedHeritage,
+      option,
+    ]);
+  }
+
   return (
     <div>
       <div className="mb-6 flex items-end justify-between gap-6">
@@ -207,43 +242,140 @@ export default function BuilderHeritage({
           </p>
 
           <h3 className="mt-2 text-2xl text-[#F4EFE5]">
-            Choose your primary heritage
+            Choose your heritage
           </h3>
 
           <p className="mt-2 max-w-xl text-sm leading-6 text-[#8E8A81]">
-            This selection becomes the first visual anchor of
-            the shield and will later guide recommended flags,
-            symbols, colors, and regional motifs.
+            Select up to three places that represent your
+            family&apos;s geographic or ancestral heritage.
+            Each selection becomes an individual flag patch
+            on the Regiment Jacket&apos;s right shoulder.
           </p>
         </div>
 
         <div className="hidden rounded-full border border-[#B08D57]/30 bg-[#B08D57]/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-[#D5B77A] sm:block">
-          Quadrant I
+          {selectedHeritage.length} / {MAX_HERITAGE_SELECTIONS}
         </div>
       </div>
 
+      {selectedHeritage.length > 0 && (
+        <div className="mb-6 rounded-[1.25rem] border border-[#B08D57]/20 bg-[#B08D57]/5 px-5 py-4">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div>
+              <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-[#B08D57]">
+                Right Shoulder Heritage
+              </p>
+
+              <p className="mt-1 text-sm text-[#8E8A81]">
+                {selectedHeritage.length === 1
+                  ? "1 individual flag patch selected"
+                  : `${selectedHeritage.length} individual flag patches selected`}
+              </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => onHeritageChange([])}
+              className="rounded-full border border-white/10 px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-[#8E8A81] transition hover:border-[#B08D57]/45 hover:text-[#D0AE69]"
+            >
+              Clear
+            </button>
+          </div>
+
+          <div className="mt-4 flex flex-wrap gap-2">
+            {selectedHeritage.map(
+              (item, index) => {
+                const visual =
+                  heritageVisuals[item];
+
+                const Flag =
+                  getFlagComponent(visual);
+
+                return (
+                  <button
+                    key={item}
+                    type="button"
+                    onClick={() =>
+                      toggleHeritage(item)
+                    }
+                    className="flex items-center gap-2 rounded-full border border-[#B08D57]/30 bg-[#171815] py-1.5 pl-1.5 pr-3 transition hover:border-[#B08D57]/60"
+                    title={`Remove ${item}`}
+                  >
+                    <span className="flex h-7 w-9 items-center justify-center overflow-hidden rounded-md border border-white/10 bg-[#777777] p-0.5">
+                      {Flag ? (
+                        <Flag
+                          width="100%"
+                          height="100%"
+                          title={`Flag of ${item}`}
+                        />
+                      ) : (
+                        <span
+                          className="text-xs text-[#D8D0C3]"
+                          aria-hidden="true"
+                        >
+                          ⚑
+                        </span>
+                      )}
+                    </span>
+
+                    <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#D8D3CA]">
+                      {index + 1}. {item}
+                    </span>
+
+                    <span
+                      className="text-[#77736A]"
+                      aria-hidden="true"
+                    >
+                      ×
+                    </span>
+                  </button>
+                );
+              },
+            )}
+          </div>
+        </div>
+      )}
+
       <div className="grid gap-4 sm:grid-cols-2">
         {options.map((option) => {
-          const active = heritage === option;
-          const visual = heritageVisuals[option];
-          const Flag = getFlagComponent(visual);
+          const selectedIndex =
+            selectedHeritage.indexOf(option);
+
+          const active =
+            selectedIndex !== -1;
+
+          const disabled =
+            !active &&
+            selectionLimitReached;
+
+          const visual =
+            heritageVisuals[option];
+
+          const Flag =
+            getFlagComponent(visual);
 
           return (
             <button
               key={option}
               type="button"
-              onClick={() => onHeritageChange(option)}
+              onClick={() =>
+                toggleHeritage(option)
+              }
+              disabled={disabled}
               aria-pressed={active}
+              aria-disabled={disabled}
               className={[
                 "group relative min-h-[150px] overflow-hidden rounded-[1.35rem] border p-5 text-left transition duration-200",
                 active
                   ? "border-[#C6A15B] bg-[#C6A15B]/10 shadow-[inset_0_0_0_1px_rgba(198,161,91,0.18)]"
-                  : "border-white/10 bg-[#20211F] hover:-translate-y-0.5 hover:border-[#B08D57]/55 hover:bg-[#232420]",
+                  : disabled
+                    ? "cursor-not-allowed border-white/5 bg-[#1B1C1A] opacity-45"
+                    : "border-white/10 bg-[#20211F] hover:-translate-y-0.5 hover:border-[#B08D57]/55 hover:bg-[#232420]",
               ].join(" ")}
             >
               {active && (
-                <div className="absolute right-4 top-4 z-10 flex h-6 w-6 items-center justify-center rounded-full border border-[#C6A15B] bg-[#C6A15B] text-[11px] font-bold text-[#151515]">
-                  ✓
+                <div className="absolute right-4 top-4 z-10 flex h-7 min-w-7 items-center justify-center rounded-full border border-[#C6A15B] bg-[#C6A15B] px-2 text-[10px] font-bold text-[#151515]">
+                  {selectedIndex + 1}
                 </div>
               )}
 
@@ -286,7 +418,8 @@ export default function BuilderHeritage({
                   </div>
 
                   <p className="mt-1 text-sm text-[#8E8A81]">
-                    {visual?.subtitle ?? "Family heritage"}
+                    {visual?.subtitle ??
+                      "Family heritage"}
                   </p>
                 </div>
               </div>
@@ -297,12 +430,16 @@ export default function BuilderHeritage({
                     "text-xs font-semibold uppercase tracking-[0.18em] transition",
                     active
                       ? "text-[#D0AE69]"
-                      : "text-[#6F6B63] group-hover:text-[#B08D57]",
+                      : disabled
+                        ? "text-[#55524D]"
+                        : "text-[#6F6B63] group-hover:text-[#B08D57]",
                   ].join(" ")}
                 >
                   {active
-                    ? "Selected heritage"
-                    : "Select heritage"}
+                    ? `Heritage slot ${selectedIndex + 1}`
+                    : disabled
+                      ? "3 heritage flags selected"
+                      : "Add heritage"}
                 </p>
               </div>
             </button>
@@ -312,9 +449,10 @@ export default function BuilderHeritage({
 
       <div className="mt-5 rounded-xl border border-white/8 bg-black/10 px-4 py-3">
         <p className="text-xs leading-5 text-[#77736A]">
-          Heritage selections use controlled Family Regiment
-          Visual Canon artwork. Country codes remain secondary;
-          the approved flag asset is the primary visual cue.
+          Each selection remains an independent Family
+          Regiment Visual Canon flag asset. Up to three
+          individual patches may be assigned to the right
+          shoulder; combined multi-flag artwork is not used.
         </p>
       </div>
     </div>

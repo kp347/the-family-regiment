@@ -1,11 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import {
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import M65JacketPreview, {
   type JacketPatchZone,
@@ -92,7 +88,7 @@ const defaultDraft: StudioDraft = {
 
   animal: "Lion",
   shield: "Heater Shield",
-  crown: "Ducal",
+  crown: "None",
 
   banner: true,
   wreath: false,
@@ -195,12 +191,11 @@ export default function CrestStudio() {
           ) as Partial<StudioDraft>)
         : {};
 
-      const builderAnimal =
-        resolveAnimal(
-          parsedBuilder.crest?.animal,
-          parsedBuilder.animal,
-          parsedBuilder.symbol,
-        );
+      const builderAnimal = resolveAnimal(
+        parsedBuilder.crest?.animal,
+        parsedBuilder.animal,
+        parsedBuilder.symbol,
+      );
 
       const studioAnimal = resolveAnimal(
         parsedStudio.animal,
@@ -224,10 +219,9 @@ export default function CrestStudio() {
         parsedStudio.crown,
       );
 
-      const builderFinish =
-        resolvePalette(
-          parsedBuilder.embroideryFinish,
-        );
+      const builderFinish = resolvePalette(
+        parsedBuilder.embroideryFinish,
+      );
 
       const studioFinish = resolvePalette(
         parsedStudio.palette,
@@ -1118,10 +1112,19 @@ function resolveShield(
   ...values: Array<string | undefined>
 ): BuilderShieldStyle | undefined {
   for (const value of values) {
-    if (
-      value &&
-      isBuilderShieldStyle(value)
-    ) {
+    if (!value) {
+      continue;
+    }
+
+    if (value === "Tournament Shield") {
+      return "Spanish Shield";
+    }
+
+    if (value === "Crusader Shield") {
+      return "Heater Shield";
+    }
+
+    if (isBuilderShieldStyle(value)) {
       return value;
     }
   }
@@ -1133,7 +1136,20 @@ function resolveCrown(
   ...values: Array<string | undefined>
 ): CrestCrown | undefined {
   for (const value of values) {
-    if (value && isCrestCrown(value)) {
+    if (!value) {
+      continue;
+    }
+
+    if (
+      value === "Baron" ||
+      value === "Count" ||
+      value === "Ducal" ||
+      value === "Royal"
+    ) {
+      return "None";
+    }
+
+    if (isCrestCrown(value)) {
       return value;
     }
   }

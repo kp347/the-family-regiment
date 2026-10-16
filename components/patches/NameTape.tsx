@@ -14,25 +14,10 @@ type NameTapeProps = {
   className?: string;
 };
 
-const finishStyles: Record<
-  NameTapeFinish,
-  {
-    text: string;
-    border: string;
-  }
-> = {
-  "Regiment Gold": {
-    text: "text-[#E8D7AE]",
-    border: "border-[#B08D57]",
-  },
-  "Tactical Subdued": {
-    text: "text-[#C1C3B2]",
-    border: "border-[#777B63]",
-  },
-  "Heritage Ivory": {
-    text: "text-[#F1E7CF]",
-    border: "border-[#D7C49C]",
-  },
+const finishText: Record<NameTapeFinish, string> = {
+  "Regiment Gold": "text-[#E8D7AE]",
+  "Tactical Subdued": "text-[#626A3A]",
+  "Heritage Ivory": "text-[#F1E7CF]",
 };
 
 export default function NameTape({
@@ -41,16 +26,15 @@ export default function NameTape({
   active = false,
   className = "",
 }: NameTapeProps) {
-  const styles = finishStyles[finish];
-
   return (
     <PatchBase
       shape="rectangle"
+      finish={finish}
       active={active}
-      className={`min-w-[120px] px-4 py-2 ${styles.border} ${className}`}
+      className={`min-w-[120px] px-4 py-2 ${className}`}
     >
       <span
-        className={`block text-center text-[10px] font-bold uppercase tracking-[0.28em] ${styles.text}`}
+        className={`block text-center text-[10px] font-bold uppercase tracking-[0.28em] ${finishText[finish]}`}
       >
         {name.trim() || "LAURENT"}
       </span>

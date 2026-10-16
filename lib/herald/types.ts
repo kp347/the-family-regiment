@@ -15,9 +15,10 @@ export type ShieldShape =
 
 export type BuilderShieldStyle =
   | "Heater Shield"
+  | "French Shield"
   | "Norman Shield"
-  | "Tournament Shield"
-  | "Crusader Shield";
+  | "Spanish Shield"
+  | "Targe";
 
 export type BorderStyle =
   | "merrow"
@@ -49,10 +50,10 @@ export type CrestAnimal =
 
 export type CrestCrown =
   | "None"
-  | "Baron"
-  | "Count"
-  | "Ducal"
-  | "Royal";
+  | "Regiment Crown"
+  | "Heritage Coronet"
+  | "Laurel Crest"
+  | "Naval Crown";
 
 export type CrestMetallic =
   | "gold"
@@ -210,17 +211,18 @@ export const crestAnimals: CrestAnimal[] = [
 
 export const builderShieldStyles: BuilderShieldStyle[] = [
   "Heater Shield",
+  "French Shield",
   "Norman Shield",
-  "Tournament Shield",
-  "Crusader Shield",
+  "Spanish Shield",
+  "Targe",
 ];
 
 export const crestCrowns: CrestCrown[] = [
   "None",
-  "Baron",
-  "Count",
-  "Ducal",
-  "Royal",
+  "Regiment Crown",
+  "Heritage Coronet",
+  "Laurel Crest",
+  "Naval Crown",
 ];
 
 export const defaultBuilderCrestSpec: BuilderCrestSpec = {
@@ -228,7 +230,7 @@ export const defaultBuilderCrestSpec: BuilderCrestSpec = {
 
   shield: "Heater Shield",
 
-  crown: "Ducal",
+  crown: "None",
 
   heritage: "France",
 
@@ -267,12 +269,76 @@ export function isBuilderShieldStyle(
   );
 }
 
+/*
+ * Compatibility boundary for older saved Builder drafts.
+ *
+ * Tournament Shield previously used Spanish-style geometry.
+ * Crusader Shield previously fell back to Heater-style geometry.
+ *
+ * The old names are accepted here only for migration.
+ * They are not part of the current customer-facing V1 vocabulary.
+ */
+export function normalizeBuilderShieldStyle(
+  value: string | undefined,
+): BuilderShieldStyle {
+  if (
+    value &&
+    isBuilderShieldStyle(value)
+  ) {
+    return value;
+  }
+
+  switch (value) {
+    case "Tournament Shield":
+      return "Spanish Shield";
+
+    case "Crusader Shield":
+      return "Heater Shield";
+
+    default:
+      return defaultBuilderCrestSpec.shield;
+  }
+}
+
 export function isCrestCrown(
   value: string,
 ): value is CrestCrown {
   return crestCrowns.includes(
     value as CrestCrown,
   );
+}
+
+/*
+ * Compatibility boundary for older rank-based crown values.
+ *
+ * Baron, Count, Ducal and Royal are intentionally NOT translated
+ * into one of the new Family Regiment ornaments because the old
+ * rank terminology does not carry the same meaning as the new
+ * curated ornament system.
+ *
+ * Older saved drafts therefore migrate safely to "None" and can
+ * receive a new ornament through an explicit customer selection.
+ */
+export function normalizeCrestCrown(
+  value: string | undefined,
+): CrestCrown {
+  if (
+    value &&
+    isCrestCrown(value)
+  ) {
+    return value;
+  }
+
+  switch (value) {
+    case "Baron":
+    case "Count":
+    case "Ducal":
+    case "Royal":
+      return "None";
+
+    default:
+      return defaultBuilderCrestSpec.crown;
+  }
 }
 
 export function normalizeBuilderCrestSpec(
@@ -287,17 +353,13 @@ export function normalizeBuilderCrestSpec(
         ? crest.animal
         : defaultBuilderCrestSpec.animal,
 
-    shield:
-      crest?.shield &&
-      isBuilderShieldStyle(crest.shield)
-        ? crest.shield
-        : defaultBuilderCrestSpec.shield,
+    shield: normalizeBuilderShieldStyle(
+      crest?.shield,
+    ),
 
-    crown:
-      crest?.crown &&
-      isCrestCrown(crest.crown)
-        ? crest.crown
-        : defaultBuilderCrestSpec.crown,
+    crown: normalizeCrestCrown(
+      crest?.crown,
+    ),
 
     heritage:
       crest?.heritage?.trim() ||
@@ -352,9 +414,10 @@ export function toShieldShape(
     ShieldShape
   > = {
     "Heater Shield": "heater",
+    "French Shield": "heater",
     "Norman Shield": "kite",
-    "Tournament Shield": "spanish",
-    "Crusader Shield": "heater",
+    "Spanish Shield": "spanish",
+    Targe: "round",
   };
 
   return shieldMap[shield];

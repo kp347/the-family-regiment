@@ -5,6 +5,13 @@ import type {
   BuilderShieldStyle,
   CrestCrown,
 } from "@/lib/herald/types";
+
+import {
+  isCrestAnimal,
+  normalizeBuilderShieldStyle,
+  normalizeCrestCrown,
+} from "@/lib/herald/types";
+
 import CrestRenderer from "@/lib/herald/svg/CrestRenderer";
 
 import PatchBase from "./PatchBase";
@@ -34,8 +41,13 @@ const finishPalettes: Record<
     border: string;
   }
 > = {
+  /*
+   * Default Family Regiment military-patch expression.
+   *
+   * OD green field + warm ivory + antique gold.
+   */
   "Regiment Gold": {
-    primary: "#20231C",
+    primary: "#4B5320",
     secondary: "#E8D7AE",
     metallic: "gold",
     border: "border-[#B08D57]",
@@ -69,23 +81,53 @@ export default function CrestPatch({
   const palette = finishPalettes[finish];
 
   const resolvedCrest: BuilderCrestSpec = {
-    animal: normalizeAnimal(crest?.animal ?? symbol),
-    shield: normalizeShield(crest?.shield ?? shield),
-    crown: normalizeCrown(crest?.crown ?? crown),
-    heritage: crest?.heritage?.trim() || "Heritage",
-    motto: crest?.motto?.trim() || "Fortis in Familia",
+    animal: normalizeAnimal(
+      crest?.animal ?? symbol,
+    ),
+
+    shield: normalizeBuilderShieldStyle(
+      crest?.shield ?? shield,
+    ),
+
+    crown: normalizeCrestCrown(
+      crest?.crown ?? crown,
+    ),
+
+    heritage:
+      crest?.heritage?.trim() ||
+      "Heritage",
+
+    motto:
+      crest?.motto?.trim() ||
+      "Fortis in Familia",
+
     initials:
       crest?.initials?.trim() ||
       initials?.trim() ||
       "FR",
+
     colors: {
-      primary: crest?.colors?.primary ?? palette.primary,
-      secondary: crest?.colors?.secondary ?? palette.secondary,
-      metallic: crest?.colors?.metallic ?? palette.metallic,
+      primary:
+        crest?.colors?.primary ??
+        palette.primary,
+
+      secondary:
+        crest?.colors?.secondary ??
+        palette.secondary,
+
+      metallic:
+        crest?.colors?.metallic ??
+        palette.metallic,
     },
-    supporters: crest?.supporters ?? [],
-    wreath: crest?.wreath ?? false,
-    banner: crest?.banner ?? true,
+
+    supporters:
+      crest?.supporters ?? [],
+
+    wreath:
+      crest?.wreath ?? false,
+
+    banner:
+      crest?.banner ?? true,
   };
 
   return (
@@ -106,45 +148,11 @@ function normalizeAnimal(
   value: string | undefined,
 ): BuilderCrestSpec["animal"] {
   if (
-    value === "Lion" ||
-    value === "Eagle" ||
-    value === "Wolf" ||
-    value === "Bear" ||
-    value === "Stag"
+    value &&
+    isCrestAnimal(value)
   ) {
     return value;
   }
 
   return "Lion";
-}
-
-function normalizeShield(
-  value: BuilderShieldStyle | string | undefined,
-): BuilderShieldStyle {
-  if (
-    value === "Norman Shield" ||
-    value === "Tournament Shield" ||
-    value === "Crusader Shield" ||
-    value === "Heater Shield"
-  ) {
-    return value;
-  }
-
-  return "Heater Shield";
-}
-
-function normalizeCrown(
-  value: CrestCrown | string | undefined,
-): CrestCrown {
-  if (
-    value === "Baron" ||
-    value === "Count" ||
-    value === "Ducal" ||
-    value === "Royal" ||
-    value === "None"
-  ) {
-    return value;
-  }
-
-  return "None";
 }

@@ -1,5 +1,3 @@
-// lib/herald/validator.ts
-
 import type {
   CrestSpec,
   PatchSettings,
@@ -598,15 +596,6 @@ function calculateComplexityScore(
 
   if (
     design.motto.latin.trim()
-  ) {
-    score += 1;
-  }
-
-  if (
-    design.shield ===
-      "Tournament Shield" ||
-    design.shield ===
-      "Crusader Shield"
   ) {
     score += 1;
   }

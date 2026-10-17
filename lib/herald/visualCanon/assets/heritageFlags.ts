@@ -1,3 +1,4 @@
+
 // lib/herald/visualCanon/assets/heritageFlags.ts
 
 import type {
@@ -12,18 +13,11 @@ export type HeritageFlagRegion =
   | "africa";
 
 export interface HeritageFlagAsset extends VisualCanonAsset {
-  id: string;
-
   category: "heritage-flag";
-
   isoCode?: string;
-
   heritageCode: string;
-
   region: HeritageFlagRegion;
-
   countryName: string;
-
   subdivision?: boolean;
 }
 
@@ -107,8 +101,7 @@ export const heritageFlagAssets: HeritageFlagAsset[] = [
       "america",
       "stars and stripes",
     ],
-    componentPath:
-      "@/lib/herald/svg/flags/united-states",
+    componentPath: "@/lib/herald/svg/flags/united-states",
     viewBoxWidth: 19,
     viewBoxHeight: 10,
   }),
@@ -120,13 +113,8 @@ export const heritageFlagAssets: HeritageFlagAsset[] = [
     heritageCode: "CA",
     isoCode: "CA",
     region: "americas",
-    keywords: [
-      "canada",
-      "canadian",
-      "maple leaf",
-    ],
-    componentPath:
-      "@/lib/herald/svg/flags/canada",
+    keywords: ["canada", "canadian", "maple leaf"],
+    componentPath: "@/lib/herald/svg/flags/canada",
     viewBoxWidth: 2,
     viewBoxHeight: 1,
   }),
@@ -138,12 +126,8 @@ export const heritageFlagAssets: HeritageFlagAsset[] = [
     heritageCode: "MX",
     isoCode: "MX",
     region: "americas",
-    keywords: [
-      "mexico",
-      "mexican",
-    ],
-    componentPath:
-      "@/lib/herald/svg/flags/mexico",
+    keywords: ["mexico", "mexican"],
+    componentPath: "@/lib/herald/svg/flags/mexico",
     viewBoxWidth: 7,
     viewBoxHeight: 4,
   }),
@@ -155,14 +139,130 @@ export const heritageFlagAssets: HeritageFlagAsset[] = [
     heritageCode: "BR",
     isoCode: "BR",
     region: "americas",
-    keywords: [
-      "brazil",
-      "brazilian",
-    ],
-    componentPath:
-      "@/lib/herald/svg/flags/brazil",
+    keywords: ["brazil", "brazilian"],
+    componentPath: "@/lib/herald/svg/flags/brazil",
     viewBoxWidth: 10,
     viewBoxHeight: 7,
+  }),
+
+  createHeritageFlag({
+    id: "puerto-rico",
+    name: "Puerto Rico",
+    countryName: "Puerto Rico",
+    heritageCode: "PR",
+    isoCode: "PR",
+    region: "americas",
+    subdivision: true,
+    keywords: ["puerto rico", "puerto rican", "boricua"],
+    componentPath: "@/lib/herald/svg/flags/puerto-rico",
+    viewBoxWidth: 2,
+    viewBoxHeight: 1,
+  }),
+
+  createHeritageFlag({
+    id: "dominican-republic",
+    name: "Dominican Republic",
+    countryName: "Dominican Republic",
+    heritageCode: "DO",
+    isoCode: "DO",
+    region: "americas",
+    keywords: [
+      "dominican republic",
+      "dominican",
+      "quisqueya",
+    ],
+    componentPath: "@/lib/herald/svg/flags/dominican-republic",
+    viewBoxWidth: 3,
+    viewBoxHeight: 2,
+  }),
+
+  createHeritageFlag({
+    id: "haiti",
+    name: "Haiti",
+    countryName: "Haiti",
+    heritageCode: "HT",
+    isoCode: "HT",
+    region: "americas",
+    keywords: ["haiti", "haitian", "ayiti"],
+    componentPath: "@/lib/herald/svg/flags/haiti",
+    viewBoxWidth: 5,
+    viewBoxHeight: 3,
+  }),
+
+  createHeritageFlag({
+    id: "jamaica",
+    name: "Jamaica",
+    countryName: "Jamaica",
+    heritageCode: "JM",
+    isoCode: "JM",
+    region: "americas",
+    keywords: ["jamaica", "jamaican"],
+    componentPath: "@/lib/herald/svg/flags/jamaica",
+    viewBoxWidth: 2,
+    viewBoxHeight: 1,
+  }),
+
+  createHeritageFlag({
+    id: "cuba",
+    name: "Cuba",
+    countryName: "Cuba",
+    heritageCode: "CU",
+    isoCode: "CU",
+    region: "americas",
+    keywords: ["cuba", "cuban"],
+    componentPath: "@/lib/herald/svg/flags/cuba",
+    viewBoxWidth: 2,
+    viewBoxHeight: 1,
+  }),
+
+  createHeritageFlag({
+    id: "trinidad-and-tobago",
+    name: "Trinidad and Tobago",
+    countryName: "Trinidad and Tobago",
+    heritageCode: "TT",
+    isoCode: "TT",
+    region: "americas",
+    keywords: [
+      "trinidad and tobago",
+      "trinidad",
+      "tobago",
+      "trinidadian",
+    ],
+    componentPath: "@/lib/herald/svg/flags/trinidad-and-tobago",
+    viewBoxWidth: 5,
+    viewBoxHeight: 3,
+  }),
+
+  createHeritageFlag({
+    id: "martinique",
+    name: "Martinique",
+    countryName: "Martinique",
+    heritageCode: "MQ",
+    isoCode: "MQ",
+    region: "americas",
+    subdivision: true,
+    keywords: [
+      "martinique",
+      "martiniquais",
+      "martiniquaise",
+    ],
+    componentPath: "@/lib/herald/svg/flags/martinique",
+    viewBoxWidth: 3,
+    viewBoxHeight: 2,
+  }),
+
+  createHeritageFlag({
+    id: "guadeloupe",
+    name: "Guadeloupe",
+    countryName: "Guadeloupe",
+    heritageCode: "GP",
+    isoCode: "GP",
+    region: "americas",
+    subdivision: true,
+    keywords: ["guadeloupe", "guadeloupean"],
+    componentPath: "@/lib/herald/svg/flags/guadeloupe",
+    viewBoxWidth: 2,
+    viewBoxHeight: 1,
   }),
 
   // ========================================================
@@ -182,8 +282,7 @@ export const heritageFlagAssets: HeritageFlagAsset[] = [
       "tricolour",
       "tricolor",
     ],
-    componentPath:
-      "@/lib/herald/svg/flags/france",
+    componentPath: "@/lib/herald/svg/flags/france",
     viewBoxWidth: 3,
     viewBoxHeight: 2,
   }),
@@ -203,8 +302,7 @@ export const heritageFlagAssets: HeritageFlagAsset[] = [
       "great britain",
       "union jack",
     ],
-    componentPath:
-      "@/lib/herald/svg/flags/united-kingdom",
+    componentPath: "@/lib/herald/svg/flags/united-kingdom",
     viewBoxWidth: 5,
     viewBoxHeight: 3,
   }),
@@ -216,13 +314,8 @@ export const heritageFlagAssets: HeritageFlagAsset[] = [
     heritageCode: "ENG",
     region: "europe",
     subdivision: true,
-    keywords: [
-      "england",
-      "english",
-      "st george",
-    ],
-    componentPath:
-      "@/lib/herald/svg/flags/england",
+    keywords: ["england", "english", "st george"],
+    componentPath: "@/lib/herald/svg/flags/england",
     viewBoxWidth: 5,
     viewBoxHeight: 3,
   }),
@@ -240,8 +333,7 @@ export const heritageFlagAssets: HeritageFlagAsset[] = [
       "st andrew",
       "saltire",
     ],
-    componentPath:
-      "@/lib/herald/svg/flags/scotland",
+    componentPath: "@/lib/herald/svg/flags/scotland",
     viewBoxWidth: 5,
     viewBoxHeight: 3,
   }),
@@ -253,13 +345,8 @@ export const heritageFlagAssets: HeritageFlagAsset[] = [
     heritageCode: "IE",
     isoCode: "IE",
     region: "europe",
-    keywords: [
-      "ireland",
-      "irish",
-      "eire",
-    ],
-    componentPath:
-      "@/lib/herald/svg/flags/ireland",
+    keywords: ["ireland", "irish", "eire"],
+    componentPath: "@/lib/herald/svg/flags/ireland",
     viewBoxWidth: 2,
     viewBoxHeight: 1,
   }),
@@ -271,12 +358,8 @@ export const heritageFlagAssets: HeritageFlagAsset[] = [
     heritageCode: "IT",
     isoCode: "IT",
     region: "europe",
-    keywords: [
-      "italy",
-      "italian",
-    ],
-    componentPath:
-      "@/lib/herald/svg/flags/italy",
+    keywords: ["italy", "italian"],
+    componentPath: "@/lib/herald/svg/flags/italy",
     viewBoxWidth: 3,
     viewBoxHeight: 2,
   }),
@@ -288,13 +371,8 @@ export const heritageFlagAssets: HeritageFlagAsset[] = [
     heritageCode: "DE",
     isoCode: "DE",
     region: "europe",
-    keywords: [
-      "germany",
-      "german",
-      "deutschland",
-    ],
-    componentPath:
-      "@/lib/herald/svg/flags/germany",
+    keywords: ["germany", "german", "deutschland"],
+    componentPath: "@/lib/herald/svg/flags/germany",
     viewBoxWidth: 5,
     viewBoxHeight: 3,
   }),
@@ -312,8 +390,7 @@ export const heritageFlagAssets: HeritageFlagAsset[] = [
       "espana",
       "españa",
     ],
-    componentPath:
-      "@/lib/herald/svg/flags/spain",
+    componentPath: "@/lib/herald/svg/flags/spain",
     viewBoxWidth: 3,
     viewBoxHeight: 2,
   }),
@@ -325,12 +402,8 @@ export const heritageFlagAssets: HeritageFlagAsset[] = [
     heritageCode: "PT",
     isoCode: "PT",
     region: "europe",
-    keywords: [
-      "portugal",
-      "portuguese",
-    ],
-    componentPath:
-      "@/lib/herald/svg/flags/portugal",
+    keywords: ["portugal", "portuguese"],
+    componentPath: "@/lib/herald/svg/flags/portugal",
     viewBoxWidth: 3,
     viewBoxHeight: 2,
   }),
@@ -347,8 +420,7 @@ export const heritageFlagAssets: HeritageFlagAsset[] = [
       "dutch",
       "holland",
     ],
-    componentPath:
-      "@/lib/herald/svg/flags/netherlands",
+    componentPath: "@/lib/herald/svg/flags/netherlands",
     viewBoxWidth: 3,
     viewBoxHeight: 2,
   }),
@@ -360,12 +432,8 @@ export const heritageFlagAssets: HeritageFlagAsset[] = [
     heritageCode: "BE",
     isoCode: "BE",
     region: "europe",
-    keywords: [
-      "belgium",
-      "belgian",
-    ],
-    componentPath:
-      "@/lib/herald/svg/flags/belgium",
+    keywords: ["belgium", "belgian"],
+    componentPath: "@/lib/herald/svg/flags/belgium",
     viewBoxWidth: 15,
     viewBoxHeight: 13,
   }),
@@ -377,12 +445,8 @@ export const heritageFlagAssets: HeritageFlagAsset[] = [
     heritageCode: "CH",
     isoCode: "CH",
     region: "europe",
-    keywords: [
-      "switzerland",
-      "swiss",
-    ],
-    componentPath:
-      "@/lib/herald/svg/flags/switzerland",
+    keywords: ["switzerland", "swiss"],
+    componentPath: "@/lib/herald/svg/flags/switzerland",
     viewBoxWidth: 1,
     viewBoxHeight: 1,
   }),
@@ -400,8 +464,7 @@ export const heritageFlagAssets: HeritageFlagAsset[] = [
       "nordic",
       "scandinavian",
     ],
-    componentPath:
-      "@/lib/herald/svg/flags/sweden",
+    componentPath: "@/lib/herald/svg/flags/sweden",
     viewBoxWidth: 8,
     viewBoxHeight: 5,
   }),
@@ -419,8 +482,7 @@ export const heritageFlagAssets: HeritageFlagAsset[] = [
       "nordic",
       "scandinavian",
     ],
-    componentPath:
-      "@/lib/herald/svg/flags/norway",
+    componentPath: "@/lib/herald/svg/flags/norway",
     viewBoxWidth: 22,
     viewBoxHeight: 16,
   }),
@@ -432,12 +494,8 @@ export const heritageFlagAssets: HeritageFlagAsset[] = [
     heritageCode: "PL",
     isoCode: "PL",
     region: "europe",
-    keywords: [
-      "poland",
-      "polish",
-    ],
-    componentPath:
-      "@/lib/herald/svg/flags/poland",
+    keywords: ["poland", "polish"],
+    componentPath: "@/lib/herald/svg/flags/poland",
     viewBoxWidth: 8,
     viewBoxHeight: 5,
   }),
@@ -454,8 +512,7 @@ export const heritageFlagAssets: HeritageFlagAsset[] = [
       "greek",
       "hellenic",
     ],
-    componentPath:
-      "@/lib/herald/svg/flags/greece",
+    componentPath: "@/lib/herald/svg/flags/greece",
     viewBoxWidth: 3,
     viewBoxHeight: 2,
   }),
@@ -476,8 +533,7 @@ export const heritageFlagAssets: HeritageFlagAsset[] = [
       "japanese",
       "hinomaru",
     ],
-    componentPath:
-      "@/lib/herald/svg/flags/japan",
+    componentPath: "@/lib/herald/svg/flags/japan",
     viewBoxWidth: 3,
     viewBoxHeight: 2,
   }),
@@ -495,8 +551,38 @@ export const heritageFlagAssets: HeritageFlagAsset[] = [
       "korean",
       "republic of korea",
     ],
-    componentPath:
-      "@/lib/herald/svg/flags/south-korea",
+    componentPath: "@/lib/herald/svg/flags/south-korea",
+    viewBoxWidth: 3,
+    viewBoxHeight: 2,
+  }),
+
+  createHeritageFlag({
+    id: "philippines",
+    name: "Philippines",
+    countryName: "Philippines",
+    heritageCode: "PH",
+    isoCode: "PH",
+    region: "asia-pacific",
+    keywords: [
+      "philippines",
+      "filipino",
+      "filipina",
+      "pilipinas",
+    ],
+    componentPath: "@/lib/herald/svg/flags/philippines",
+    viewBoxWidth: 2,
+    viewBoxHeight: 1,
+  }),
+
+  createHeritageFlag({
+    id: "china",
+    name: "China",
+    countryName: "China",
+    heritageCode: "CN",
+    isoCode: "CN",
+    region: "asia-pacific",
+    keywords: ["china", "chinese", "prc"],
+    componentPath: "@/lib/herald/svg/flags/china",
     viewBoxWidth: 3,
     viewBoxHeight: 2,
   }),
@@ -512,12 +598,8 @@ export const heritageFlagAssets: HeritageFlagAsset[] = [
     heritageCode: "NG",
     isoCode: "NG",
     region: "africa",
-    keywords: [
-      "nigeria",
-      "nigerian",
-    ],
-    componentPath:
-      "@/lib/herald/svg/flags/nigeria",
+    keywords: ["nigeria", "nigerian"],
+    componentPath: "@/lib/herald/svg/flags/nigeria",
     viewBoxWidth: 2,
     viewBoxHeight: 1,
   }),
@@ -533,8 +615,7 @@ export const heritageFlagAssets: HeritageFlagAsset[] = [
       "south africa",
       "south african",
     ],
-    componentPath:
-      "@/lib/herald/svg/flags/south-africa",
+    componentPath: "@/lib/herald/svg/flags/south-africa",
     viewBoxWidth: 3,
     viewBoxHeight: 2,
   }),
@@ -546,12 +627,8 @@ export const heritageFlagAssets: HeritageFlagAsset[] = [
     heritageCode: "EG",
     isoCode: "EG",
     region: "africa",
-    keywords: [
-      "egypt",
-      "egyptian",
-    ],
-    componentPath:
-      "@/lib/herald/svg/flags/egypt",
+    keywords: ["egypt", "egyptian"],
+    componentPath: "@/lib/herald/svg/flags/egypt",
     viewBoxWidth: 3,
     viewBoxHeight: 2,
   }),
@@ -563,12 +640,8 @@ export const heritageFlagAssets: HeritageFlagAsset[] = [
     heritageCode: "GH",
     isoCode: "GH",
     region: "africa",
-    keywords: [
-      "ghana",
-      "ghanaian",
-    ],
-    componentPath:
-      "@/lib/herald/svg/flags/ghana",
+    keywords: ["ghana", "ghanaian"],
+    componentPath: "@/lib/herald/svg/flags/ghana",
     viewBoxWidth: 3,
     viewBoxHeight: 2,
   }),
@@ -580,12 +653,8 @@ export const heritageFlagAssets: HeritageFlagAsset[] = [
     heritageCode: "KE",
     isoCode: "KE",
     region: "africa",
-    keywords: [
-      "kenya",
-      "kenyan",
-    ],
-    componentPath:
-      "@/lib/herald/svg/flags/kenya",
+    keywords: ["kenya", "kenyan"],
+    componentPath: "@/lib/herald/svg/flags/kenya",
     viewBoxWidth: 3,
     viewBoxHeight: 2,
   }),
@@ -618,21 +687,17 @@ export function searchHeritageFlags(
     return heritageFlagAssets;
   }
 
-  return heritageFlagAssets.filter(
-    (asset) => {
-      const searchable = [
-        asset.name,
-        asset.countryName,
-        asset.heritageCode,
-        asset.isoCode ?? "",
-        ...asset.keywords,
-      ]
-        .join(" ")
-        .toLowerCase();
+  return heritageFlagAssets.filter((asset) => {
+    const searchable = [
+      asset.name,
+      asset.countryName,
+      asset.heritageCode,
+      asset.isoCode ?? "",
+      ...asset.keywords,
+    ]
+      .join(" ")
+      .toLowerCase();
 
-      return searchable.includes(
-        normalized,
-      );
-    },
-  );
+    return searchable.includes(normalized);
+  });
 }

@@ -47,6 +47,66 @@ const heritageVisuals: Record<string, HeritageVisual> = {
     subtitle: "Brazilian heritage",
   },
 
+  "Puerto Rico": {
+    assetId: "puerto-rico",
+    code: "PR",
+    subtitle: "Puerto Rico heritage",
+  },
+
+  "Dominican Republic": {
+    assetId: "dominican-republic",
+    code: "DO",
+    subtitle: "Dominican Republic heritage",
+  },
+
+  "Haiti": {
+    assetId: "haiti",
+    code: "HT",
+    subtitle: "Haiti heritage",
+  },
+
+  "Jamaica": {
+    assetId: "jamaica",
+    code: "JM",
+    subtitle: "Jamaica heritage",
+  },
+
+  "Cuba": {
+    assetId: "cuba",
+    code: "CU",
+    subtitle: "Cuba heritage",
+  },
+
+  "Trinidad and Tobago": {
+    assetId: "trinidad-and-tobago",
+    code: "TT",
+    subtitle: "Trinidad and Tobago heritage",
+  },
+
+  "Martinique": {
+    assetId: "martinique",
+    code: "MQ",
+    subtitle: "Martinique heritage",
+  },
+
+  "Guadeloupe": {
+    assetId: "guadeloupe",
+    code: "GP",
+    subtitle: "Guadeloupe heritage",
+  },
+
+  "Philippines": {
+    assetId: "philippines",
+    code: "PH",
+    subtitle: "Philippines heritage",
+  },
+
+  "China": {
+    assetId: "china",
+    code: "CN",
+    subtitle: "China heritage",
+  },
+
   France: {
     assetId: "france",
     code: "FR",
@@ -313,7 +373,7 @@ export default function BuilderHeritage({
                           className="text-xs text-[#D8D0C3]"
                           aria-hidden="true"
                         >
-                          ⚑
+                          ΓÜæ
                         </span>
                       )}
                     </span>
@@ -326,7 +386,7 @@ export default function BuilderHeritage({
                       className="text-[#77736A]"
                       aria-hidden="true"
                     >
-                      ×
+                      ├ù
                     </span>
                   </button>
                 );
@@ -399,7 +459,7 @@ export default function BuilderHeritage({
                       className="text-xl text-[#D8D0C3]"
                       aria-hidden="true"
                     >
-                      ⚑
+                      ΓÜæ
                     </span>
                   )}
                 </div>

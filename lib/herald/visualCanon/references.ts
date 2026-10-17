@@ -1,3 +1,4 @@
+
 // lib/herald/visualCanon/references.ts
 
 import { getVisualCanonAsset } from "./registry";
@@ -46,7 +47,17 @@ export type HeritageFlagVisualCanonAssetId =
   | "ghana"
   | "south-africa"
   | "egypt"
-  | "kenya";
+  | "kenya"
+  | "puerto-rico"
+  | "dominican-republic"
+  | "haiti"
+  | "jamaica"
+  | "cuba"
+  | "trinidad-and-tobago"
+  | "martinique"
+  | "guadeloupe"
+  | "philippines"
+  | "china";
 
 export type VisualCanonAssetId =
   | PrimaryChargeVisualCanonAssetId
@@ -67,61 +78,18 @@ const legacyPrimaryChargeMap: Record<
     assetId: "lion",
     variantId: "rampant",
   },
-
-  Eagle: {
-    assetId: "eagle",
-  },
-
-  Wolf: {
-    assetId: "wolf",
-  },
-
-  Bear: {
-    assetId: "bear",
-  },
-
-  Stag: {
-    assetId: "stag",
-  },
-
-  Griffin: {
-    assetId: "griffin",
-  },
-
-  Salmon: {
-    assetId: "salmon",
-  },
+  Eagle: { assetId: "eagle" },
+  Wolf: { assetId: "wolf" },
+  Bear: { assetId: "bear" },
+  Stag: { assetId: "stag" },
+  Griffin: { assetId: "griffin" },
+  Salmon: { assetId: "salmon" },
 };
 
 /*
- * =========================================================
- * Shield Reference Migration
- * =========================================================
- *
- * The five V1 shield families are:
- *
- * Heater
- * French
- * Norman
- * Spanish
- * Targe
- *
- * Tournament and Crusader are retained here only as legacy
- * Builder aliases so older saved drafts can resolve into
- * the current Canon instead of becoming invalid.
- *
- * They are NOT members of the current V1 Shield Canon.
- *
- * Locked legacy normalization:
- *
- * Tournament Shield -> Spanish Shield
- * Crusader Shield   -> Heater Shield
- *
- * These aliases are migration rules only. They must not be
- * exposed as additional customer-facing shield choices.
- * =========================================================
+ * Legacy shield aliases remain migration-only.
+ * They are not customer-facing choices.
  */
-
 const shieldReferenceMap: Record<
   string,
   VisualCanonReference
@@ -129,30 +97,21 @@ const shieldReferenceMap: Record<
   "Heater Shield": {
     assetId: "heater-shield",
   },
-
   "French Shield": {
     assetId: "french-shield",
   },
-
   "Norman Shield": {
     assetId: "norman-shield",
   },
-
   "Spanish Shield": {
     assetId: "spanish-shield",
   },
-
   Targe: {
     assetId: "targe-shield",
   },
-
-  /*
-   * Legacy migration aliases.
-   */
   "Tournament Shield": {
     assetId: "spanish-shield",
   },
-
   "Crusader Shield": {
     assetId: "heater-shield",
   },
@@ -162,113 +121,52 @@ const heritageFlagMap: Record<
   HeritageFlagVisualCanonAssetId,
   VisualCanonReference
 > = {
-  "united-states": {
-    assetId: "united-states",
-  },
+  "united-states": { assetId: "united-states" },
+  canada: { assetId: "canada" },
+  mexico: { assetId: "mexico" },
+  brazil: { assetId: "brazil" },
 
-  canada: {
-    assetId: "canada",
-  },
+  france: { assetId: "france" },
+  "united-kingdom": { assetId: "united-kingdom" },
+  england: { assetId: "england" },
+  scotland: { assetId: "scotland" },
+  ireland: { assetId: "ireland" },
+  italy: { assetId: "italy" },
+  germany: { assetId: "germany" },
+  spain: { assetId: "spain" },
+  portugal: { assetId: "portugal" },
+  netherlands: { assetId: "netherlands" },
+  belgium: { assetId: "belgium" },
+  switzerland: { assetId: "switzerland" },
+  sweden: { assetId: "sweden" },
+  norway: { assetId: "norway" },
+  poland: { assetId: "poland" },
+  greece: { assetId: "greece" },
 
-  mexico: {
-    assetId: "mexico",
-  },
+  japan: { assetId: "japan" },
+  "south-korea": { assetId: "south-korea" },
 
-  brazil: {
-    assetId: "brazil",
-  },
+  nigeria: { assetId: "nigeria" },
+  ghana: { assetId: "ghana" },
+  "south-africa": { assetId: "south-africa" },
+  egypt: { assetId: "egypt" },
+  kenya: { assetId: "kenya" },
 
-  france: {
-    assetId: "france",
+  "puerto-rico": { assetId: "puerto-rico" },
+  "dominican-republic": {
+    assetId: "dominican-republic",
   },
+  haiti: { assetId: "haiti" },
+  jamaica: { assetId: "jamaica" },
+  cuba: { assetId: "cuba" },
+  "trinidad-and-tobago": {
+    assetId: "trinidad-and-tobago",
+  },
+  martinique: { assetId: "martinique" },
+  guadeloupe: { assetId: "guadeloupe" },
 
-  "united-kingdom": {
-    assetId: "united-kingdom",
-  },
-
-  england: {
-    assetId: "england",
-  },
-
-  scotland: {
-    assetId: "scotland",
-  },
-
-  ireland: {
-    assetId: "ireland",
-  },
-
-  italy: {
-    assetId: "italy",
-  },
-
-  germany: {
-    assetId: "germany",
-  },
-
-  spain: {
-    assetId: "spain",
-  },
-
-  portugal: {
-    assetId: "portugal",
-  },
-
-  netherlands: {
-    assetId: "netherlands",
-  },
-
-  belgium: {
-    assetId: "belgium",
-  },
-
-  switzerland: {
-    assetId: "switzerland",
-  },
-
-  sweden: {
-    assetId: "sweden",
-  },
-
-  norway: {
-    assetId: "norway",
-  },
-
-  poland: {
-    assetId: "poland",
-  },
-
-  greece: {
-    assetId: "greece",
-  },
-
-  japan: {
-    assetId: "japan",
-  },
-
-  "south-korea": {
-    assetId: "south-korea",
-  },
-
-  nigeria: {
-    assetId: "nigeria",
-  },
-
-  ghana: {
-    assetId: "ghana",
-  },
-
-  "south-africa": {
-    assetId: "south-africa",
-  },
-
-  egypt: {
-    assetId: "egypt",
-  },
-
-  kenya: {
-    assetId: "kenya",
-  },
+  philippines: { assetId: "philippines" },
+  china: { assetId: "china" },
 };
 
 export function resolvePrimaryChargeReference(
@@ -313,15 +211,10 @@ export function isCurrentArtworkVersion(
 
 export interface VisualCanonReferenceSnapshot {
   assetId: VisualCanonAssetId;
-
   assetName: string;
-
   category: VisualCanonAsset["category"];
-
   canonVersion: string;
-
   artworkVersion: string;
-
   variantId?: string;
 }
 
@@ -336,15 +229,10 @@ export function createVisualCanonReferenceSnapshot(
 
   return {
     assetId: reference.assetId,
-
     assetName: asset.name,
-
     category: asset.category,
-
     canonVersion: asset.canonVersion,
-
     artworkVersion: asset.artworkVersion,
-
     variantId: reference.variantId,
   };
 }

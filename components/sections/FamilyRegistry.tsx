@@ -1,3 +1,4 @@
+
 import Link from "next/link";
 import RegistryCard from "@/components/registry/RegistryCard";
 
@@ -46,12 +47,25 @@ export default function FamilyRegistry() {
             family&apos;s story.
           </p>
 
-          <Link
-            href="/registry"
-            className="mt-10 inline-flex items-center border-b border-[#8b542f] pb-1 text-sm font-semibold uppercase tracking-[0.18em] text-[#653b23]"
-          >
-            Explore the Registry
-          </Link>
+          <div className="mt-10 flex flex-col items-center justify-center gap-5 sm:flex-row">
+            <Link
+              href="/begin"
+              className="inline-flex min-h-12 items-center justify-center border border-[#8b542f] px-7 py-3 text-center text-xs font-semibold uppercase tracking-[0.16em] text-[#653b23] transition-colors hover:bg-[#8b542f] hover:text-white"
+            >
+              Establish Your House
+            </Link>
+
+            <Link
+              href="/builder"
+              className="inline-flex min-h-12 items-center justify-center bg-[#8b542f] px-7 py-3 text-center text-xs font-semibold uppercase tracking-[0.16em] text-white transition-colors hover:bg-[#653b23]"
+            >
+              Customize Your Regiment Jacket
+            </Link>
+          </div>
+
+          <p className="mt-6 text-sm text-[#786d60]">
+            Already know your family story? Explore the jacket builder directly.
+          </p>
         </div>
       </div>
     </section>

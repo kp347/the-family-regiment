@@ -1023,7 +1023,7 @@ setMilitaryBranch(
     );
   }
   return (
-    <div className="min-h-screen bg-[#111213] text-[#F6F2EA]">
+    <div className="min-h-screen min-w-0 overflow-x-clip bg-[#111213] text-[#F6F2EA]">
       <BuilderHeader
         saveMessage={
           saveMessage
@@ -1035,8 +1035,8 @@ setMilitaryBranch(
           resetDraft
         }
       />
-      <main className="px-6 pb-10 md:pb-16">
-        <div className="mx-auto max-w-7xl">
+      <main className="min-w-0 px-3 pb-10 sm:px-6 md:pb-16">
+        <div className="mx-auto min-w-0 max-w-7xl">
           <BuilderStepper
             steps={
               steps
@@ -1048,8 +1048,8 @@ setMilitaryBranch(
               setCurrentStep
             }
           />
-          <div className="grid overflow-hidden rounded-[2rem] border border-white/10 bg-[#18191A] lg:grid-cols-[1.05fr_0.95fr]">
-            <section className="min-h-[720px] p-8 md:p-12">
+          <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] overflow-hidden rounded-[1.25rem] border border-white/10 bg-[#18191A] sm:rounded-[2rem] lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)]">
+            <section className="min-w-0 p-4 sm:p-8 md:p-12 lg:min-h-[720px]">
               <p className="text-xs uppercase tracking-[0.35em] text-[#B08D57]">
                 Step{" "}
                 {
@@ -1369,7 +1369,7 @@ function BuilderNavigation({
   onNext: () => void;
 }) {
   return (
-    <div className="mt-12 flex items-center justify-between border-t border-white/10 pt-8">
+    <div className="mt-12 flex min-w-0 items-center justify-between gap-2 border-t border-white/10 pt-8 sm:gap-4">
       <button
         type="button"
         onClick={
@@ -1378,7 +1378,7 @@ function BuilderNavigation({
         disabled={
           currentStep === 0
         }
-        className="rounded-full border border-white/15 px-6 py-3 text-xs font-semibold uppercase tracking-[0.2em] transition hover:border-[#B08D57] hover:text-[#B08D57] disabled:cursor-not-allowed disabled:opacity-30"
+        className="min-w-0 rounded-full border border-white/15 px-3 py-3 text-[10px] font-semibold uppercase tracking-[0.1em] transition hover:border-[#B08D57] hover:text-[#B08D57] disabled:cursor-not-allowed disabled:opacity-30 sm:px-6 sm:text-xs sm:tracking-[0.2em]"
       >
         Previous
       </button>
@@ -1389,7 +1389,7 @@ function BuilderNavigation({
           onClick={
             onNext
           }
-          className="rounded-full bg-[#B08D57] px-7 py-3 text-xs font-semibold uppercase tracking-[0.2em] text-[#151515] transition hover:scale-[1.02]"
+          className="min-w-0 rounded-full bg-[#B08D57] px-4 py-3 text-[10px] font-semibold uppercase tracking-[0.1em] text-[#151515] transition hover:scale-[1.02] sm:px-7 sm:text-xs sm:tracking-[0.2em]"
         >
           Continue
         </button>

@@ -426,12 +426,11 @@ export default function BuilderPreview({
                     title={`Name tape: ${displayNameTape}`}
                   >
                     <NameTape
-                      name={displayNameTape}
-                      finish={finish}
-                      active
-                      compact
-                      className="!w-full !min-w-0"
-                    />
+  name={displayNameTape}
+  finish={finish}
+  active
+  className="w-full min-w-0"
+/>
                   </div>
                 );
               })()}

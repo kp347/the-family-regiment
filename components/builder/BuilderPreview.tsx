@@ -425,12 +425,25 @@ export default function BuilderPreview({
                     className="absolute z-20"
                     title={`Name tape: ${displayNameTape}`}
                   >
-                    <NameTape
-  name={displayNameTape}
-  finish={finish}
-  active
-  className="w-full min-w-0"
-/>
+                    {/* Mobile: use the compact patch without its default minimum width. */}
+                    <div className="block w-full min-w-0 sm:hidden">
+                      <NameTape
+                        name={displayNameTape}
+                        finish={finish}
+                        active
+                        compact
+                        className="!w-full !min-w-0"
+                      />
+                    </div>
+                    {/* Desktop: retain the existing name tape appearance. */}
+                    <div className="hidden w-full min-w-0 sm:block">
+                      <NameTape
+                        name={displayNameTape}
+                        finish={finish}
+                        active
+                        className="w-full min-w-0"
+                      />
+                    </div>
                   </div>
                 );
               })()}

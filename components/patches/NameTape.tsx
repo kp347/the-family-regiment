@@ -1,3 +1,4 @@
+
 "use client";
 
 import PatchBase from "./PatchBase";
@@ -12,6 +13,7 @@ type NameTapeProps = {
   finish?: NameTapeFinish;
   active?: boolean;
   className?: string;
+  compact?: boolean;
 };
 
 const finishText: Record<NameTapeFinish, string> = {
@@ -25,18 +27,29 @@ export default function NameTape({
   finish = "Regiment Gold",
   active = false,
   className = "",
+  compact = false,
 }: NameTapeProps) {
+  const displayName = name.trim() || "LAURENT";
+
   return (
     <PatchBase
       shape="rectangle"
       finish={finish}
       active={active}
-      className={`min-w-[120px] px-4 py-2 ${className}`}
+      className={
+        compact
+          ? `!min-w-0 !w-full !px-1.5 !py-0.5 ${className}`
+          : `min-w-[120px] px-4 py-2 ${className}`
+      }
     >
       <span
-        className={`block text-center text-[10px] font-bold uppercase tracking-[0.28em] ${finishText[finish]}`}
+        className={
+          compact
+            ? `block whitespace-nowrap text-center text-[6px] font-bold uppercase tracking-[0.12em] ${finishText[finish]}`
+            : `block text-center text-[10px] font-bold uppercase tracking-[0.28em] ${finishText[finish]}`
+        }
       >
-        {name.trim() || "LAURENT"}
+        {displayName}
       </span>
     </PatchBase>
   );

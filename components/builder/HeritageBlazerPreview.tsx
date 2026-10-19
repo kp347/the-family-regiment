@@ -1,6 +1,8 @@
 
 "use client";
 
+import Image from "next/image";
+
 import HeritageCrestPreview from "./HeritageCrestPreview";
 
 import type {
@@ -29,85 +31,104 @@ export default function HeritageBlazerPreview({
   crown,
   finish,
 }: Props) {
+  const crestProps = {
+    familyName,
+    initials,
+    motto,
+    symbol,
+    shield,
+    crown,
+    finish,
+  };
+
   return (
-    <div className="relative mx-auto w-full max-w-[520px] overflow-hidden rounded-sm border border-[#b08d57]/25 bg-[#151b27]">
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_50%_20%,#33415a_0%,#151b27_60%,#0c111b_100%)]" />
-
-      <div className="relative aspect-[4/5]">
-        <svg
-          viewBox="0 0 400 500"
-          className="absolute inset-0 h-full w-full"
-          aria-hidden="true"
-        >
-          {/* Shoulder silhouette */}
-          <path
-            d="M130 75 Q95 90 42 128 L0 205 V500 H400 V205 L358 128 Q305 90 270 75 Z"
-            fill="#202d42"
-            stroke="#39475b"
-            strokeWidth="2"
+    <div className="w-full space-y-5">
+      {/* Realistic garment preview */}
+      <div className="relative mx-auto w-full overflow-hidden border border-[#b08d57]/25 bg-[#151b27]">
+        <div className="relative aspect-[1343/1119] w-full">
+          <Image
+            src="/images/heritage-blazer/heritage-blazer-builder.png"
+            alt="Tailored navy Heritage Blazer with brass buttons displayed on a mannequin"
+            fill
+            priority
+            sizes="(max-width: 1024px) 100vw, 55vw"
+            className="object-cover"
           />
 
-          {/* Shirt */}
-          <path
-            d="M155 77 L200 260 L245 77 L230 65 H170 Z"
-            fill="#eee9df"
-          />
+          {/* Wearer's left chest */}
+          <div
+            className="pointer-events-none absolute z-10"
+            style={{
+              left: "64%",
+              top: "41%",
+              width: "16%",
+              transform: "translate(-50%, -50%)",
+            }}
+          >
+            <HeritageCrestPreview {...crestProps} />
+          </div>
 
-          {/* Left and right jacket fronts */}
-          <path
-            d="M130 75 L200 280 L176 500 H0 V205 L42 128 Z"
-            fill="#233149"
-          />
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-[#0b0d0c]/80 to-transparent" />
 
-          <path
-            d="M270 75 L200 280 L224 500 H400 V205 L358 128 Z"
-            fill="#1c293e"
-          />
+          <div className="absolute bottom-4 left-4 right-4 z-20 flex items-center justify-between gap-3 text-[9px] font-semibold uppercase tracking-[0.16em] text-[#eee6d6] sm:text-[10px]">
+            <span>Heritage Blazer</span>
+            <span>Personalized Left-Chest Crest</span>
+          </div>
+        </div>
+      </div>
 
-          {/* Lapels */}
-          <path
-            d="M130 75 L174 175 L145 192 L200 280 L155 78 Z"
-            fill="#34425a"
-            stroke="#47556a"
-            strokeWidth="1.5"
-          />
+      {/* Enlarged crest detail */}
+      <div className="border border-[#b08d57]/25 bg-[#20221b] p-6 sm:p-8">
+        <div className="mb-7 flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-[#c5a16a]">
+              Heritage Crest
+            </p>
 
-          <path
-            d="M270 75 L226 175 L255 192 L200 280 L245 78 Z"
-            fill="#2d3b52"
-            stroke="#47556a"
-            strokeWidth="1.5"
-          />
+            <h3 className="font-display mt-3 text-2xl text-[#eee6d6] sm:text-3xl">
+              The Details of Your House
+            </h3>
+          </div>
 
-          {/* Buttons */}
-          <circle cx="212" cy="333" r="5" fill="#a18b65" />
-          <circle cx="214" cy="408" r="5" fill="#a18b65" />
-
-          {/* Breast pocket */}
-          <path
-            d="M242 218 L326 213"
-            stroke="#617086"
-            strokeWidth="3"
-          />
-        </svg>
-
-        {/* Wearer's left chest: viewer's right */}
-        <div className="absolute left-[65%] top-[31%] w-[23%] -translate-x-1/2">
-          <HeritageCrestPreview
-            familyName={familyName}
-            initials={initials}
-            motto={motto}
-            symbol={symbol}
-            shield={shield}
-            crown={crown}
-            finish={finish}
-          />
+          <span className="border border-[#b08d57]/35 px-3 py-2 text-[10px] uppercase tracking-[0.12em] text-[#bba47c]">
+            Enlarged Detail
+          </span>
         </div>
 
-        <div className="absolute bottom-5 left-5 right-5 flex justify-between gap-3 text-[10px] uppercase tracking-[0.16em] text-[#d7c8aa]">
-          <span>Heritage Blazer</span>
-          <span>Left-Chest Crest</span>
+        <div className="relative flex min-h-[310px] items-center justify-center overflow-hidden border border-[#b08d57]/15 bg-[radial-gradient(ellipse_at_center,#30332a_0%,#151712_75%)] px-5 py-8">
+          <div className="w-full max-w-[285px]">
+            <HeritageCrestPreview {...crestProps} />
+          </div>
         </div>
+
+        <div className="mt-6 grid gap-5 border-t border-[#b08d57]/20 pt-6 sm:grid-cols-2">
+          <div>
+            <p className="text-[10px] uppercase tracking-[0.18em] text-[#c5a16a]">
+              House
+            </p>
+
+            <p className="font-display mt-2 text-xl text-[#eee6d6]">
+              {familyName.trim() || "Family"}
+            </p>
+          </div>
+
+          <div>
+            <p className="text-[10px] uppercase tracking-[0.18em] text-[#c5a16a]">
+              Latin Motto
+            </p>
+
+            <p className="font-display mt-2 text-xl italic text-[#e0d2bc]">
+              {motto.trim() || "Fortis in Familia"}
+            </p>
+          </div>
+        </div>
+
+        <p className="mt-6 text-xs leading-6 text-[#a99e8c]">
+          Enlarged digital artwork for design review. The
+          blazer preview illustrates crest placement; final
+          embroidery dimensions and production artwork
+          remain subject to validation.
+        </p>
       </div>
     </div>
   );

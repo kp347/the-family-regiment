@@ -4,7 +4,6 @@
 import { useId } from "react";
 
 import type {
-  BuilderCrestSpec,
   BuilderShieldStyle,
   CrestCrown,
 } from "@/lib/herald/types";
@@ -21,7 +20,7 @@ import { getAnimalReferenceByName } from "@/lib/herald/visualCanon/animalReferen
 
 import type { SupportedCrestFinish } from "./FamilyCrestPreview";
 
-type HeritageCrestPreviewProps = {
+type Props = {
   familyName: string;
   initials: string;
   motto: string;
@@ -55,7 +54,7 @@ const SHIELDS: Record<BuilderShieldStyle, string> = {
   Targe: TARGE_SHIELD_PATH,
 };
 
-const ANIMAL_CALIBRATION: Record<
+const CALIBRATION: Record<
   string,
   { scale: number; x: number; y: number }
 > = {
@@ -68,11 +67,11 @@ const ANIMAL_CALIBRATION: Record<
   Salmon: { scale: 0.72, x: 2, y: -25 },
 };
 
-function cleanText(value: string, fallback: string) {
+function normalize(value: string, fallback: string) {
   return value.trim().replace(/\s+/g, " ") || fallback;
 }
 
-function colorChannels(hex: string) {
+function rgb(hex: string) {
   const value = hex.replace("#", "");
 
   return {
@@ -82,93 +81,147 @@ function colorChannels(hex: string) {
   };
 }
 
+function getHouseFontSize(length: number): number {
+  if (length > 30) return 6.2;
+  if (length > 24) return 7.2;
+  if (length > 18) return 8.3;
+  if (length > 13) return 9.4;
+  return 10.8;
+}
+
+function getMottoFontSize(length: number): number {
+  if (length > 34) return 6.2;
+  if (length > 25) return 7.2;
+  if (length > 17) return 8.5;
+  return 10;
+}
+
 export default function HeritageCrestPreview({
   familyName,
-  initials,
+  initials: _initials,
   motto,
   symbol,
   shield,
   crown: _crown,
   finish,
   className = "",
-}: HeritageCrestPreviewProps) {
-  const instanceId = useId().replace(/[^a-zA-Z0-9_-]/g, "");
+}: Props) {
+  const id = useId().replace(/[^a-zA-Z0-9_-]/g, "");
 
-  const palette = PALETTES[finish] ?? PALETTES["Regiment Gold"];
+  const palette =
+    PALETTES[finish] ?? PALETTES["Regiment Gold"];
 
-  const houseName = cleanText(familyName, "Family");
-  const houseInitials = cleanText(initials, "FR");
-  const latinMotto = cleanText(motto, "Fortis in Familia");
+  const house = normalize(
+    familyName,
+    "Family",
+  ).toUpperCase();
 
-  const animal = isCrestAnimal(symbol) ? symbol : "Lion";
+  const houseText = `HOUSE OF ${house}`;
 
-  const shieldPath = SHIELDS[shield] ?? HEATER_SHIELD_PATH;
+  const latin = normalize(
+    motto,
+    "Fortis in Familia",
+  ).toUpperCase();
+
+  const animal = isCrestAnimal(symbol)
+    ? symbol
+    : "Lion";
+
   const artwork = getAnimalReferenceByName(animal);
 
-  const calibration = ANIMAL_CALIBRATION[animal] ?? {
+  const calibration = CALIBRATION[animal] ?? {
     scale: 1,
     x: 0,
     y: 0,
   };
 
-  const scale = (artwork?.scale ?? 1) * calibration.scale;
+  const scale =
+    (artwork?.scale ?? 1) * calibration.scale;
 
-  const width = 106 * scale;
-  const height = 116 * scale;
+  const imageWidth = 106 * scale;
+  const imageHeight = 116 * scale;
 
-  const imageX = 100 - width / 2 + calibration.x;
+  const imageX =
+    100 - imageWidth / 2 + calibration.x;
+
   const imageY =
-    105 - (height - 96) / 2 + calibration.y;
+    105 -
+    (imageHeight - 96) / 2 +
+    calibration.y -
+    29;
 
-  const clipId = `heritage-clip-${instanceId}`;
-  const filterId = `heritage-charge-${instanceId}`;
-  const shadowId = `heritage-shadow-${instanceId}`;
+  const shieldPath =
+    SHIELDS[shield] ?? HEATER_SHIELD_PATH;
 
-  const { r, g, b } = colorChannels(palette.thread);
+  const clipId = `heritage-clip-${id}`;
+  const colorId = `heritage-color-${id}`;
+  const housePathId = `heritage-house-${id}`;
+  const mottoPathId = `heritage-motto-${id}`;
 
-  // Retained for compatibility with the shared heraldic identity.
-  // Initials are not displayed in the Heritage Crest.
-  void houseInitials;
+  const { r, g, b } = rgb(palette.thread);
+
+  const useOriginalAnimalColor =
+    finish === "Regiment Gold";
+
+  const houseFontSize = getHouseFontSize(
+    houseText.length,
+  );
+
+  const mottoFontSize = getMottoFontSize(
+    latin.length,
+  );
+
+  void _initials;
+  void _crown;
+
+  const title =
+    `${houseText}, ${animal} crest, ${latin}`;
 
   return (
-    <div
-      className={`relative mx-auto w-full max-w-[340px] ${className}`}
-    >
+    <div className={`w-full ${className}`}>
       <svg
-        viewBox="0 0 200 270"
+        viewBox="0 0 200 205"
         xmlns="http://www.w3.org/2000/svg"
         role="img"
-        aria-label={`Heritage crest for ${houseName}, featuring a ${animal} and the motto ${latinMotto}`}
-        className="h-auto w-full overflow-visible"
+        aria-label={title}
+        className="block h-auto w-full overflow-visible"
+        shapeRendering="geometricPrecision"
+        textRendering="geometricPrecision"
       >
-        <title>{`House of ${houseName} — Heritage Crest`}</title>
+        <title>{title}</title>
 
         <defs>
+          {/* Shield clipping */}
           <clipPath id={clipId}>
             <path
               d={shieldPath}
-              transform="translate(50 64)"
+              transform="translate(50 35)"
             />
           </clipPath>
 
-          <filter
-            id={shadowId}
-            x="-30%"
-            y="-30%"
-            width="160%"
-            height="170%"
-          >
-            <feDropShadow
-              dx="0"
-              dy="3"
-              stdDeviation="3"
-              floodColor="#000000"
-              floodOpacity="0.35"
-            />
-          </filter>
+          {/*
+            Wide House Name arc.
 
+            The path extends almost across the entire
+            crest width to prevent clipping of longer
+            House Names.
+          */}
+          <path
+            id={housePathId}
+            d="M12 43 Q100 0 188 43"
+            fill="none"
+          />
+
+          {/* Curved motto text path */}
+          <path
+            id={mottoPathId}
+            d="M40 169 Q100 180 160 169"
+            fill="none"
+          />
+
+          {/* Thread color treatment */}
           <filter
-            id={filterId}
+            id={colorId}
             x="-10%"
             y="-10%"
             width="120%"
@@ -181,37 +234,13 @@ export default function HeritageCrestPreview({
                 0.299 0.587 0.114 0 0
                 0.299 0.587 0.114 0 0
                 0.299 0.587 0.114 0 0
-                0     0     0     1 0
+                0 0 0 1 0
               "
               result="luminance"
             />
 
-            <feComponentTransfer
-              in="luminance"
-              result="contrast"
-            >
-              <feFuncR
-                type="gamma"
-                amplitude="1.28"
-                exponent="0.82"
-                offset="0"
-              />
-              <feFuncG
-                type="gamma"
-                amplitude="1.28"
-                exponent="0.82"
-                offset="0"
-              />
-              <feFuncB
-                type="gamma"
-                amplitude="1.28"
-                exponent="0.82"
-                offset="0"
-              />
-            </feComponentTransfer>
-
             <feColorMatrix
-              in="contrast"
+              in="luminance"
               type="matrix"
               values={`
                 ${r} 0 0 0 0
@@ -223,132 +252,138 @@ export default function HeritageCrestPreview({
           </filter>
         </defs>
 
-        <g filter={`url(#${shadowId})`}>
-          {/* House name: traditional heraldic heading */}
-          <text
-            x="100"
-            y="34"
+        {/* ARCHED HOUSE NAME */}
+        <text
+          fill={palette.thread}
+          fontFamily="Georgia, serif"
+          fontSize={houseFontSize}
+          fontWeight="bold"
+          letterSpacing={
+            houseText.length > 18 ? 0.1 : 0.3
+          }
+        >
+          <textPath
+            href={`#${housePathId}`}
+            startOffset="50%"
             textAnchor="middle"
-            fill={palette.thread}
-            fontFamily="Georgia, 'Times New Roman', serif"
-            fontSize={
-              houseName.length > 18
-                ? 9
-                : houseName.length > 12
-                  ? 11
-                  : 13
-            }
-            fontWeight="bold"
-            letterSpacing="0.6"
-            textLength={
-              houseName.length > 22 ? 166 : undefined
-            }
-            lengthAdjust="spacingAndGlyphs"
           >
-            {`HOUSE OF ${houseName.toUpperCase()}`}
-          </text>
+            {houseText}
+          </textPath>
+        </text>
 
-          {/* Decorative heading rule */}
-          <path
-            d="M55 44 H145"
-            stroke={palette.thread}
-            strokeWidth="1"
-            opacity="0.8"
-          />
+        {/* MAIN HERALDIC SHIELD */}
+        <path
+          d={shieldPath}
+          transform="translate(50 35)"
+          fill={palette.field}
+          stroke={palette.thread}
+          strokeWidth="4.5"
+          strokeLinejoin="round"
+        />
 
-          <path
-            d="M92 44 L100 40 L108 44 L100 48 Z"
-            fill={palette.thread}
-          />
+        {/* INNER SHIELD DETAIL */}
+        <path
+          d={shieldPath}
+          transform="translate(50 35) scale(0.9) translate(5 6)"
+          fill="none"
+          stroke={palette.thread}
+          strokeWidth="1.4"
+          strokeLinejoin="round"
+          opacity="0.65"
+        />
 
-          {/* Traditional heraldic shield */}
-          <path
-            d={shieldPath}
-            transform="translate(50 64)"
-            fill={palette.field}
-            stroke={palette.thread}
-            strokeWidth="5"
-            strokeLinejoin="round"
-          />
-
-          <path
-            d={shieldPath}
-            transform="translate(50 64) scale(0.9) translate(5 6)"
-            fill="none"
-            stroke={palette.thread}
-            strokeWidth="1.8"
-            strokeLinejoin="round"
-            opacity="0.62"
-          />
-
-          {/* Approved Visual Canon animal */}
-          <g clipPath={`url(#${clipId})`}>
-            {artwork && (
-              <image
-                href={artwork.transparentSrc}
-                x={imageX}
-                y={imageY}
-                width={width}
-                height={height}
-                preserveAspectRatio="xMidYMid meet"
-                filter={`url(#${filterId})`}
-              />
-            )}
-          </g>
-
-          {/* Traditional heraldic motto scroll */}
-          <path
-            d="
-              M22 201
-              Q100 215 178 201
-              L171 230
-              Q100 242 29 230
-              Z
-            "
-            fill={palette.field}
-            stroke={palette.thread}
-            strokeWidth="2.5"
-            strokeLinejoin="round"
-          />
-
-          <path
-            d="M22 201 L10 209 L22 221 L15 235 L38 231"
-            fill={palette.field}
-            stroke={palette.thread}
-            strokeWidth="1.8"
-          />
-
-          <path
-            d="M178 201 L190 209 L178 221 L185 235 L162 231"
-            fill={palette.field}
-            stroke={palette.thread}
-            strokeWidth="1.8"
-          />
-
-          <text
-            x="100"
-            y="223"
-            textAnchor="middle"
-            fill={palette.thread}
-            fontFamily="Georgia, 'Times New Roman', serif"
-            fontSize={
-              latinMotto.length > 24
-                ? 7.2
-                : latinMotto.length > 17
-                  ? 8.5
-                  : 10
-            }
-            fontWeight="bold"
-            fontStyle="italic"
-            letterSpacing="0.25"
-            textLength={
-              latinMotto.length > 24 ? 135 : undefined
-            }
-            lengthAdjust="spacingAndGlyphs"
-          >
-            {latinMotto.toUpperCase()}
-          </text>
+        {/* APPROVED VISUAL CANON ANIMAL */}
+        <g clipPath={`url(#${clipId})`}>
+          {artwork && (
+            <image
+              href={artwork.transparentSrc}
+              x={imageX}
+              y={imageY}
+              width={imageWidth}
+              height={imageHeight}
+              preserveAspectRatio="xMidYMid meet"
+              filter={
+                useOriginalAnimalColor
+                  ? undefined
+                  : `url(#${colorId})`
+              }
+            />
+          )}
         </g>
+
+        {/* LEFT SCROLL TAIL */}
+        <path
+          d="
+            M39 155
+            L20 163
+            L34 174
+            L25 187
+            L53 180
+          "
+          fill={palette.field}
+          stroke={palette.thread}
+          strokeWidth="1.8"
+          strokeLinejoin="round"
+        />
+
+        {/* RIGHT SCROLL TAIL */}
+        <path
+          d="
+            M161 155
+            L180 163
+            L166 174
+            L175 187
+            L147 180
+          "
+          fill={palette.field}
+          stroke={palette.thread}
+          strokeWidth="1.8"
+          strokeLinejoin="round"
+        />
+
+        {/* MAIN HERALDIC MOTTO SCROLL */}
+        <path
+          d="
+            M35 153
+            Q100 165 165 153
+            L160 181
+            Q100 194 40 181
+            Z
+          "
+          fill={palette.field}
+          stroke={palette.thread}
+          strokeWidth="2.5"
+          strokeLinejoin="round"
+        />
+
+        {/* INNER SCROLL STITCH DETAIL */}
+        <path
+          d="M42 158 Q100 169 158 158"
+          fill="none"
+          stroke={palette.thread}
+          strokeWidth="0.7"
+          opacity="0.45"
+        />
+
+        {/* CURVED LATIN MOTTO */}
+        <text
+          fill={palette.thread}
+          fontFamily="Georgia, serif"
+          fontSize={mottoFontSize}
+          fontWeight="bold"
+          fontStyle="italic"
+          letterSpacing={
+            latin.length > 24 ? 0 : 0.15
+          }
+        >
+          <textPath
+            href={`#${mottoPathId}`}
+            startOffset="50%"
+            textAnchor="middle"
+          >
+            {latin}
+          </textPath>
+        </text>
       </svg>
     </div>
   );

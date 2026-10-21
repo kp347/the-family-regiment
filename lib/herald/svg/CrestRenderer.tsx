@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useId } from "react";
@@ -93,8 +94,7 @@ function resolveMetallicColor(
 }
 
 function hexToRgb01(hex: string) {
-  const normalized =
-    hex.replace("#", "").trim();
+  const normalized = hex.replace("#", "").trim();
 
   const expanded =
     normalized.length === 3
@@ -104,8 +104,7 @@ function hexToRgb01(hex: string) {
           .join("")
       : normalized;
 
-  const numeric =
-    Number.parseInt(expanded, 16);
+  const numeric = Number.parseInt(expanded, 16);
 
   if (
     Number.isNaN(numeric) ||
@@ -119,17 +118,9 @@ function hexToRgb01(hex: string) {
   }
 
   return {
-    r:
-      ((numeric >> 16) & 255) /
-      255,
-
-    g:
-      ((numeric >> 8) & 255) /
-      255,
-
-    b:
-      (numeric & 255) /
-      255,
+    r: ((numeric >> 16) & 255) / 255,
+    g: ((numeric >> 8) & 255) / 255,
+    b: (numeric & 255) / 255,
   };
 }
 
@@ -138,14 +129,11 @@ function normalizeRockerText(
   fallback: string,
   maxLength: number,
 ): string {
-  const normalized =
-    value
-      ?.trim()
-      .replace(/\s+/g, " ");
+  const normalized = value
+    ?.trim()
+    .replace(/\s+/g, " ");
 
-  return (
-    normalized || fallback
-  )
+  return (normalized || fallback)
     .slice(0, maxLength)
     .toUpperCase();
 }
@@ -156,68 +144,45 @@ export default function CrestRenderer({
   title,
   chargeColor,
 }: CrestRendererProps) {
-  const instanceId =
-    useId().replace(
-      /[^a-zA-Z0-9_-]/g,
-      "",
-    );
+  const instanceId = useId().replace(
+    /[^a-zA-Z0-9_-]/g,
+    "",
+  );
 
-  const primary =
-    resolveFieldColor(
-      crest.colors?.primary,
-    );
+  const primary = resolveFieldColor(
+    crest.colors?.primary,
+  );
 
-  const secondary =
-    resolveSecondaryColor(
-      crest.colors?.secondary,
-    );
-
-  const metallic =
-    resolveMetallicColor(
-      crest.colors?.metallic,
-    );
+  const metallic = resolveMetallicColor(
+    crest.colors?.metallic,
+  );
 
   const presentationColor =
-    chargeColor?.trim() ||
-    metallic;
+    chargeColor?.trim() || metallic;
 
-  const familyName =
-    normalizeRockerText(
-      crest.heritage,
-      "FAMILY",
-      18,
-    );
+  const familyName = normalizeRockerText(
+    crest.heritage,
+    "FAMILY",
+    18,
+  );
 
-  const motto =
-    normalizeRockerText(
-      crest.motto,
-      "FORTIS IN FAMILIA",
-      28,
-    );
+  const motto = normalizeRockerText(
+    crest.motto,
+    "FORTIS IN FAMILIA",
+    28,
+  );
 
   const accessibleTitle =
     title ??
     `${familyName} family crest featuring a ${crest.animal}`;
 
-  const shieldPath =
-    getShieldPath(
-      crest.shield,
-    );
+  const shieldPath = getShieldPath(crest.shield);
 
-  const shadowId =
-    `crest-shadow-${instanceId}`;
-
-  const clipId =
-    `crest-shield-clip-${instanceId}`;
-
-  const chargeFilterId =
-    `crest-charge-filter-${instanceId}`;
-
-  const topTextPathId =
-    `crest-top-text-${instanceId}`;
-
-  const bottomTextPathId =
-    `crest-bottom-text-${instanceId}`;
+  const shadowId = `crest-shadow-${instanceId}`;
+  const clipId = `crest-shield-clip-${instanceId}`;
+  const chargeFilterId = `crest-charge-filter-${instanceId}`;
+  const topTextPathId = `crest-top-text-${instanceId}`;
+  const bottomTextPathId = `crest-bottom-text-${instanceId}`;
 
   return (
     <svg
@@ -225,13 +190,11 @@ export default function CrestRenderer({
       role="img"
       aria-label={accessibleTitle}
       className={className}
-      xmlns="http\\\\://www.w3.org/2000/svg"
+      xmlns="http://www.w3.org/2000/svg"
       shapeRendering="geometricPrecision"
       textRendering="geometricPrecision"
     >
-      <title>
-        {accessibleTitle}
-      </title>
+      <title>{accessibleTitle}</title>
 
       <defs>
         <filter
@@ -265,12 +228,8 @@ export default function CrestRenderer({
         {/*
          * TOP TEXT PATH
          *
-         * Deliberately more pronounced than the previous
-         * shallow arc. This makes the military-tab character
-         * visible even with short surnames such as LAURENT
-         * and more apparent with longer family names.
-         *
-         * The rocker geometry itself remains unchanged.
+         * Pronounced curved surname lettering.
+         * Approved V1 rocker geometry is unchanged.
          */}
         <path
           id={topTextPathId}
@@ -279,8 +238,9 @@ export default function CrestRenderer({
         />
 
         {/*
-         * Bottom motto path remains unchanged during this
-         * micro-pass.
+         * BOTTOM MOTTO PATH
+         *
+         * Approved V1 motto curvature is unchanged.
          */}
         <path
           id={bottomTextPathId}
@@ -289,9 +249,7 @@ export default function CrestRenderer({
         />
       </defs>
 
-      <g
-        filter={`url(#${shadowId})`}
-      >
+      <g filter={`url(#${shadowId})`}>
         <TopRocker
           surname={familyName}
           fill={primary}
@@ -306,9 +264,7 @@ export default function CrestRenderer({
           secondary={presentationColor}
         />
 
-        <g
-          clipPath={`url(#${clipId})`}
-        >
+        <g clipPath={`url(#${clipId})`}>
           <CanonAnimalCharge
             animal={crest.animal}
             filterId={chargeFilterId}
@@ -326,6 +282,12 @@ export default function CrestRenderer({
     </svg>
   );
 }
+
+/*
+ * =========================================================
+ * SHIELD
+ * =========================================================
+ */
 
 function Shield({
   path,
@@ -507,11 +469,7 @@ function CanonChargeFilter({
   id: string;
   color: string;
 }) {
-  const {
-    r,
-    g,
-    b,
-  } = hexToRgb01(color);
+  const { r, g, b } = hexToRgb01(color);
 
   return (
     <filter
@@ -558,9 +516,7 @@ function CanonChargeFilter({
           offset="0"
         />
 
-        <feFuncA
-          type="identity"
-        />
+        <feFuncA type="identity" />
       </feComponentTransfer>
 
       <feColorMatrix
@@ -600,35 +556,41 @@ const animalPresentationCalibration: Partial<
     x: 0,
     y: -10,
   },
+
   Eagle: {
     scale: 0.88,
     x: 0,
     y: -28,
   },
+
   Wolf: {
     scale: 0.82,
     x: -3,
     y: -26,
   },
+
   Bear: {
     scale: 0.82,
     x: -4,
     y: -20,
   },
+
   Stag: {
     scale: 0.86,
     x: 0,
     y: -28,
   },
+
   Griffin: {
     scale: 0.76,
     x: 0,
     y: -29,
   },
-  Salmon: {
-    scale: 0.72,
-    x: 2,
-    y: -25,
+
+  "Mako Shark": {
+    scale: 0.9,
+    x: 0,
+    y: -20,
   },
 };
 
@@ -636,41 +598,28 @@ function CanonAnimalCharge({
   animal,
   filterId,
 }: {
-  animal:
-    BuilderCrestSpec["animal"];
-
+  animal: BuilderCrestSpec["animal"];
   filterId: string;
 }) {
-  const artwork =
-    getAnimalReferenceByName(
-      animal,
-    );
+  const artwork = getAnimalReferenceByName(animal);
 
   if (!artwork) {
     return null;
   }
 
   const calibration =
-    animalPresentationCalibration[
-      animal
-    ] ?? {
+    animalPresentationCalibration[animal] ?? {
       scale: 1,
       x: 0,
       y: 0,
     };
 
-  const sourceScale =
-    artwork.scale ?? 1;
+  const sourceScale = artwork.scale ?? 1;
 
-  const scale =
-    sourceScale *
-    calibration.scale;
+  const scale = sourceScale * calibration.scale;
 
-  const width =
-    106 * scale;
-
-  const height =
-    116 * scale;
+  const width = 106 * scale;
+  const height = 116 * scale;
 
   const x =
     100 -

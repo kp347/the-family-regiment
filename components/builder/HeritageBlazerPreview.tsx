@@ -55,11 +55,11 @@ export default function HeritageBlazerPreview({
             className="object-cover"
           />
 
-          {/* Wearer's left chest */}
+          {/* Wearer's left chest — shifted 1% toward center */}
           <div
             className="pointer-events-none absolute z-10"
             style={{
-              left: "64%",
+              left: "63%",
               top: "41%",
               width: "16%",
               transform: "translate(-50%, -50%)",

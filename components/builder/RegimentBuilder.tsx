@@ -13,10 +13,11 @@ import BuilderJacket, {
   type IdentityPatchCategory,
   type InterchangeableIdentityPatch,
   type MilitaryBranch,
-  type Sport,
+  type Profession,
   type ZodiacSign,
 } from "./BuilderJacket";
 import BuilderMotto from "./BuilderMotto";
+import { PROFESSIONS } from "./IdentityShieldPatch";
 import BuilderPreview from "./BuilderPreview";
 import BuilderStepper from "./BuilderStepper";
 import BuilderSummary from "./BuilderSummary";
@@ -30,6 +31,12 @@ import type {
   HeraldQuadrant,
   HeraldShieldComposition,
 } from "@/lib/herald/design";
+import {
+  HOUSE_IDENTITY_KEY,
+  readHouseIdentity,
+  saveHouseIdentity,
+  type HouseIdentity,
+} from "@/lib/houseIdentity";
 import { heritageFlagAssets } from "@/lib/herald/visualCanon/assets/heritageFlags";
 import type { HeritageFlagVisualCanonAssetId } from "@/lib/herald/visualCanon/references";
 import {
@@ -54,9 +61,9 @@ function normalizeAdditionalIdentityPatches(value: unknown): InterchangeableIden
     if (candidate.category === "Military Branch") {
       const normalized = normalizeMilitaryBranch(candidate.value as MilitaryBranch);
       if (normalized !== "None") patch = { category: "Military Branch", value: normalized };
-    } else if (candidate.category === "Sport") {
-      const normalized = normalizeSport(candidate.value as Sport);
-      if (normalized !== "None") patch = { category: "Sport", value: normalized };
+    } else if (candidate.category === "Profession") {
+      const normalized = normalizeProfession(candidate.value);
+      if (normalized !== "None") patch = { category: "Profession", value: normalized };
     } else if (candidate.category === "Zodiac") {
       const normalized = normalizeZodiacSign(candidate.value as ZodiacSign);
       if (normalized !== "None") patch = { category: "Zodiac", value: normalized };
@@ -85,7 +92,7 @@ type BuilderDraft = {
   /** Extra purchased patches, not additional garment positions. */
   additionalIdentityPatches: InterchangeableIdentityPatch[];
 militaryBranch: MilitaryBranch;
-  sport: Sport;
+  profession: Profession;
   zodiacSign: ZodiacSign;
   /**
    \* Temporary five-zone fields retained only for migration of
@@ -328,7 +335,7 @@ const defaultDraft: BuilderDraft = {
   leftChestIdentity: "None",
   additionalIdentityPatches: [],
 militaryBranch: "None",
-  sport: "None",
+  profession: "None",
   zodiacSign: "None",
   composition:
     createDefaultComposition(
@@ -429,12 +436,7 @@ const [
   defaultDraft.militaryBranch,
 );
 
-  const [
-    sport,
-    setSport,
-  ] = useState<Sport>(
-    defaultDraft.sport,
-  );
+  const [profession, setProfession] = useState<Profession>(defaultDraft.profession);
   const [
     zodiacSign,
     setZodiacSign,
@@ -561,6 +563,22 @@ selectedMotto,
 composition,
 designCreatedAt,
     ]);
+  function applySharedIdentity(identity: HouseIdentity) {
+    setFamilyName(identity.familyName);
+    setInitials(identity.initials);
+    setAnimal(identity.animal);
+    setShield(identity.shield);
+    setMotto(identity.motto);
+    setComposition((current) => ({
+      ...current,
+      quadrants: current.quadrants.map((quadrant) =>
+        quadrant.id === "II" && quadrant.type === "animal"
+          ? createAnimalQuadrant(identity.animal)
+          : quadrant,
+      ) as HeraldShieldComposition["quadrants"],
+    }));
+  }
+
   useEffect(() => {
     const savedDraft =
       window.localStorage.getItem(
@@ -710,11 +728,7 @@ designCreatedAt,
           ),
         );
 
-        setSport(
-          normalizeSport(
-            parsedDraft.sport,
-          ),
-        );
+        setProfession(normalizeProfession(parsedDraft.profession));
         setZodiacSign(
           normalizeZodiacSign(
             parsedDraft.zodiacSign,
@@ -769,8 +783,53 @@ designCreatedAt,
         );
       }
     }
+    // The shared House identity is authoritative. Existing jacket-only
+    // customization is restored above and remains independent.
+    applySharedIdentity(readHouseIdentity());
     setDraftLoaded(true);
   }, []);
+
+  useEffect(() => {
+    if (!draftLoaded) return;
+
+    function refreshHouseIdentity() {
+      const identity = readHouseIdentity();
+      // Avoid replacing in-progress edits unless another builder
+      // actually changed the shared House record.
+      let saved: string | null = null;
+      try {
+        saved = window.localStorage.getItem(HOUSE_IDENTITY_KEY);
+      } catch {
+        return;
+      }
+      if (!saved) return;
+      try {
+        const parsed = JSON.parse(saved) as Partial<HouseIdentity>;
+        if (
+          parsed.familyName !== familyName ||
+          parsed.initials !== initials ||
+          parsed.animal !== animal ||
+          parsed.shield !== shield ||
+          parsed.motto !== motto
+        ) {
+          applySharedIdentity(identity);
+        }
+      } catch {
+        // Invalid shared storage is ignored.
+      }
+    }
+
+    function onStorage(event: StorageEvent) {
+      if (event.key === HOUSE_IDENTITY_KEY) refreshHouseIdentity();
+    }
+
+    window.addEventListener("focus", refreshHouseIdentity);
+    window.addEventListener("storage", onStorage);
+    return () => {
+      window.removeEventListener("focus", refreshHouseIdentity);
+      window.removeEventListener("storage", onStorage);
+    };
+  }, [draftLoaded, familyName, initials, animal, shield, motto]);
   useEffect(() => {
     if (!draftLoaded) {
       return;
@@ -781,6 +840,13 @@ designCreatedAt,
         createDraft(),
       ),
     );
+    saveHouseIdentity({
+      familyName,
+      initials,
+      motto,
+      animal,
+      shield: normalizeShield(shield),
+    });
   }, [
     draftLoaded,
     familyName,
@@ -797,7 +863,7 @@ designCreatedAt,
     rightShoulderHeritage,
 leftChestIdentity,
 militaryBranch,
-    sport,
+    profession,
     zodiacSign,
     additionalIdentityPatches,
     composition,
@@ -819,7 +885,7 @@ militaryBranch,
       rightShoulderHeritage,
       leftChestIdentity,
 militaryBranch,
-      sport,
+        profession,
       zodiacSign,
       additionalIdentityPatches,
       composition,
@@ -924,6 +990,13 @@ militaryBranch,
         createDraft(),
       ),
     );
+    saveHouseIdentity({
+      familyName,
+      initials,
+      motto,
+      animal,
+      shield: normalizeShield(shield),
+    });
     showMessage(
       "Draft saved",
     );
@@ -941,30 +1014,21 @@ militaryBranch,
     );
   }
   function resetDraft() {
-    setFamilyName(
-      defaultDraft.familyName,
-    );
-    setInitials(
-      defaultDraft.initials,
-    );
+    const sharedHouse = readHouseIdentity();
+    setFamilyName(sharedHouse.familyName);
+    setInitials(sharedHouse.initials);
     setHeritage(
       defaultDraft.heritage,
     );
-    setAnimal(
-      defaultDraft.animal,
-    );
-    setShield(
-      defaultDraft.shield,
-    );
+    setAnimal(sharedHouse.animal);
+    setShield(sharedHouse.shield);
     setCrown(
       defaultDraft.crown,
     );
     setValue(
       defaultDraft.value,
     );
-    setMotto(
-      defaultDraft.motto,
-    );
+    setMotto(sharedHouse.motto);
     setJacketView(
       defaultDraft.jacketView,
     );
@@ -984,9 +1048,7 @@ setMilitaryBranch(
   defaultDraft.militaryBranch,
 );
 
-    setSport(
-      defaultDraft.sport,
-    );
+    setProfession(defaultDraft.profession);
     setZodiacSign(
       defaultDraft.zodiacSign,
     );
@@ -994,7 +1056,7 @@ setMilitaryBranch(
     setComposition(
       createDefaultComposition(
         defaultDraft.heritage,
-        defaultDraft.animal,
+        sharedHouse.animal,
         defaultDraft.value,
       ),
     );
@@ -1180,8 +1242,8 @@ setMilitaryBranch(
                     }
 militaryBranch={militaryBranch}
 onMilitaryBranchChange={setMilitaryBranch}
-                    sport={sport}
-                    onSportChange={setSport}
+                    profession={profession}
+                    onProfessionChange={setProfession}
                     zodiacSign={zodiacSign}
                       additionalIdentityPatches={additionalIdentityPatches}
                       onAdditionalIdentityPatchesChange={setAdditionalIdentityPatches}
@@ -1339,7 +1401,8 @@ onMilitaryBranchChange={setMilitaryBranch}
                 leftChestIdentity
               }
 militaryBranch={militaryBranch}
-sport={sport}
+sport="None"
+                 profession={profession}
 zodiacSign={zodiacSign}
               symbolOptions={
                 symbolOptions
@@ -1504,7 +1567,6 @@ function normalizeIdentityPatchCategory(
   switch (value) {
     case "Profession":
     case "Military Branch":
-    case "Sport":
     case "Zodiac":
     case "Hometown":
     case "Family Value":
@@ -1525,29 +1587,6 @@ function normalizeMilitaryBranch(
     case "Coast Guard":
     case "Space Force":
       return value;
-    case "None":
-    default:
-      return "None";
-  }
-}
-
-function normalizeSport(
-  value: Sport | undefined,
-): Sport {
-  switch (value) {
-    case "American Football":
-    case "Football (Soccer)":
-    case "Baseball":
-    case "Basketball":
-    case "Hockey":
-    case "Tennis":
-    case "Golf":
-    case "Running":
-    case "Boxing":
-    case "Martial Arts":
-    case "Swimming":
-      return value;
-
     case "None":
     default:
       return "None";
@@ -1625,4 +1664,9 @@ function getDesignColors(
           "gold",
       };
   }
+}
+
+function normalizeProfession(value: unknown): Profession {
+  return typeof value === "string" && (PROFESSIONS as readonly string[]).includes(value)
+    ? value as Profession : "None";
 }

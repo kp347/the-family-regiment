@@ -1,3 +1,4 @@
+
 import type { PrimaryChargeVisualCanonAssetId } from "./references";
 
 /*
@@ -22,6 +23,9 @@ import type { PrimaryChargeVisualCanonAssetId } from "./references";
  * Final production artwork will eventually use controlled
  * vector masters and manufacturing-safe derivatives that
  * have passed Family Regiment review and physical sampling.
+ *
+ * Salmon remains registered for legacy saved designs.
+ * Mako Shark replaces Salmon in customer-facing selections.
  * =========================================================
  */
 
@@ -104,13 +108,37 @@ export const animalReferenceArtwork: Record<
     alt: "Family Regiment Griffin presentation reference",
   },
 
+  /*
+   * New customer-facing primary charge.
+   *
+   * Shortfin mako in a curved, leaping heraldic pose.
+   * Antique-gold artwork with restrained wave accents.
+   *
+   * These asset paths are reserved for the upcoming
+   * approved artwork files.
+   */
+  "mako-shark": {
+    assetId: "mako-shark",
+    name: "Mako Shark",
+    src: "/canon/animals/mako-shark-transparent.png",
+    transparentSrc:
+      "/canon/animals/mako-shark-transparent.png",
+    alt: "Family Regiment Mako Shark heraldic presentation reference",
+  },
+
+  /*
+   * Legacy only.
+   *
+   * Retained to support previously saved family designs.
+   * Do not expose Salmon as a new customer selection.
+   */
   salmon: {
     assetId: "salmon",
     name: "Salmon",
     src: "/canon/animals/salmon.png",
     transparentSrc:
       "/canon/animals/salmon-transparent.png",
-    alt: "Family Regiment Salmon presentation reference",
+    alt: "Family Regiment Salmon legacy presentation reference",
     scale: 1.05,
   },
 };

@@ -1,3 +1,4 @@
+
 "use client";
 
 import { getAnimalReferenceByName } from "@/lib/herald/visualCanon/animalReferences";
@@ -54,9 +55,9 @@ const animals: AnimalOption[] = [
       "Guardianship, vigilance, courage, and strength",
   },
   {
-    name: "Salmon",
+    name: "Mako Shark",
     meaning:
-      "Perseverance, return, journey, and continuity",
+      "Speed, precision, determination, adaptability, and protection",
   },
 ];
 
@@ -88,6 +89,18 @@ const shields: ShieldOption[] = [
   },
 ];
 
+function normalizeSelectedAnimal(value: string): string {
+  if (
+    value === "Salmon" ||
+    value === "Shark" ||
+    value === "mako-shark"
+  ) {
+    return "Mako Shark";
+  }
+
+  return value;
+}
+
 export default function BuilderHeraldry({
   animal,
   shield,
@@ -96,6 +109,11 @@ export default function BuilderHeraldry({
   onShieldChange,
   onCrownChange: _onCrownChange,
 }: BuilderHeraldryProps) {
+  const selectedAnimal = normalizeSelectedAnimal(animal);
+
+  void _crown;
+  void _onCrownChange;
+
   return (
     <div className="space-y-12">
       <section>
@@ -107,18 +125,13 @@ export default function BuilderHeraldry({
 
         <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
           {shields.map((option) => {
-            const active =
-              shield === option.name;
+            const active = shield === option.name;
 
             return (
               <button
                 key={option.name}
                 type="button"
-                onClick={() =>
-                  onShieldChange(
-                    option.name,
-                  )
-                }
+                onClick={() => onShieldChange(option.name)}
                 aria-pressed={active}
                 className={[
                   "group relative overflow-hidden rounded-[1.35rem] border p-4 text-center transition duration-200",
@@ -127,14 +140,10 @@ export default function BuilderHeraldry({
                     : "border-white/10 bg-[#20211F] hover:-translate-y-0.5 hover:border-[#B08D57]/55",
                 ].join(" ")}
               >
-                {active && (
-                  <SelectedMark />
-                )}
+                {active && <SelectedMark />}
 
                 <div className="relative flex h-36 items-center justify-center overflow-hidden rounded-xl border border-white/8 bg-[#171815]">
-                  <ShieldReferencePreview
-                    name={option.name}
-                  />
+                  <ShieldReferencePreview name={option.name} />
                 </div>
 
                 <p className="mt-4 text-sm font-semibold text-[#F3EEE4]">
@@ -155,16 +164,12 @@ export default function BuilderHeraldry({
           </p>
 
           <p className="mt-2 max-w-3xl text-sm leading-6 text-[#8E8A81]">
-            These shield images are
-            controlled presentation
-            references. Production masters
-            remain subject to Family Regiment
-            design review, manufacturing
-            validation, and physical sample
-            approval. Decorative details shown
-            in reference artwork are not
-            automatically structural shield
-            geometry.
+            These shield images are controlled presentation
+            references. Production masters remain subject to
+            Family Regiment design review, manufacturing
+            validation, and physical sample approval.
+            Decorative details shown in reference artwork are
+            not automatically structural shield geometry.
           </p>
         </div>
       </section>
@@ -178,18 +183,13 @@ export default function BuilderHeraldry({
 
         <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {animals.map((option) => {
-            const active =
-              animal === option.name;
+            const active = selectedAnimal === option.name;
 
             return (
               <button
                 key={option.name}
                 type="button"
-                onClick={() =>
-                  onAnimalChange(
-                    option.name,
-                  )
-                }
+                onClick={() => onAnimalChange(option.name)}
                 aria-pressed={active}
                 className={[
                   "group relative min-h-[220px] overflow-hidden rounded-[1.35rem] border p-5 text-left transition duration-200",
@@ -198,14 +198,10 @@ export default function BuilderHeraldry({
                     : "border-white/10 bg-[#20211F] hover:-translate-y-0.5 hover:border-[#B08D57]/55",
                 ].join(" ")}
               >
-                {active && (
-                  <SelectedMark />
-                )}
+                {active && <SelectedMark />}
 
                 <div className="relative flex h-28 items-center justify-center overflow-hidden rounded-xl border border-white/8 bg-[#171815]">
-                  <AnimalReferencePreview
-                    name={option.name}
-                  />
+                  <AnimalReferencePreview name={option.name} />
                 </div>
 
                 <div className="mt-5">
@@ -230,18 +226,13 @@ export default function BuilderHeraldry({
           </p>
 
           <p className="mt-2 max-w-3xl text-sm leading-6 text-[#8E8A81]">
-            Standard crests are assembled
-            from the controlled Family
-            Regiment Visual Canon. One
-            dominant heraldic figure carries
-            the primary family identity.
-            Optional subordinate family-story
-            elements may support that figure
-            without competing with it.
-            Production artwork remains subject
-            to design review, manufacturing
-            validation, and physical sample
-            approval.
+            Standard crests are assembled from the controlled
+            Family Regiment Visual Canon. One dominant heraldic
+            figure carries the primary family identity.
+            Optional subordinate family-story elements may
+            support that figure without competing with it.
+            Production artwork remains subject to design review,
+            manufacturing validation, and physical sample approval.
           </p>
         </div>
       </section>
@@ -288,8 +279,7 @@ function ShieldReferencePreview({
 }: {
   name: string;
 }) {
-  const artwork =
-    getShieldReferenceByName(name);
+  const artwork = getShieldReferenceByName(name);
 
   if (!artwork) {
     return (
@@ -301,8 +291,7 @@ function ShieldReferencePreview({
     );
   }
 
-  const scale =
-    artwork.scale ?? 1;
+  const scale = artwork.scale ?? 1;
 
   return (
     <img
@@ -310,9 +299,7 @@ function ShieldReferencePreview({
       alt={artwork.alt}
       className="h-full w-full object-contain"
       style={{
-        objectPosition:
-          artwork.objectPosition ??
-          "center",
+        objectPosition: artwork.objectPosition ?? "center",
         transform: `scale(${scale})`,
       }}
     />
@@ -324,8 +311,7 @@ function AnimalReferencePreview({
 }: {
   name: string;
 }) {
-  const artwork =
-    getAnimalReferenceByName(name);
+  const artwork = getAnimalReferenceByName(name);
 
   if (!artwork) {
     return (
@@ -337,8 +323,7 @@ function AnimalReferencePreview({
     );
   }
 
-  const scale =
-    artwork.scale ?? 1.22;
+  const scale = artwork.scale ?? 1.22;
 
   return (
     <img
@@ -346,9 +331,7 @@ function AnimalReferencePreview({
       alt={artwork.alt}
       className="h-full w-full object-contain"
       style={{
-        objectPosition:
-          artwork.objectPosition ??
-          "center",
+        objectPosition: artwork.objectPosition ?? "center",
         transform: `scale(${scale})`,
       }}
     />

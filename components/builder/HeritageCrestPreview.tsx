@@ -8,14 +8,6 @@ import type {
   CrestCrown,
 } from "@/lib/herald/types";
 
-import { isCrestAnimal } from "@/lib/herald/types";
-
-import { HEATER_SHIELD_PATH } from "@/lib/herald/svg/shields/heater";
-import { FRENCH_SHIELD_PATH } from "@/lib/herald/svg/shields/french";
-import { NORMAN_SHIELD_PATH } from "@/lib/herald/svg/shields/norman";
-import { SPANISH_SHIELD_PATH } from "@/lib/herald/svg/shields/spanish";
-import { TARGE_SHIELD_PATH } from "@/lib/herald/svg/shields/targe";
-
 import { getAnimalReferenceByName } from "@/lib/herald/visualCanon/animalReferences";
 
 import type { SupportedCrestFinish } from "./FamilyCrestPreview";
@@ -31,69 +23,112 @@ type Props = {
   className?: string;
 };
 
-const PALETTES = {
-  "Regiment Gold": {
-    field: "#11120F",
-    thread: "#D4AF6A",
-  },
-  "Tactical Subdued": {
-    field: "#11120F",
-    thread: "#626A3A",
-  },
-  "Heritage Ivory": {
-    field: "#24251F",
-    thread: "#F1E7CF",
-  },
-} as const;
+const ANIMALS = [
+  "Lion",
+  "Eagle",
+  "Wolf",
+  "Bear",
+  "Stag",
+  "Griffin",
+  "Mako Shark",
+  "Salmon",
+] as const;
 
-const SHIELDS: Record<BuilderShieldStyle, string> = {
-  "Heater Shield": HEATER_SHIELD_PATH,
-  "French Shield": FRENCH_SHIELD_PATH,
-  "Norman Shield": NORMAN_SHIELD_PATH,
-  "Spanish Shield": SPANISH_SHIELD_PATH,
-  Targe: TARGE_SHIELD_PATH,
-};
+type AnimalName = (typeof ANIMALS)[number];
 
-const CALIBRATION: Record<
-  string,
-  { scale: number; x: number; y: number }
+// Master image coordinate space: 1341 × 1173.
+// Preserve the existing animal placements.
+// Mako Shark uses a wider composition to accommodate
+// its curved body, tail, and restrained wave accents.
+const ANIMAL_PLACEMENT: Record<
+  AnimalName,
+  {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+  }
 > = {
-  Lion: { scale: 1, x: 0, y: -10 },
-  Eagle: { scale: 0.88, x: 0, y: -28 },
-  Wolf: { scale: 0.82, x: -3, y: -26 },
-  Bear: { scale: 0.82, x: -4, y: -20 },
-  Stag: { scale: 0.86, x: 0, y: -28 },
-  Griffin: { scale: 0.76, x: 0, y: -29 },
-  Salmon: { scale: 0.72, x: 2, y: -25 },
+  Lion: {
+    x: 506,
+    y: 450,
+    width: 305,
+    height: 337,
+  },
+
+  Eagle: {
+    x: 500,
+    y: 468,
+    width: 316,
+    height: 302,
+  },
+
+  Wolf: {
+    x: 505,
+    y: 465,
+    width: 308,
+    height: 304,
+  },
+
+  Bear: {
+    x: 502,
+    y: 464,
+    width: 312,
+    height: 309,
+  },
+
+  Stag: {
+    x: 506,
+    y: 453,
+    width: 304,
+    height: 326,
+  },
+
+  Griffin: {
+    x: 503,
+    y: 454,
+    width: 310,
+    height: 322,
+  },
+
+  "Mako Shark": {
+    x: 461,
+    y: 443,
+    width: 394,
+    height: 370,
+  },
+
+  // Legacy placement for previously saved designs.
+  Salmon: {
+    x: 493,
+    y: 502,
+    width: 330,
+    height: 228,
+  },
 };
 
-function normalize(value: string, fallback: string) {
+function clean(value: string, fallback: string) {
   return value.trim().replace(/\s+/g, " ") || fallback;
 }
 
-function rgb(hex: string) {
-  const value = hex.replace("#", "");
-
-  return {
-    r: parseInt(value.slice(0, 2), 16) / 255,
-    g: parseInt(value.slice(2, 4), 16) / 255,
-    b: parseInt(value.slice(4, 6), 16) / 255,
-  };
+function isAnimal(value: string): value is AnimalName {
+  return ANIMALS.some((animal) => animal === value);
 }
 
-function getHouseFontSize(length: number): number {
-  if (length > 30) return 6.2;
-  if (length > 24) return 7.2;
-  if (length > 18) return 8.3;
-  if (length > 13) return 9.4;
-  return 10.8;
+function nameSize(length: number) {
+  if (length > 30) return 29;
+  if (length > 24) return 36;
+  if (length > 18) return 43;
+  if (length > 13) return 50;
+  return 61;
 }
 
-function getMottoFontSize(length: number): number {
-  if (length > 34) return 6.2;
-  if (length > 25) return 7.2;
-  if (length > 17) return 8.5;
-  return 10;
+function mottoSize(length: number) {
+  if (length > 40) return 25;
+  if (length > 30) return 31;
+  if (length > 23) return 37;
+  if (length > 17) return 44;
+  return 51;
 }
 
 export default function HeritageCrestPreview({
@@ -101,280 +136,125 @@ export default function HeritageCrestPreview({
   initials: _initials,
   motto,
   symbol,
-  shield,
+  shield: _shield,
   crown: _crown,
-  finish,
+  finish: _finish,
   className = "",
 }: Props) {
-  const id = useId().replace(/[^a-zA-Z0-9_-]/g, "");
+  const uid = useId().replace(/[^a-zA-Z0-9_-]/g, "");
 
-  const palette =
-    PALETTES[finish] ?? PALETTES["Regiment Gold"];
+  const namePathId = `heritage-name-${uid}`;
+  const mottoPathId = `heritage-motto-${uid}`;
+  const animalClipId = `heritage-animal-clip-${uid}`;
 
-  const house = normalize(
-    familyName,
-    "Family",
-  ).toUpperCase();
+  const surname = clean(familyName, "Family").toUpperCase();
+  const latin = clean(motto, "Fortis in Familia").toUpperCase();
 
-  const houseText = `HOUSE OF ${house}`;
-
-  const latin = normalize(
-    motto,
-    "Fortis in Familia",
-  ).toUpperCase();
-
-  const animal = isCrestAnimal(symbol)
+  const animal: AnimalName = isAnimal(symbol)
     ? symbol
     : "Lion";
 
-  const artwork = getAnimalReferenceByName(animal);
+  const animalArtwork = getAnimalReferenceByName(animal);
+  const placement = ANIMAL_PLACEMENT[animal];
 
-  const calibration = CALIBRATION[animal] ?? {
-    scale: 1,
-    x: 0,
-    y: 0,
-  };
-
-  const scale =
-    (artwork?.scale ?? 1) * calibration.scale;
-
-  const imageWidth = 106 * scale;
-  const imageHeight = 116 * scale;
-
-  const imageX =
-    100 - imageWidth / 2 + calibration.x;
-
-  const imageY =
-    105 -
-    (imageHeight - 96) / 2 +
-    calibration.y -
-    29;
-
-  const shieldPath =
-    SHIELDS[shield] ?? HEATER_SHIELD_PATH;
-
-  const clipId = `heritage-clip-${id}`;
-  const colorId = `heritage-color-${id}`;
-  const housePathId = `heritage-house-${id}`;
-  const mottoPathId = `heritage-motto-${id}`;
-
-  const { r, g, b } = rgb(palette.thread);
-
-  const useOriginalAnimalColor =
-    finish === "Regiment Gold";
-
-  const houseFontSize = getHouseFontSize(
-    houseText.length,
-  );
-
-  const mottoFontSize = getMottoFontSize(
-    latin.length,
-  );
-
+  // The ornamental PNG has a fixed crown,
+  // shield outline, and gold finish.
+  // Preserve the shared builder interface.
   void _initials;
+  void _shield;
   void _crown;
-
-  const title =
-    `${houseText}, ${animal} crest, ${latin}`;
+  void _finish;
 
   return (
     <div className={`w-full ${className}`}>
       <svg
-        viewBox="0 0 200 205"
+        viewBox="0 0 1341 1173"
         xmlns="http://www.w3.org/2000/svg"
         role="img"
-        aria-label={title}
-        className="block h-auto w-full overflow-visible"
-        shapeRendering="geometricPrecision"
+        aria-label={`${surname} heritage crest with ${animal} and motto ${latin}`}
+        className="block h-auto w-full"
         textRendering="geometricPrecision"
       >
-        <title>{title}</title>
+        <title>{`${surname} — ${latin}`}</title>
 
         <defs>
-          {/* Shield clipping */}
-          <clipPath id={clipId}>
-            <path
-              d={shieldPath}
-              transform="translate(50 35)"
-            />
-          </clipPath>
-
-          {/*
-            Wide House Name arc.
-
-            The path extends almost across the entire
-            crest width to prevent clipping of longer
-            House Names.
-          */}
+          {/* Approved upper banner lettering path. */}
           <path
-            id={housePathId}
-            d="M12 43 Q100 0 188 43"
+            id={namePathId}
+            d="M 404 219 Q 657 81 909 219"
             fill="none"
           />
 
-          {/* Curved motto text path */}
+          {/* Approved lower motto ribbon path. */}
           <path
             id={mottoPathId}
-            d="M40 169 Q100 180 160 169"
+            d="M 438 882 Q 656 982 874 882"
             fill="none"
           />
 
-          {/* Thread color treatment */}
-          <filter
-            id={colorId}
-            x="-10%"
-            y="-10%"
-            width="120%"
-            height="120%"
-            colorInterpolationFilters="sRGB"
-          >
-            <feColorMatrix
-              type="matrix"
-              values="
-                0.299 0.587 0.114 0 0
-                0.299 0.587 0.114 0 0
-                0.299 0.587 0.114 0 0
-                0 0 0 1 0
-              "
-              result="luminance"
-            />
-
-            <feColorMatrix
-              in="luminance"
-              type="matrix"
-              values={`
-                ${r} 0 0 0 0
-                0 ${g} 0 0 0
-                0 0 ${b} 0 0
-                0 0 0 1 0
-              `}
-            />
-          </filter>
+          {/* Lower shield only: excludes crown and gold perimeter. */}
+          <clipPath id={animalClipId}>
+            <path d="M 498 457 L 814 457 L 811 646 Q 785 722 657 777 Q 527 721 501 646 Z" />
+          </clipPath>
         </defs>
 
-        {/* ARCHED HOUSE NAME */}
+        {/* Approved heritage crest framework. */}
+        <image
+          href="/images/heritage-blazer/heritage-crest-framework.png"
+          x="0"
+          y="0"
+          width="1341"
+          height="1173"
+          preserveAspectRatio="xMidYMid meet"
+        />
+
+        {/* Selected animal artwork inside the shield. */}
+        {animalArtwork && (
+          <g clipPath={`url(#${animalClipId})`}>
+            <image
+              href={animalArtwork.transparentSrc}
+              x={placement.x}
+              y={placement.y}
+              width={placement.width}
+              height={placement.height}
+              preserveAspectRatio="xMidYMid meet"
+            />
+          </g>
+        )}
+
+        {/* Approved surname alignment — unchanged. */}
         <text
-          fill={palette.thread}
-          fontFamily="Georgia, serif"
-          fontSize={houseFontSize}
+          transform="rotate(-2.5 657 170)"
+          fill="#F2D69F"
+          stroke="#24190E"
+          strokeWidth="2.1"
+          paintOrder="stroke"
+          fontFamily="Georgia, 'Times New Roman', serif"
           fontWeight="bold"
-          letterSpacing={
-            houseText.length > 18 ? 0.1 : 0.3
-          }
+          fontSize={nameSize(surname.length)}
+          letterSpacing={surname.length > 20 ? 0 : 1}
         >
           <textPath
-            href={`#${housePathId}`}
-            startOffset="50%"
+            href={`#${namePathId}`}
+            startOffset="52.5%"
             textAnchor="middle"
           >
-            {houseText}
+            {surname}
           </textPath>
         </text>
 
-        {/* MAIN HERALDIC SHIELD */}
-        <path
-          d={shieldPath}
-          transform="translate(50 35)"
-          fill={palette.field}
-          stroke={palette.thread}
-          strokeWidth="4.5"
-          strokeLinejoin="round"
-        />
-
-        {/* INNER SHIELD DETAIL */}
-        <path
-          d={shieldPath}
-          transform="translate(50 35) scale(0.9) translate(5 6)"
-          fill="none"
-          stroke={palette.thread}
-          strokeWidth="1.4"
-          strokeLinejoin="round"
-          opacity="0.65"
-        />
-
-        {/* APPROVED VISUAL CANON ANIMAL */}
-        <g clipPath={`url(#${clipId})`}>
-          {artwork && (
-            <image
-              href={artwork.transparentSrc}
-              x={imageX}
-              y={imageY}
-              width={imageWidth}
-              height={imageHeight}
-              preserveAspectRatio="xMidYMid meet"
-              filter={
-                useOriginalAnimalColor
-                  ? undefined
-                  : `url(#${colorId})`
-              }
-            />
-          )}
-        </g>
-
-        {/* LEFT SCROLL TAIL */}
-        <path
-          d="
-            M39 155
-            L20 163
-            L34 174
-            L25 187
-            L53 180
-          "
-          fill={palette.field}
-          stroke={palette.thread}
-          strokeWidth="1.8"
-          strokeLinejoin="round"
-        />
-
-        {/* RIGHT SCROLL TAIL */}
-        <path
-          d="
-            M161 155
-            L180 163
-            L166 174
-            L175 187
-            L147 180
-          "
-          fill={palette.field}
-          stroke={palette.thread}
-          strokeWidth="1.8"
-          strokeLinejoin="round"
-        />
-
-        {/* MAIN HERALDIC MOTTO SCROLL */}
-        <path
-          d="
-            M35 153
-            Q100 165 165 153
-            L160 181
-            Q100 194 40 181
-            Z
-          "
-          fill={palette.field}
-          stroke={palette.thread}
-          strokeWidth="2.5"
-          strokeLinejoin="round"
-        />
-
-        {/* INNER SCROLL STITCH DETAIL */}
-        <path
-          d="M42 158 Q100 169 158 158"
-          fill="none"
-          stroke={palette.thread}
-          strokeWidth="0.7"
-          opacity="0.45"
-        />
-
-        {/* CURVED LATIN MOTTO */}
+        {/* Approved motto alignment — unchanged. */}
         <text
-          fill={palette.thread}
-          fontFamily="Georgia, serif"
-          fontSize={mottoFontSize}
+          transform="translate(10 20) rotate(0.5 657 920)"
+          fill="#30200E"
+          stroke="#E6C58A"
+          strokeWidth="0.6"
+          paintOrder="stroke"
+          fontFamily="Georgia, 'Times New Roman', serif"
           fontWeight="bold"
           fontStyle="italic"
-          letterSpacing={
-            latin.length > 24 ? 0 : 0.15
-          }
+          fontSize={mottoSize(latin.length)}
+          letterSpacing={latin.length > 23 ? 0 : 0.5}
         >
           <textPath
             href={`#${mottoPathId}`}

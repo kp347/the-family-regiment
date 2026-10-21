@@ -1,6 +1,4 @@
 
-// lib/herald/visualCanon/references.ts
-
 import { getVisualCanonAsset } from "./registry";
 import type { VisualCanonAsset } from "./types";
 
@@ -11,6 +9,7 @@ export type PrimaryChargeVisualCanonAssetId =
   | "bear"
   | "stag"
   | "griffin"
+  | "mako-shark"
   | "salmon";
 
 export type ShieldVisualCanonAssetId =
@@ -70,6 +69,11 @@ export interface VisualCanonReference {
   artworkVersion?: string;
 }
 
+/*
+ * Legacy values remain resolvable for saved designs.
+ * Salmon is retained as a legacy identifier only.
+ * Mako Shark is the new customer-facing selection.
+ */
 const legacyPrimaryChargeMap: Record<
   string,
   VisualCanonReference
@@ -83,6 +87,8 @@ const legacyPrimaryChargeMap: Record<
   Bear: { assetId: "bear" },
   Stag: { assetId: "stag" },
   Griffin: { assetId: "griffin" },
+  "Mako Shark": { assetId: "mako-shark" },
+  Shark: { assetId: "mako-shark" },
   Salmon: { assetId: "salmon" },
 };
 
@@ -125,7 +131,6 @@ const heritageFlagMap: Record<
   canada: { assetId: "canada" },
   mexico: { assetId: "mexico" },
   brazil: { assetId: "brazil" },
-
   france: { assetId: "france" },
   "united-kingdom": { assetId: "united-kingdom" },
   england: { assetId: "england" },
@@ -142,16 +147,13 @@ const heritageFlagMap: Record<
   norway: { assetId: "norway" },
   poland: { assetId: "poland" },
   greece: { assetId: "greece" },
-
   japan: { assetId: "japan" },
   "south-korea": { assetId: "south-korea" },
-
   nigeria: { assetId: "nigeria" },
   ghana: { assetId: "ghana" },
   "south-africa": { assetId: "south-africa" },
   egypt: { assetId: "egypt" },
   kenya: { assetId: "kenya" },
-
   "puerto-rico": { assetId: "puerto-rico" },
   "dominican-republic": {
     assetId: "dominican-republic",
@@ -164,7 +166,6 @@ const heritageFlagMap: Record<
   },
   martinique: { assetId: "martinique" },
   guadeloupe: { assetId: "guadeloupe" },
-
   philippines: { assetId: "philippines" },
   china: { assetId: "china" },
 };

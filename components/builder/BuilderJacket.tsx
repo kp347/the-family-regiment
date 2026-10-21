@@ -1,9 +1,10 @@
 "use client";
 
 import { useState } from "react";
+import IdentityShieldPatch, { PROFESSIONS, type Profession, type IdentityPatchFinish } from "./IdentityShieldPatch";
+export type { Profession } from "./IdentityShieldPatch";
 import Image from "next/image";
 import { getMilitaryBranchCanonAsset } from "@/lib/herald/visualCanon/assets/militaryBranches";
-import { getSportCanonAsset } from "@/lib/herald/visualCanon/assets/sports";
 import { getZodiacCanonAsset } from "@/lib/herald/visualCanon/assets/zodiac";
 
 import {
@@ -127,6 +128,7 @@ export type InterchangeableIdentityPatch =
   | { category: "Military Branch"; value: MilitaryBranch }
 
   | { category: "Sport"; value: Sport }
+  | { category: "Profession"; value: Profession }
 
   | { category: "Zodiac"; value: ZodiacSign };
 
@@ -145,6 +147,7 @@ type BuilderJacketProps = {
   militaryBranch?: MilitaryBranch;
 
   sport?: Sport;
+  profession?: Profession;
 
   zodiacSign?: ZodiacSign;
 
@@ -182,6 +185,7 @@ type BuilderJacketProps = {
 
   ) => void;
 
+  onProfessionChange?: (value: Profession) => void;
   onSportChange?: (
 
     value: Sport,
@@ -209,32 +213,6 @@ const militaryBranches: MilitaryBranch[] = [
   "Coast Guard",
 
   "Space Force",
-
-];
-
-const sports: Sport[] = [
-
-  "American Football",
-
-  "Football (Soccer)",
-
-  "Baseball",
-
-  "Basketball",
-
-  "Hockey",
-
-  "Tennis",
-
-  "Golf",
-
-  "Running",
-
-  "Boxing",
-
-  "Martial Arts",
-
-  "Swimming",
 
 ];
 
@@ -280,7 +258,7 @@ export default function BuilderJacket({
 
   militaryBranch = "None",
 
-  sport = "None",
+  profession = "None",
 
   zodiacSign = "None",
 
@@ -306,7 +284,7 @@ export default function BuilderJacket({
 
   onMilitaryBranchChange,
 
-  onSportChange,
+  onProfessionChange,
 
   onZodiacSignChange,
 
@@ -416,7 +394,7 @@ export default function BuilderJacket({
 
                 militaryBranch,
 
-                sport,
+                profession,
 
                 zodiacSign,
 
@@ -656,7 +634,8 @@ export default function BuilderJacket({
 
           militaryBranch={militaryBranch}
 
-          sport={sport}
+          profession={profession}
+          finish={embroideryFinish}
 
           zodiacSign={zodiacSign}
 
@@ -666,7 +645,7 @@ export default function BuilderJacket({
 
           onMilitaryBranchChange={onMilitaryBranchChange}
 
-          onSportChange={onSportChange}
+          onProfessionChange={onProfessionChange}
 
           onZodiacSignChange={onZodiacSignChange}
 
@@ -688,7 +667,7 @@ function getLeftChestPlacementValue(
 
   militaryBranch: MilitaryBranch,
 
-  sport: Sport,
+  profession: Profession,
 
   zodiacSign: ZodiacSign,
 
@@ -712,17 +691,9 @@ function getLeftChestPlacementValue(
 
   }
 
-  if (
+  // Legacy Sports selections are no longer offered in V1.
 
-    category === "Sport" &&
-
-    sport !== "None"
-
-  ) {
-
-    return sport;
-
-  }
+  if (category === "Profession" && profession !== "None") return profession;
 
   if (
 
@@ -770,7 +741,7 @@ function getJacketViewDetail(
 
 }
 
-type AvailableIdentityCategory = InterchangeableIdentityPatch["category"];
+type AvailableIdentityCategory = Exclude<InterchangeableIdentityPatch["category"], "Sport">;
 
 function PersonalIdentityCollection({
 
@@ -778,7 +749,8 @@ function PersonalIdentityCollection({
 
   militaryBranch,
 
-  sport,
+  profession,
+  finish,
 
   zodiacSign,
 
@@ -788,7 +760,7 @@ function PersonalIdentityCollection({
 
   onMilitaryBranchChange,
 
-  onSportChange,
+  onProfessionChange,
 
   onZodiacSignChange,
 
@@ -800,7 +772,8 @@ function PersonalIdentityCollection({
 
   militaryBranch: MilitaryBranch;
 
-  sport: Sport;
+  profession: Profession;
+  finish: string;
 
   zodiacSign: ZodiacSign;
 
@@ -810,7 +783,7 @@ function PersonalIdentityCollection({
 
   onMilitaryBranchChange?: (value: MilitaryBranch) => void;
 
-  onSportChange?: (value: Sport) => void;
+  onProfessionChange?: (value: Profession) => void;
 
   onZodiacSignChange?: (value: ZodiacSign) => void;
 
@@ -818,15 +791,22 @@ function PersonalIdentityCollection({
 
 }) {
 
+  const visiblePatches = patches.filter(
+    (patch): patch is Exclude<InterchangeableIdentityPatch, { category: "Sport" }> =>
+      patch.category !== "Sport",
+  );
+
+  const patchFinish: IdentityPatchFinish = finish === "Tactical Subdued" || finish === "Heritage Ivory" ? finish : "Regiment Gold";
+
   const [mode, setMode] = useState<"primary" | "additional">("primary");
 
-  const [browseCategory, setBrowseCategory] = useState<AvailableIdentityCategory>("Sport");
+  const [browseCategory, setBrowseCategory] = useState<AvailableIdentityCategory>("Profession");
 
   const activeCategory: AvailableIdentityCategory =
 
     mode === "primary" &&
 
-    (primaryCategory === "Military Branch" || primaryCategory === "Sport" || primaryCategory === "Zodiac")
+    (primaryCategory === "Military Branch" || primaryCategory === "Profession" || primaryCategory === "Zodiac")
 
       ? primaryCategory
 
@@ -836,21 +816,21 @@ function PersonalIdentityCollection({
 
     primaryCategory === "Military Branch" ? militaryBranch :
 
-    primaryCategory === "Sport" ? sport :
+    primaryCategory === "Profession" ? profession :
 
     primaryCategory === "Zodiac" ? zodiacSign : "None";
 
   const selectedPrimary = primaryValue !== "None" &&
 
-    (primaryCategory === "Military Branch" || primaryCategory === "Sport" || primaryCategory === "Zodiac");
+    (primaryCategory === "Military Branch" || primaryCategory === "Profession" || primaryCategory === "Zodiac");
 
   const options = activeCategory === "Military Branch" ? militaryBranches :
 
-    activeCategory === "Sport" ? sports : zodiacSigns;
+    activeCategory === "Profession" ? PROFESSIONS : zodiacSigns;
 
   const canSelectPrimary = activeCategory === "Military Branch" ? !!onMilitaryBranchChange :
 
-    activeCategory === "Sport" ? !!onSportChange : !!onZodiacSignChange;
+    activeCategory === "Profession" ? !!onProfessionChange : !!onZodiacSignChange;
 
   function chooseCategory(category: AvailableIdentityCategory) {
 
@@ -870,15 +850,15 @@ function PersonalIdentityCollection({
 
       if (activeCategory === "Military Branch") onMilitaryBranchChange?.(value as MilitaryBranch);
 
-      if (activeCategory === "Sport") onSportChange?.(value as Sport);
+      if (activeCategory === "Profession") onProfessionChange?.(value as Profession);
 
       if (activeCategory === "Zodiac") onZodiacSignChange?.(value as ZodiacSign);
 
       // The same patch cannot be both the installed primary and an extra.
 
-      if (onPatchesChange && patches.some(p => p.category === activeCategory && p.value === value)) {
+      if (onPatchesChange && visiblePatches.some(p => p.category === activeCategory && p.value === value)) {
 
-        onPatchesChange(patches.filter(p => !(p.category === activeCategory && p.value === value)));
+        onPatchesChange(visiblePatches.filter(p => !(p.category === activeCategory && p.value === value)));
 
       }
 
@@ -888,30 +868,30 @@ function PersonalIdentityCollection({
 
     if (!onPatchesChange || value === "None") return;
 
-    const exists = patches.some(p => p.category === activeCategory && p.value === value);
+    const exists = visiblePatches.some(p => p.category === activeCategory && p.value === value);
 
     if (exists) {
 
-      onPatchesChange(patches.filter(p => !(p.category === activeCategory && p.value === value)));
+      onPatchesChange(visiblePatches.filter(p => !(p.category === activeCategory && p.value === value)));
 
     } else {
 
-      onPatchesChange([...patches, { category: activeCategory, value } as InterchangeableIdentityPatch]);
+      onPatchesChange([...visiblePatches, { category: activeCategory, value } as InterchangeableIdentityPatch]);
 
     }
 
   }
 
-  function makePrimary(patch: InterchangeableIdentityPatch) {
+  function makePrimary(patch: Exclude<InterchangeableIdentityPatch, { category: "Sport" }>) {
     const previous = selectedPrimary
       ? { category: primaryCategory, value: primaryValue } as InterchangeableIdentityPatch
       : undefined;
     onPrimaryCategoryChange(patch.category);
     if (patch.category === "Military Branch") onMilitaryBranchChange?.(patch.value);
-    if (patch.category === "Sport") onSportChange?.(patch.value);
+    if (patch.category === "Profession") onProfessionChange?.(patch.value);
     if (patch.category === "Zodiac") onZodiacSignChange?.(patch.value);
-    const remaining = patches.filter(p => !(p.category === patch.category && p.value === patch.value));
-    if (previous && !(previous.category === patch.category && previous.value === patch.value)) {
+    const remaining = visiblePatches.filter(p => !(p.category === patch.category && p.value === patch.value));
+    if (previous && previous.category !== "Sport" && !(previous.category === patch.category && previous.value === patch.value)) {
       remaining.unshift(previous);
     }
     onPatchesChange?.(remaining);
@@ -921,8 +901,9 @@ function PersonalIdentityCollection({
 
   function patchArtwork(patch: InterchangeableIdentityPatch): string | undefined {
     if (patch.category === "Military Branch") return getMilitaryBranchCanonAsset(patch.value)?.artworkSrc;
-    if (patch.category === "Sport") return getSportCanonAsset(patch.value)?.artworkSrc;
-    return getZodiacCanonAsset(patch.value)?.src;
+    if (patch.category === "Profession") return undefined;
+    if (patch.category === "Zodiac") return getZodiacCanonAsset(patch.value)?.src;
+    return undefined;
   }
 
   return (
@@ -941,7 +922,7 @@ function PersonalIdentityCollection({
 
       <div className="grid gap-3 sm:grid-cols-2">
 
-        <button type="button" onClick={() => { setMode("primary"); if (primaryCategory === "Military Branch" || primaryCategory === "Sport" || primaryCategory === "Zodiac") setBrowseCategory(primaryCategory); }}
+        <button type="button" onClick={() => { setMode("primary"); if (primaryCategory === "Military Branch" || primaryCategory === "Profession" || primaryCategory === "Zodiac") setBrowseCategory(primaryCategory); }}
 
           aria-pressed={mode === "primary"}
 
@@ -965,7 +946,7 @@ function PersonalIdentityCollection({
 
           <span className="mt-2 block text-lg text-[#F6F2EA]">Additional patches</span>
 
-          <span className="mt-2 block text-sm text-[#8E8A81]">{patches.length} selected · supplied separately</span>
+          <span className="mt-2 block text-sm text-[#8E8A81]">{visiblePatches.length} selected · supplied separately</span>
 
         </button>
 
@@ -993,7 +974,7 @@ function PersonalIdentityCollection({
 
         <div className="flex flex-wrap gap-2">
 
-          {(["Military Branch", "Sport", "Zodiac"] as const).map(category => (
+          {(["Military Branch", "Profession", "Zodiac"] as const).map(category => (
 
             <button key={category} type="button" onClick={() => chooseCategory(category)}
 
@@ -1007,7 +988,7 @@ function PersonalIdentityCollection({
 
           ))}
 
-          {(["Profession", "Faith"] as const).map(category => (
+          {(["Faith"] as const).map(category => (
 
             <span key={category} title="Pending approved Canon artwork"
 
@@ -1029,7 +1010,7 @@ function PersonalIdentityCollection({
 
           const isPrimary = primaryCategory === activeCategory && primaryValue === value;
 
-          const isExtra = patches.some(p => p.category === activeCategory && p.value === value);
+          const isExtra = visiblePatches.some(p => p.category === activeCategory && p.value === value);
 
           const active = mode === "primary" ? isPrimary : isExtra;
 
@@ -1043,6 +1024,7 @@ function PersonalIdentityCollection({
 
               className={`rounded-xl border p-4 text-left transition ${active ? "border-[#B08D57] bg-[#B08D57]/10" : "border-white/10 bg-[#151614]"} ${disabled ? "cursor-not-allowed opacity-50" : "hover:border-[#B08D57]/60"}`}>
 
+              <div className="mb-3 h-24 w-24">{activeCategory === "Profession" && <IdentityShieldPatch finish={patchFinish} label={value} />}</div>
               <span className="block text-sm text-[#E4DED3]">{value}</span>
 
               <span className="mt-2 block text-[9px] uppercase tracking-[0.16em] text-[#B08D57]">
@@ -1067,7 +1049,9 @@ function PersonalIdentityCollection({
             <div className="rounded-xl border border-[#B08D57]/50 bg-[#151614] p-4">
               <p className="text-[10px] uppercase tracking-wider text-[#B08D57]">On jacket · Primary</p>
               <div className="relative my-3 h-24 w-full">
-                {patchArtwork({ category: primaryCategory, value: primaryValue } as InterchangeableIdentityPatch) && (
+                {primaryCategory === "Profession" ? (
+                  <IdentityShieldPatch finish={patchFinish} label={primaryValue} />
+                ) : patchArtwork({ category: primaryCategory, value: primaryValue } as InterchangeableIdentityPatch) && (
                   <Image src={patchArtwork({ category: primaryCategory, value: primaryValue } as InterchangeableIdentityPatch)!} alt={`${primaryValue} patch`} fill sizes="180px" className="object-contain" />
                 )}
               </div>
@@ -1075,11 +1059,13 @@ function PersonalIdentityCollection({
               <p className="mt-1 text-xs text-[#77736A]">{primaryCategory}</p>
             </div>
           )}
-          {patches.map(patch => (
+          {visiblePatches.map(patch => (
             <div key={`${patch.category}:${patch.value}`} className="rounded-xl border border-white/10 bg-[#151614] p-4">
               <p className="text-[10px] uppercase tracking-wider text-[#B08D57]">Interchangeable · Additional</p>
               <div className="relative my-3 h-24 w-full">
-                {patchArtwork(patch) && (
+                {patch.category === "Profession" ? (
+                  <IdentityShieldPatch finish={patchFinish} label={patch.value} />
+                ) : patchArtwork(patch) && (
                   <Image src={patchArtwork(patch)!} alt={`${patch.value} patch`} fill sizes="180px" className="object-contain" />
                 )}
               </div>
@@ -1090,13 +1076,13 @@ function PersonalIdentityCollection({
                   disabled={!onPatchesChange}
                   className="rounded-full border border-[#B08D57]/60 px-3 py-2 text-[10px] uppercase tracking-wider text-[#D4AF6A] disabled:opacity-40">Make primary</button>
                 <button type="button" disabled={!onPatchesChange}
-                  onClick={() => onPatchesChange?.(patches.filter(p => !(p.category === patch.category && p.value === patch.value)))}
+                  onClick={() => onPatchesChange?.(visiblePatches.filter(p => !(p.category === patch.category && p.value === patch.value)))}
                   className="px-2 py-2 text-xs text-[#99958D] disabled:opacity-40">Remove</button>
               </div>
             </div>
           ))}
         </div>
-        {!selectedPrimary && patches.length === 0 && <p className="mt-4 text-sm text-[#77736A]">No identity patches selected.</p>}
+        {!selectedPrimary && visiblePatches.length === 0 && <p className="mt-4 text-sm text-[#77736A]">No identity patches selected.</p>}
         <p className="mt-4 text-xs leading-5 text-[#77736A]">Additional patches are saved to your draft. Checkout pricing and fulfillment are not yet connected.</p>
       </div>
 

@@ -4,6 +4,7 @@
 import Image from "next/image";
 import type { CSSProperties } from "react";
 
+import IdentityShieldPatch, { type Profession } from "./IdentityShieldPatch";
 import NameTape from "@/components/patches/NameTape";
 import FamilyCrestPreview from "@/components/builder/FamilyCrestPreview";
 
@@ -60,6 +61,7 @@ type BuilderPreviewProps = {
   leftChestIdentity: IdentityPatchCategory;
   militaryBranch?: MilitaryBranch;
   sport?: Sport;
+  profession?: Profession;
   zodiacSign?: ZodiacSign;
   symbolOptions: PreviewSymbolOption[];
   jacketViews: PreviewJacketOption[];
@@ -194,6 +196,7 @@ export default function BuilderPreview({
   leftChestIdentity,
   militaryBranch = "None",
   sport = "None",
+  profession = "None",
   zodiacSign = "None",
   jacketViews,
   composition: _composition,
@@ -273,6 +276,7 @@ export default function BuilderPreview({
       leftChestIdentity === "Sport" &&
       sport === "None"
     ) &&
+    !(leftChestIdentity === "Profession" && profession === "None") &&
     !(
       leftChestIdentity === "Zodiac" &&
       zodiacSign === "None"
@@ -460,7 +464,7 @@ export default function BuilderPreview({
               hasRenderableIdentityPatch && (
                 <div
                   style={{
-                    left: leftChestLayout.left,
+                    left: `calc(${leftChestLayout.left} + 1%)`,
                     top: leftChestLayout.top,
                     width: `${leftChestLayout.width}px`,
                     minHeight: `${leftChestLayout.height}px`,
@@ -472,6 +476,7 @@ export default function BuilderPreview({
                     category={leftChestIdentity}
                     militaryBranch={militaryBranch}
                     sport={sport}
+                    profession={profession}
                     zodiacSign={zodiacSign}
                     finish={finish}
                   />
@@ -578,6 +583,7 @@ export default function BuilderPreview({
                 leftChestIdentity,
                 militaryBranch,
                 sport,
+                profession,
                 zodiacSign,
               )}
             />
@@ -598,12 +604,14 @@ function IdentityPatchPreview({
   category,
   militaryBranch,
   sport,
+  profession,
   zodiacSign,
   finish,
 }: {
   category: IdentityPatchCategory;
   militaryBranch: MilitaryBranch;
   sport: Sport;
+  profession: Profession;
   zodiacSign: ZodiacSign;
   finish: SupportedFinish;
 }) {
@@ -654,33 +662,20 @@ function IdentityPatchPreview({
     );
   }
 
-  if (category === "Sport") {
-    const sportAsset = getSportCanonAsset(sport);
-
-    if (!sportAsset) {
-      return null;
-    }
-
+  if (category === "Sport" || category === "Profession") {
+    const asset = category === "Sport" ? getSportCanonAsset(sport) : undefined;
+    const label = category === "Sport" ? sport : profession;
+    if (label === "None") return null;
     return (
-      <div
-        className="flex min-h-[38px] w-full items-center justify-center"
-        title={`${sportAsset.label} identity patch`}
-      >
+      <div className="h-[65px] w-[60px]" title={`${label} identity patch`}>
         <div
-          className="relative h-[50px] w-full origin-center"
-          style={{
-            transform: `scale(${sportAsset.previewScale})`,
-          }}
+          className="h-full w-full origin-center"
+          style={{ transform: category === "Profession" ? "scale(0.85)" : undefined }}
         >
-          <Image
-            src={sportAsset.artworkSrc}
-            alt={`${sportAsset.label} sport patch`}
-            fill
-            className="object-contain"
-            style={{
-              filter: silhouetteOutline,
-            }}
-            sizes="80px"
+          <IdentityShieldPatch
+            finish={finish}
+            label={label}
+            artworkSrc={asset?.artworkSrc}
           />
         </div>
       </div>
@@ -776,6 +771,7 @@ function getLeftChestDisplayValue(
   category: IdentityPatchCategory,
   militaryBranch: MilitaryBranch,
   sport: Sport,
+  profession: Profession,
   zodiacSign: ZodiacSign,
 ): string {
   if (!visible) {
@@ -797,6 +793,8 @@ function getLeftChestDisplayValue(
       ? "Sport · Choose sport"
       : sport;
   }
+
+  if (category === "Profession") return profession === "None" ? "Profession · Choose profession" : profession;
 
   if (category === "Zodiac") {
     return zodiacSign === "None"

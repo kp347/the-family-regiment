@@ -1,4 +1,5 @@
-// lib/herald/visualCanon/assets/primaryCharges.ts
+
+ // lib/herald/visualCanon/assets/primaryCharges.ts
 
 import type { VisualCanonAsset } from "../types";
 
@@ -412,5 +413,66 @@ export const primaryChargeAssets: VisualCanonAsset[] = [
     ],
 
     componentPath: "@/lib/herald/svg/animals/salmon",
+  },
+
+  {
+    id: "mako-shark",
+    name: "Mako Shark",
+    category: "primary-charge",
+
+    description:
+      "A heraldic shortfin mako shark representing speed, precision, determination, adaptability, and protection.",
+
+    canonVersion: CANON_VERSION,
+    artworkVersion: "0.1.0",
+    artworkFormat: "svg",
+
+    dimensions: {
+      viewBoxWidth: 200,
+      viewBoxHeight: 200,
+    },
+
+    status: "draft",
+
+    production: {
+      supportedMethods: ["embroidery", "woven", "print", "digital"],
+
+      embroidery: {
+        notes: [
+          "Use a recognizable shortfin mako silhouette with a pointed snout and streamlined body.",
+          "Preserve a curved, leaping swimming pose without making the shark resemble a salmon.",
+          "Keep the dorsal fin, pectoral fins, tail, and gill marks visually distinct.",
+          "Keep teeth and surface detailing restrained and legible at patch scale.",
+          "Treat any waves as secondary accents, not part of the shark silhouette.",
+        ],
+      },
+
+      complexity: 4,
+      physicallySampled: false,
+    },
+
+    keywords: [
+      "mako shark",
+      "shortfin mako",
+      "shark",
+      "speed",
+      "precision",
+      "determination",
+      "adaptability",
+      "protection",
+      "ocean",
+    ],
+
+    heraldicNotes:
+      "The Mako Shark is a modern heraldic charge inspired by the shortfin mako, emphasizing decisive movement, precision, resilience, and guardianship.",
+
+    productionNotes: [
+      "The approved visual direction is an antique-gold, curved leaping shortfin mako with restrained wave accents.",
+      "Keep the shark distinct from salmon imagery and avoid cartoonish or sports-mascot exaggeration.",
+      "Transparent presentation artwork and a controlled vector production master are still required.",
+      "Physical vendor sampling is required before production certification.",
+    ],
+
+    componentPath: "@/lib/herald/svg/animals/makoShark",
   },
 ];

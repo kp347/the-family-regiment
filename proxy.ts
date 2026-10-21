@@ -1,3 +1,4 @@
+
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
@@ -7,26 +8,41 @@ import { NextResponse, type NextRequest } from "next/server";
  * Next.js Proxy / Supabase Session Refresh
  * =========================================================
  *
- * Supabase session refresh should only run where the
- * application may actually depend on authentication.
+ * Public storefront and builder routes do not require
+ * a Supabase session refresh on every page request.
  *
- * Internal production-preview tooling does not require an
- * authenticated customer session and should never be
- * delayed by an unavailable Supabase connection.
+ * Authentication remains enabled for account and
+ * authenticated API routes.
+ *
+ * IMPORTANT:
+ * This proxy refreshes sessions; it does not replace
+ * authorization checks inside protected pages or APIs.
  * =========================================================
  */
 
-const AUTH_BYPASS_PATHS = [
-  "/production-preview",
-  "/vendor-package-preview",
-  "/api/production",
+const AUTH_REFRESH_PATHS = [
+  "/account",
+  "/dashboard",
+  "/auth",
+  "/api/account",
+  "/api/user",
 ];
 
-function shouldBypassAuth(pathname: string): boolean {
-  return AUTH_BYPASS_PATHS.some(
-    (path) =>
-      pathname === path ||
-      pathname.startsWith(`${path}/`)
+function matchesPath(
+  pathname: string,
+  path: string
+): boolean {
+  return (
+    pathname === path ||
+    pathname.startsWith(`${path}/`)
+  );
+}
+
+function requiresAuthRefresh(
+  pathname: string
+): boolean {
+  return AUTH_REFRESH_PATHS.some((path) =>
+    matchesPath(pathname, path)
   );
 }
 
@@ -35,15 +51,22 @@ export async function proxy(request: NextRequest) {
     request,
   });
 
+  const pathname = request.nextUrl.pathname;
+
   /*
-   * Production tooling currently contains no private
-   * customer information and does not require Supabase
-   * session refresh.
+   * Public routes, including:
    *
-   * Keep these routes fast and independent from external
-   * authentication availability.
+   * /
+   * /builder
+   * /blazer
+   * /blazer/builder
+   * /jacket
+   * /production-preview
+   * /vendor-package-preview
+   *
+   * do not need an authentication refresh.
    */
-  if (shouldBypassAuth(request.nextUrl.pathname)) {
+  if (!requiresAuthRefresh(pathname)) {
     return response;
   }
 
@@ -53,14 +76,10 @@ export async function proxy(request: NextRequest) {
   const supabasePublishableKey =
     process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
 
-  /*
-   * Avoid crashing the entire application if environment
-   * configuration is temporarily unavailable.
-   */
   if (!supabaseUrl || !supabasePublishableKey) {
     if (process.env.NODE_ENV === "development") {
       console.warn(
-        "[proxy] Supabase environment variables are unavailable. Skipping session refresh."
+        "[proxy] Supabase configuration unavailable. Session refresh skipped."
       );
     }
 
@@ -78,8 +97,9 @@ export async function proxy(request: NextRequest) {
 
         setAll(cookiesToSet) {
           cookiesToSet.forEach(
-            ({ name, value }) =>
-              request.cookies.set(name, value)
+            ({ name, value }) => {
+              request.cookies.set(name, value);
+            }
           );
 
           response = NextResponse.next({
@@ -87,29 +107,19 @@ export async function proxy(request: NextRequest) {
           });
 
           cookiesToSet.forEach(
-            ({
-              name,
-              value,
-              options,
-            }) =>
+            ({ name, value, options }) => {
               response.cookies.set(
                 name,
                 value,
                 options
-              )
+              );
+            }
           );
         },
       },
     }
   );
 
-  /*
-   * Refresh the authenticated user's session when
-   * Supabase is available.
-   *
-   * A temporary Supabase/network failure should not turn
-   * every public application request into a server error.
-   */
   try {
     await supabase.auth.getUser();
   } catch (error) {

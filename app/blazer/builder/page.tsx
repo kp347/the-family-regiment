@@ -7,50 +7,18 @@ import Link from "next/link";
 import Navigation from "@/components/layout/Navigation";
 import HeritageBlazerPreview from "@/components/builder/HeritageBlazerPreview";
 
-import type {
-  BuilderShieldStyle,
-  CrestCrown,
-} from "@/lib/herald/types";
-
 import type { SupportedCrestFinish } from "@/components/builder/FamilyCrestPreview";
 
-type BlazerDraft = {
-  familyName: string;
-  initials: string;
-  motto: string;
-  symbol: string;
-  shield: BuilderShieldStyle;
-  crown: CrestCrown;
-  finish: SupportedCrestFinish;
-};
-
-const STORAGE_KEY = "family-regiment-blazer-draft";
-
-const DEFAULT_DRAFT: BlazerDraft = {
-  familyName: "Laurent",
-  initials: "L",
-  motto: "Fortis in Familia",
-  symbol: "Lion",
-  shield: "Heater Shield",
-  crown: "None",
-  finish: "Regiment Gold",
-};
-
-const SHIELDS: BuilderShieldStyle[] = [
-  "Heater Shield",
-  "French Shield",
-  "Norman Shield",
-  "Spanish Shield",
-  "Targe",
-];
-
-const ANIMALS = [
-  "Lion",
-  "Eagle",
-  "Wolf",
-  "Bear",
-  "Stag",
-];
+import {
+  BLAZER_DRAFT_KEY,
+  DEFAULT_HOUSE_IDENTITY,
+  HOUSE_ANIMALS,
+  HOUSE_IDENTITY_KEY,
+  HOUSE_SHIELDS,
+  readHouseIdentity,
+  saveHouseIdentity,
+  type HouseIdentity,
+} from "@/lib/houseIdentity";
 
 const FINISHES: SupportedCrestFinish[] = [
   "Regiment Gold",
@@ -58,137 +26,148 @@ const FINISHES: SupportedCrestFinish[] = [
   "Heritage Ivory",
 ];
 
-function isShield(value: unknown): value is BuilderShieldStyle {
-  return (
-    typeof value === "string" &&
-    SHIELDS.includes(value as BuilderShieldStyle)
-  );
-}
+type BlazerConfiguration = {
+  finish: SupportedCrestFinish;
+};
 
-function isFinish(value: unknown): value is SupportedCrestFinish {
-  return (
-    typeof value === "string" &&
-    FINISHES.includes(value as SupportedCrestFinish)
-  );
-}
+const DEFAULT_CONFIGURATION: BlazerConfiguration = {
+  finish: "Regiment Gold",
+};
 
-function readInitialDraft(): BlazerDraft {
+function readBlazerConfiguration(): BlazerConfiguration {
   try {
-    const blazerSaved = localStorage.getItem(STORAGE_KEY);
-
-    if (blazerSaved) {
-      const parsed = JSON.parse(blazerSaved) as Partial<BlazerDraft>;
-
-      return {
-        ...DEFAULT_DRAFT,
-        familyName:
-          typeof parsed.familyName === "string"
-            ? parsed.familyName
-            : DEFAULT_DRAFT.familyName,
-        initials:
-          typeof parsed.initials === "string"
-            ? parsed.initials
-            : DEFAULT_DRAFT.initials,
-        motto:
-          typeof parsed.motto === "string"
-            ? parsed.motto
-            : DEFAULT_DRAFT.motto,
-        symbol:
-          typeof parsed.symbol === "string" &&
-          ANIMALS.includes(parsed.symbol)
-            ? parsed.symbol
-            : DEFAULT_DRAFT.symbol,
-        shield: isShield(parsed.shield)
-          ? parsed.shield
-          : DEFAULT_DRAFT.shield,
-        crown: "None",
-        finish: isFinish(parsed.finish)
-          ? parsed.finish
-          : DEFAULT_DRAFT.finish,
-      };
-    }
-
-    const regimentSaved = localStorage.getItem(
-      "family-regiment-draft",
+    const saved = window.localStorage.getItem(
+      BLAZER_DRAFT_KEY,
     );
 
-    if (regimentSaved) {
-      const parsed = JSON.parse(regimentSaved) as Record<
-        string,
-        unknown
-      >;
+    if (!saved) return DEFAULT_CONFIGURATION;
 
-      const familyName =
-        typeof parsed.familyName === "string"
-          ? parsed.familyName
-          : DEFAULT_DRAFT.familyName;
+    const parsed: unknown = JSON.parse(saved);
 
+    if (
+      typeof parsed !== "object" ||
+      parsed === null ||
+      !("finish" in parsed)
+    ) {
+      return DEFAULT_CONFIGURATION;
+    }
+
+    const finish = parsed.finish;
+
+    if (
+      typeof finish === "string" &&
+      FINISHES.some((item) => item === finish)
+    ) {
       return {
-        ...DEFAULT_DRAFT,
-        familyName,
-        initials:
-          typeof parsed.initials === "string"
-            ? parsed.initials
-            : familyName.trim().charAt(0).toUpperCase(),
-        motto:
-          typeof parsed.motto === "string"
-            ? parsed.motto
-            : DEFAULT_DRAFT.motto,
-        symbol:
-          typeof parsed.animal === "string" &&
-          ANIMALS.includes(parsed.animal)
-            ? parsed.animal
-            : DEFAULT_DRAFT.symbol,
-        shield: isShield(parsed.shield)
-          ? parsed.shield
-          : DEFAULT_DRAFT.shield,
-        finish: isFinish(parsed.embroideryFinish)
-          ? parsed.embroideryFinish
-          : DEFAULT_DRAFT.finish,
+        finish: finish as SupportedCrestFinish,
       };
     }
   } catch {
-    // Invalid or unavailable browser storage falls back to defaults.
+    // Invalid saved data falls back to defaults.
   }
 
-  return DEFAULT_DRAFT;
+  return DEFAULT_CONFIGURATION;
+}
+
+function saveBlazerConfiguration(
+  configuration: BlazerConfiguration,
+) {
+  try {
+    window.localStorage.setItem(
+      BLAZER_DRAFT_KEY,
+      JSON.stringify(configuration),
+    );
+
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 export default function HeritageBlazerBuilderPage() {
-  const [draft, setDraft] = useState<BlazerDraft>(
-    DEFAULT_DRAFT,
+  const [house, setHouse] = useState<HouseIdentity>(
+    DEFAULT_HOUSE_IDENTITY,
   );
+
+  const [configuration, setConfiguration] =
+    useState<BlazerConfiguration>(
+      DEFAULT_CONFIGURATION,
+    );
+
   const [loaded, setLoaded] = useState(false);
+  const [saveStatus, setSaveStatus] = useState<
+    "saved" | "unavailable"
+  >("saved");
 
   useEffect(() => {
-    const initial = readInitialDraft();
-    // Load saved customer data once after hydration.
+    const initialHouse = readHouseIdentity();
+    const initialConfiguration = readBlazerConfiguration();
+
+    // Hydrate saved customer data after the initial render.
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    setDraft(initial);
+    setHouse(initialHouse);
+    setConfiguration(initialConfiguration);
     setLoaded(true);
   }, []);
 
   useEffect(() => {
     if (!loaded) return;
 
-    try {
-      localStorage.setItem(
-        STORAGE_KEY,
-        JSON.stringify(draft),
-      );
-    } catch {
-      // Preview remains usable if storage is unavailable.
-    }
-  }, [draft, loaded]);
+    const houseSaved = saveHouseIdentity(house);
 
-  function update<K extends keyof BlazerDraft>(
+    const blazerSaved = saveBlazerConfiguration(
+      configuration,
+    );
+
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setSaveStatus(
+      houseSaved && blazerSaved
+        ? "saved"
+        : "unavailable",
+    );
+  }, [house, configuration, loaded]);
+
+  // Reflect House identity changes made in another tab.
+  useEffect(() => {
+    function handleStorage(event: StorageEvent) {
+      if (
+        event.key === HOUSE_IDENTITY_KEY ||
+        event.key === null
+      ) {
+        setHouse(readHouseIdentity());
+      }
+    }
+
+    window.addEventListener("storage", handleStorage);
+
+    return () => {
+      window.removeEventListener(
+        "storage",
+        handleStorage,
+      );
+    };
+  }, []);
+
+  function updateHouse<K extends keyof HouseIdentity>(
     key: K,
-    value: BlazerDraft[K],
+    value: HouseIdentity[K],
   ) {
-    setDraft((current) => ({
-      ...current,
-      [key]: value,
-    }));
+    setHouse((current) => {
+      const next = {
+        ...current,
+        [key]: value,
+      };
+
+      // Keep initials aligned when the House Name changes.
+      // Garment-specific name tapes are never modified.
+      if (key === "familyName") {
+        next.initials =
+          String(value).trim().charAt(0).toUpperCase() ||
+          "FR";
+      }
+
+      return next;
+    });
   }
 
   return (
@@ -221,44 +200,66 @@ export default function HeritageBlazerBuilderPage() {
               heraldry. Customize the crest that will sit over
               the heart of your Heritage Blazer.
             </p>
+
+            <p
+              className="mt-5 text-xs tracking-[0.08em] text-[#bba47c]"
+              role="status"
+            >
+              {loaded
+                ? saveStatus === "saved"
+                  ? "House identity and blazer preferences saved in this browser."
+                  : "Browser storage unavailable. Your changes may not persist."
+                : "Loading your House identity..."}
+            </p>
           </div>
 
           <div className="mt-14 grid gap-12 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]">
-            {/* Controls */}
             <div className="space-y-8">
               <Field label="House Name">
                 <input
-                  value={draft.familyName}
+                  value={house.familyName}
                   maxLength={40}
                   onChange={(event) =>
-                    update("familyName", event.target.value)
+                    updateHouse(
+                      "familyName",
+                      event.target.value,
+                    )
                   }
                   className={inputClass}
                   placeholder="Enter your House Name"
+                  disabled={!loaded}
                 />
               </Field>
 
               <Field label="Latin Motto">
                 <input
-                  value={draft.motto}
+                  value={house.motto}
                   maxLength={60}
                   onChange={(event) =>
-                    update("motto", event.target.value)
+                    updateHouse(
+                      "motto",
+                      event.target.value,
+                    )
                   }
                   className={inputClass}
                   placeholder="Fortis in Familia"
+                  disabled={!loaded}
                 />
               </Field>
 
               <Field label="Heraldic Symbol">
                 <select
-                  value={draft.symbol}
+                  value={house.animal}
                   onChange={(event) =>
-                    update("symbol", event.target.value)
+                    updateHouse(
+                      "animal",
+                      event.target.value,
+                    )
                   }
                   className={inputClass}
+                  disabled={!loaded}
                 >
-                  {ANIMALS.map((animal) => (
+                  {HOUSE_ANIMALS.map((animal) => (
                     <option key={animal} value={animal}>
                       {animal}
                     </option>
@@ -268,16 +269,17 @@ export default function HeritageBlazerBuilderPage() {
 
               <Field label="Shield Shape">
                 <select
-                  value={draft.shield}
+                  value={house.shield}
                   onChange={(event) =>
-                    update(
+                    updateHouse(
                       "shield",
-                      event.target.value as BuilderShieldStyle,
+                      event.target.value as HouseIdentity["shield"],
                     )
                   }
                   className={inputClass}
+                  disabled={!loaded}
                 >
-                  {SHIELDS.map((shape) => (
+                  {HOUSE_SHIELDS.map((shape) => (
                     <option key={shape} value={shape}>
                       {shape}
                     </option>
@@ -291,10 +293,18 @@ export default function HeritageBlazerBuilderPage() {
                     <button
                       key={finish}
                       type="button"
-                      onClick={() => update("finish", finish)}
-                      aria-pressed={draft.finish === finish}
-                      className={`min-h-16 border px-3 py-3 text-xs leading-5 transition-colors ${
-                        draft.finish === finish
+                      disabled={!loaded}
+                      onClick={() =>
+                        setConfiguration((current) => ({
+                          ...current,
+                          finish,
+                        }))
+                      }
+                      aria-pressed={
+                        configuration.finish === finish
+                      }
+                      className={`min-h-16 border px-3 py-3 text-xs leading-5 transition-colors disabled:opacity-50 ${
+                        configuration.finish === finish
                           ? "border-[#c7aa78] bg-[#b08d57]/15 text-[#eee6d6]"
                           : "border-[#5b5549] text-[#aaa08f] hover:border-[#b08d57]"
                       }`}
@@ -322,20 +332,19 @@ export default function HeritageBlazerBuilderPage() {
               </div>
             </div>
 
-            {/* Live preview */}
             <div className="lg:sticky lg:top-8 lg:self-start">
               <p className="mb-5 text-xs font-semibold uppercase tracking-[0.24em] text-[#c5a16a]">
                 Live Garment Preview
               </p>
 
               <HeritageBlazerPreview
-                familyName={draft.familyName}
-                initials={draft.initials}
-                motto={draft.motto}
-                symbol={draft.symbol}
-                shield={draft.shield}
-                crown={draft.crown}
-                finish={draft.finish}
+                familyName={house.familyName}
+                initials={house.initials}
+                motto={house.motto}
+                symbol={house.animal}
+                shield={house.shield}
+                crown="None"
+                finish={configuration.finish}
               />
 
               <div className="mt-6 border border-[#b08d57]/20 bg-[#20221b] p-5">
@@ -344,11 +353,11 @@ export default function HeritageBlazerBuilderPage() {
                 </p>
 
                 <p className="font-display mt-3 text-2xl">
-                  House of {draft.familyName || "Family"}
+                  House of {house.familyName || "Family"}
                 </p>
 
                 <p className="mt-2 font-display italic text-[#c7aa78]">
-                  {draft.motto || "Fortis in Familia"}
+                  {house.motto || "Fortis in Familia"}
                 </p>
 
                 <p className="mt-4 text-xs leading-6 text-[#a99e8c]">
@@ -366,7 +375,7 @@ export default function HeritageBlazerBuilderPage() {
 }
 
 const inputClass =
-  "w-full min-h-12 border border-[#5b5549] bg-[#20221b] px-4 py-3 text-sm text-[#eee6d6] outline-none transition-colors focus:border-[#c7aa78]";
+  "w-full min-h-12 border border-[#5b5549] bg-[#20221b] px-4 py-3 text-sm text-[#eee6d6] outline-none transition-colors focus:border-[#c7aa78] disabled:opacity-50";
 
 function Field({
   label,

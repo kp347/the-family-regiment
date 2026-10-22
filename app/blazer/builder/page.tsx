@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useEffect, useState } from "react";
@@ -6,6 +5,7 @@ import Link from "next/link";
 
 import Navigation from "@/components/layout/Navigation";
 import HeritageBlazerPreview from "@/components/builder/HeritageBlazerPreview";
+import { MOTTO_LIBRARY } from "@/lib/herald/motto";
 
 import type { SupportedCrestFinish } from "@/components/builder/FamilyCrestPreview";
 
@@ -232,19 +232,40 @@ export default function HeritageBlazerBuilderPage() {
               </Field>
 
               <Field label="Latin Motto">
-                <input
-                  value={house.motto}
-                  maxLength={60}
-                  onChange={(event) =>
-                    updateHouse(
-                      "motto",
-                      event.target.value,
-                    )
-                  }
-                  className={inputClass}
-                  placeholder="Fortis in Familia"
-                  disabled={!loaded}
-                />
+                <div className="space-y-3">
+                  <select
+                    value={MOTTO_LIBRARY.some((entry) => entry.latin === house.motto) ? house.motto : "custom"}
+                    onChange={(event) => {
+                      if (event.target.value !== "custom") {
+                        updateHouse("motto", event.target.value);
+                      }
+                    }}
+                    className={inputClass}
+                    disabled={!loaded}
+                    aria-label="Choose a Latin motto"
+                  >
+                    {!MOTTO_LIBRARY.some((entry) => entry.latin === house.motto) && (
+                      <option value="custom">Custom motto</option>
+                    )}
+                    {MOTTO_LIBRARY.map((entry) => (
+                      <option key={entry.latin} value={entry.latin}>
+                        {entry.latin} — {entry.english}
+                      </option>
+                    ))}
+                  </select>
+                  <input
+                    value={house.motto}
+                    maxLength={60}
+                    onChange={(event) => updateHouse("motto", event.target.value)}
+                    className={inputClass}
+                    placeholder="Or enter your own Latin motto"
+                    aria-label="Edit or enter a custom Latin motto"
+                    disabled={!loaded}
+                  />
+                  <p className="text-xs leading-5 text-[#a99e8c]">
+                    Select a motto above or write your own. Your crest updates automatically.
+                  </p>
+                </div>
               </Field>
 
               <Field label="Heraldic Symbol">

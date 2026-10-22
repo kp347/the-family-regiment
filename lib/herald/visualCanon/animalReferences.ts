@@ -67,8 +67,8 @@ export const animalReferenceArtwork: Record<
     name: "Eagle",
     src: "/canon/animals/eagle.png",
     transparentSrc:
-      "/canon/animals/eagle-transparent.png",
-    alt: "Family Regiment Eagle presentation reference",
+      "/canon/animals/eagle-heraldic.png",
+    alt: "Family Regiment Eagle heraldic presentation reference",
   },
 
   wolf: {
@@ -76,8 +76,8 @@ export const animalReferenceArtwork: Record<
     name: "Wolf",
     src: "/canon/animals/wolf.png",
     transparentSrc:
-      "/canon/animals/wolf-transparent.png",
-    alt: "Family Regiment Wolf presentation reference",
+      "/canon/animals/wolf-heraldic.png",
+    alt: "Family Regiment Wolf heraldic presentation reference",
   },
 
   bear: {
@@ -85,8 +85,8 @@ export const animalReferenceArtwork: Record<
     name: "Bear",
     src: "/canon/animals/bear.png",
     transparentSrc:
-      "/canon/animals/bear-transparent.png",
-    alt: "Family Regiment Bear presentation reference",
+      "/canon/animals/bear-heraldic.png",
+    alt: "Family Regiment Bear heraldic presentation reference",
   },
 
   stag: {
@@ -94,8 +94,8 @@ export const animalReferenceArtwork: Record<
     name: "Stag",
     src: "/canon/animals/stag.png",
     transparentSrc:
-      "/canon/animals/stag-transparent.png",
-    alt: "Family Regiment Stag presentation reference",
+      "/canon/animals/stag-heraldic.png",
+    alt: "Family Regiment Stag heraldic presentation reference",
     scale: 1.08,
   },
 
@@ -109,13 +109,10 @@ export const animalReferenceArtwork: Record<
   },
 
   /*
-   * New customer-facing primary charge.
+   * Approved customer-facing primary charge.
    *
    * Shortfin mako in a curved, leaping heraldic pose.
    * Antique-gold artwork with restrained wave accents.
-   *
-   * These asset paths are reserved for the upcoming
-   * approved artwork files.
    */
   "mako-shark": {
     assetId: "mako-shark",

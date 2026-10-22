@@ -36,18 +36,26 @@ const ANIMALS = [
 
 type AnimalName = (typeof ANIMALS)[number];
 
-// Master image coordinate space: 1341 × 1173.
-// Preserve the existing animal placements.
-// Mako Shark uses a wider composition to accommodate
-// its curved body, tail, and restrained wave accents.
+type AnimalPlacement = {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+};
+
+// Master coordinate space: 1341 × 1173.
+//
+// The shield's usable central region is narrower
+// than the full image placement area.
+//
+// New heraldic animals are fitted conservatively
+// to avoid clipping wings, limbs and antlers.
+//
+// Existing approved animals retain their placements.
+
 const ANIMAL_PLACEMENT: Record<
   AnimalName,
-  {
-    x: number;
-    y: number;
-    width: number;
-    height: number;
-  }
+  AnimalPlacement
 > = {
   Lion: {
     x: 506,
@@ -57,31 +65,31 @@ const ANIMAL_PLACEMENT: Record<
   },
 
   Eagle: {
-    x: 500,
-    y: 468,
-    width: 316,
-    height: 302,
+    x: 518,
+    y: 461,
+    width: 306,
+    height: 294,
   },
 
   Wolf: {
-    x: 505,
-    y: 465,
-    width: 308,
-    height: 304,
+    x: 510,
+    y: 457,
+    width: 325,
+    height: 295,
   },
 
   Bear: {
-    x: 502,
-    y: 464,
-    width: 312,
-    height: 309,
+    x: 535,
+    y: 437,
+    width: 275,
+    height: 320,
   },
 
   Stag: {
-    x: 506,
-    y: 453,
-    width: 304,
-    height: 326,
+    x: 510,
+    y: 450,
+    width: 320,
+    height: 330,
   },
 
   Griffin: {
@@ -98,7 +106,6 @@ const ANIMAL_PLACEMENT: Record<
     height: 370,
   },
 
-  // Legacy placement for previously saved designs.
   Salmon: {
     x: 493,
     y: 502,
@@ -141,25 +148,57 @@ export default function HeritageCrestPreview({
   finish: _finish,
   className = "",
 }: Props) {
-  const uid = useId().replace(/[^a-zA-Z0-9_-]/g, "");
+  const uid = useId().replace(
+    /[^a-zA-Z0-9_-]/g,
+    "",
+  );
 
   const namePathId = `heritage-name-${uid}`;
   const mottoPathId = `heritage-motto-${uid}`;
   const animalClipId = `heritage-animal-clip-${uid}`;
 
-  const surname = clean(familyName, "Family").toUpperCase();
-  const latin = clean(motto, "Fortis in Familia").toUpperCase();
+  const surname = clean(
+    familyName,
+    "Family",
+  ).toUpperCase();
+
+  const latin = clean(
+    motto,
+    "Fortis in Familia",
+  ).toUpperCase();
 
   const animal: AnimalName = isAnimal(symbol)
     ? symbol
     : "Lion";
 
-  const animalArtwork = getAnimalReferenceByName(animal);
+  const animalArtwork =
+    getAnimalReferenceByName(animal);
+
   const placement = ANIMAL_PLACEMENT[animal];
 
-  // The ornamental PNG has a fixed crown,
-  // shield outline, and gold finish.
-  // Preserve the shared builder interface.
+  // Preserve the approved motto-fitting behavior.
+
+  const latinFontSize = mottoSize(latin.length);
+
+  const estimatedTextWidth = [...latin].reduce(
+    (width, character) =>
+      width +
+      (character === " "
+        ? 0.32
+        : "IÍJL".includes(character)
+          ? 0.37
+          : "MW".includes(character)
+            ? 0.91
+            : 0.65) *
+        latinFontSize,
+    0,
+  );
+
+  const fittedMottoLength =
+    estimatedTextWidth > 400
+      ? 400
+      : undefined;
+
   void _initials;
   void _shield;
   void _crown;
@@ -175,24 +214,26 @@ export default function HeritageCrestPreview({
         className="block h-auto w-full"
         textRendering="geometricPrecision"
       >
-        <title>{`${surname} — ${latin}`}</title>
+        <title>
+          {`${surname} — ${latin}`}
+        </title>
 
         <defs>
-          {/* Approved upper banner lettering path. */}
+          {/* Approved surname path. */}
           <path
             id={namePathId}
             d="M 404 219 Q 657 81 909 219"
             fill="none"
           />
 
-          {/* Approved lower motto ribbon path. */}
+          {/* Approved motto path. */}
           <path
             id={mottoPathId}
             d="M 438 882 Q 656 982 874 882"
             fill="none"
           />
 
-          {/* Lower shield only: excludes crown and gold perimeter. */}
+          {/* Approved shield clipping region. */}
           <clipPath id={animalClipId}>
             <path d="M 498 457 L 814 457 L 811 646 Q 785 722 657 777 Q 527 721 501 646 Z" />
           </clipPath>
@@ -208,7 +249,7 @@ export default function HeritageCrestPreview({
           preserveAspectRatio="xMidYMid meet"
         />
 
-        {/* Selected animal artwork inside the shield. */}
+        {/* Selected heraldic animal. */}
         {animalArtwork && (
           <g clipPath={`url(#${animalClipId})`}>
             <image
@@ -222,7 +263,7 @@ export default function HeritageCrestPreview({
           </g>
         )}
 
-        {/* Approved surname alignment — unchanged. */}
+        {/* Approved surname styling. */}
         <text
           transform="rotate(-2.5 657 170)"
           fill="#F2D69F"
@@ -232,7 +273,9 @@ export default function HeritageCrestPreview({
           fontFamily="Georgia, 'Times New Roman', serif"
           fontWeight="bold"
           fontSize={nameSize(surname.length)}
-          letterSpacing={surname.length > 20 ? 0 : 1}
+          letterSpacing={
+            surname.length > 20 ? 0 : 1
+          }
         >
           <textPath
             href={`#${namePathId}`}
@@ -243,7 +286,7 @@ export default function HeritageCrestPreview({
           </textPath>
         </text>
 
-        {/* Approved motto alignment — unchanged. */}
+        {/* Approved motto fitting and alignment. */}
         <text
           transform="translate(10 20) rotate(0.5 657 920)"
           fill="#30200E"
@@ -253,8 +296,12 @@ export default function HeritageCrestPreview({
           fontFamily="Georgia, 'Times New Roman', serif"
           fontWeight="bold"
           fontStyle="italic"
-          fontSize={mottoSize(latin.length)}
-          letterSpacing={latin.length > 23 ? 0 : 0.5}
+          fontSize={latinFontSize}
+          letterSpacing={
+            latin.length > 23 ? 0 : 0.5
+          }
+          textLength={fittedMottoLength}
+          lengthAdjust="spacingAndGlyphs"
         >
           <textPath
             href={`#${mottoPathId}`}

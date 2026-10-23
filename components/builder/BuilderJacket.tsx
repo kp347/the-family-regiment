@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { readHouseIdentity } from "@/lib/houseIdentity";
 import IdentityShieldPatch, { PROFESSIONS, type Profession, type IdentityPatchFinish } from "./IdentityShieldPatch";
 export type { Profession } from "./IdentityShieldPatch";
 import Image from "next/image";
@@ -556,25 +557,19 @@ export default function BuilderJacket({
 
       </BuilderGroup>
 
-      <BuilderGroup title="Right chest · Name tape">
+      <BuilderGroup title="Right chest · Personal name tape">
 
         <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-6">
 
           <p className="text-xs uppercase tracking-[0.24em] text-[#B08D57]">
 
-            Personal Identifier
+            Your Personal Identity
 
           </p>
 
           <p className="mt-3 text-sm leading-6 text-[#77736A]">
 
-            The name tape sits directly above the
-
-            right chest pocket. Use a surname,
-
-            first name, nickname, callsign, or
-
-            another preferred identifier.
+            Your family crest carries your House Name. The name tape sits above the right chest pocket and can carry your first name, nickname, callsign, or surname instead. These two names do not need to match.
 
           </p>
 
@@ -582,7 +577,7 @@ export default function BuilderJacket({
 
             <span className="text-[10px] uppercase tracking-[0.22em] text-[#77736A]">
 
-              Name tape text
+              Name, nickname, or callsign
 
             </span>
 
@@ -608,13 +603,29 @@ export default function BuilderJacket({
 
               maxLength={18}
 
-              placeholder="LAURENT"
+              placeholder="e.g. MAVERICK"
 
               className="mt-3 w-full rounded-xl border border-white/10 bg-[#151614] px-4 py-4 text-sm uppercase tracking-[0.18em] text-[#F6F2EA] outline-none transition placeholder:text-[#55524C] focus:border-[#B08D57]"
 
             />
 
           </label>
+
+          <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[#B08D57]/20 bg-[#B08D57]/5 p-4">
+            <p className="max-w-sm text-xs leading-5 text-[#BDB7AC]">
+              Want the same name on your crest and name tape? Copy your House Name with one click.
+            </p>
+            <button
+              type="button"
+              onClick={() => onNameTapeTextChange(readHouseIdentity().familyName.slice(0, 18))}
+              className="rounded-full border border-[#B08D57]/60 px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#D4AF6A] transition hover:bg-[#B08D57]/10"
+            >
+              Use My House Name
+            </button>
+          </div>
+          <p className="mt-3 text-xs leading-5 text-[#8D8981]">
+            Example: House crest — FITZGERALD · Name tape — MAVERICK. Your current name tape remains unchanged unless you edit it.
+          </p>
 
           <p className="mt-3 text-[9px] uppercase tracking-[0.18em] text-[#65625D]">
 

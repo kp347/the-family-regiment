@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 
 import Navigation from "@/components/layout/Navigation";
@@ -94,6 +94,7 @@ export default function HeritageBlazerBuilderPage() {
       DEFAULT_CONFIGURATION,
     );
 
+  const sharedIdentitySnapshot = useRef<string | null>(null);
   const [loaded, setLoaded] = useState(false);
   const [saveStatus, setSaveStatus] = useState<
     "saved" | "unavailable"
@@ -105,6 +106,7 @@ export default function HeritageBlazerBuilderPage() {
 
     // Hydrate saved customer data after the initial render.
     // eslint-disable-next-line react-hooks/set-state-in-effect
+    sharedIdentitySnapshot.current = JSON.stringify(initialHouse);
     setHouse(initialHouse);
     setConfiguration(initialConfiguration);
     setLoaded(true);
@@ -113,7 +115,11 @@ export default function HeritageBlazerBuilderPage() {
   useEffect(() => {
     if (!loaded) return;
 
-    const houseSaved = saveHouseIdentity(house);
+    const serialized = JSON.stringify(house);
+    const houseSaved = serialized === sharedIdentitySnapshot.current
+      ? true
+      : saveHouseIdentity(house);
+    if (houseSaved) sharedIdentitySnapshot.current = serialized;
 
     const blazerSaved = saveBlazerConfiguration(
       configuration,
@@ -134,7 +140,9 @@ export default function HeritageBlazerBuilderPage() {
         event.key === HOUSE_IDENTITY_KEY ||
         event.key === null
       ) {
-        setHouse(readHouseIdentity());
+        const updated = readHouseIdentity();
+        sharedIdentitySnapshot.current = JSON.stringify(updated);
+        setHouse(updated);
       }
     }
 
@@ -343,6 +351,12 @@ export default function HeritageBlazerBuilderPage() {
                   name tapes, and additional identity patches
                   remain exclusive to the Regiment Jacket.
                 </p>
+
+                <div className="mt-7 rounded-xl border border-[#b08d57]/35 bg-[#b08d57]/5 p-5">
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#c5a16a]">Your Matching Collection</p>
+                  <p className="mt-3 text-sm leading-7 text-[#b9b1a2]">This blazer uses the same House crest as your Regiment Jacket. Only the blazer embroidery finish is independent. You may choose either garment or both at Collection Review.</p>
+                  <Link href="/collection/review" className="mt-5 inline-flex min-h-11 items-center bg-[#b08d57] px-6 py-3 text-xs font-semibold uppercase tracking-[0.13em] text-[#171914] hover:bg-[#c7aa78]">Review Both Garments &amp; Sizes →</Link>
+                </div>
 
                 <Link
                   href="/builder"

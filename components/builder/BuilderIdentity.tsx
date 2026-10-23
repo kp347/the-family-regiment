@@ -17,36 +17,46 @@ export default function BuilderIdentity({
 }: BuilderIdentityProps) {
   return (
     <div className="max-w-2xl space-y-8">
+      <div className="rounded-2xl border border-[#B08D57]/25 bg-[#B08D57]/5 p-5">
+        <p className="text-xs font-semibold uppercase tracking-[0.25em] text-[#B08D57]">
+          First, establish your House
+        </p>
+        <p className="mt-3 text-sm leading-7 text-[#BDB7AC]">
+          Your House Name represents your family legacy. It appears on your
+          family crest and carries across your House collection. Later, when
+          customizing your jacket, you can choose a different name, nickname,
+          or callsign for the chest name tape.
+        </p>
+      </div>
+
       <InputField
         id="family-name"
-        label="Family name"
+        label="House Name"
         value={familyName}
-        placeholder="Laurent"
+        placeholder="e.g. Fitzgerald"
         maxLength={30}
+        helper="Your family's name on the crest. This is separate from the jacket's personal name tape."
         onChange={onFamilyNameChange}
       />
 
       <InputField
         id="family-initials"
-        label="Regiment initials"
+        label="Regiment Initials"
         value={initials}
-        placeholder="LR"
+        placeholder="e.g. FZ"
         maxLength={4}
-        onChange={(nextValue) =>
-          onInitialsChange(nextValue.toUpperCase())
-        }
+        helper="Your chosen House monogram or initials."
+        onChange={(nextValue) => onInitialsChange(nextValue.toUpperCase())}
       />
 
       <div className="rounded-2xl border border-[#B08D57]/25 bg-[#B08D57]/5 p-6">
         <p className="text-xs uppercase tracking-[0.3em] text-[#B08D57]">
-          Identity Preview
+          House Identity Preview
         </p>
-
         <p className="mt-4 text-3xl">{regimentTitle}</p>
-
         <p className="mt-3 text-sm leading-6 text-[#8F8B82]">
-          Your name and initials can appear on the crest, interior label,
-          monogram patch, and family record card.
+          This is your shared family identity, not your jacket name tape.
+          You'll personalize the chest name tape separately in the Jacket step.
         </p>
       </div>
     </div>
@@ -59,6 +69,7 @@ function InputField({
   value,
   placeholder,
   maxLength,
+  helper,
   onChange,
 }: {
   id: string;
@@ -66,17 +77,14 @@ function InputField({
   value: string;
   placeholder: string;
   maxLength: number;
+  helper: string;
   onChange: (value: string) => void;
 }) {
   return (
     <div>
-      <label
-        htmlFor={id}
-        className="text-xs uppercase tracking-[0.3em] text-[#B08D57]"
-      >
+      <label htmlFor={id} className="text-xs uppercase tracking-[0.3em] text-[#B08D57]">
         {label}
       </label>
-
       <input
         id={id}
         type="text"
@@ -86,13 +94,9 @@ function InputField({
         onChange={(event) => onChange(event.target.value)}
         className="mt-4 w-full border-b border-white/20 bg-transparent px-0 py-4 text-3xl text-[#F6F2EA] outline-none transition placeholder:text-[#4F4D49] focus:border-[#B08D57]"
       />
-
-      <div className="mt-3 flex justify-between text-xs text-[#65625D]">
-        <span>Used throughout your custom identity.</span>
-
-        <span>
-          {value.length}/{maxLength}
-        </span>
+      <div className="mt-3 flex items-start justify-between gap-4 text-xs text-[#8F8B82]">
+        <span>{helper}</span>
+        <span className="shrink-0 text-[#65625D]">{value.length}/{maxLength}</span>
       </div>
     </div>
   );

@@ -283,7 +283,10 @@ export default function BuilderPreview({
     );
 
   const palette = getIdentityPatchPalette(finish);
-
+// Military artwork already contains its approved embroidered border.
+// Use only a subtle dark shadow to separate it from the jacket fabric.
+const militaryPatchShadow =
+  "drop-shadow(0 2px 2px rgba(0, 0, 0, 0.55))";
   return (
     <aside className="relative w-full min-w-0 max-w-full overflow-hidden border-t border-white/10 bg-[#20211E] lg:min-h-[720px] lg:border-l lg:border-t-0">
       <div className="relative flex w-full min-w-0 max-w-full items-center justify-center p-3 sm:p-6 md:p-10 lg:sticky lg:top-0 lg:min-h-[720px]">
@@ -616,7 +619,8 @@ function IdentityPatchPreview({
   finish: SupportedFinish;
 }) {
   const palette = getIdentityPatchPalette(finish);
-
+const militaryPatchShadow =
+  "drop-shadow(0 2px 2px rgba(0, 0, 0, 0.55))";
   const silhouetteOutline = [
     `drop-shadow(0.65px 0 0 ${palette.border})`,
     `drop-shadow(-0.65px 0 0 ${palette.border})`,
@@ -648,15 +652,15 @@ function IdentityPatchPreview({
           }}
         >
           <Image
-            src={branchAsset.artworkSrc}
-            alt={`${branchAsset.label} military branch patch`}
-            fill
-            className="object-contain"
-            style={{
-              filter: silhouetteOutline,
-            }}
-            sizes="80px"
-          />
+  src={branchAsset.artworkSrc}
+  alt={`${branchAsset.label} military branch patch`}
+  fill
+  className="object-contain"
+  style={{
+    filter: militaryPatchShadow,
+  }}
+  sizes="80px"
+/>
         </div>
       </div>
     );

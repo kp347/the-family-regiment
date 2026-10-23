@@ -26,13 +26,6 @@ export const DEFAULT_HOUSE_IDENTITY: HouseIdentity = {
   shield: "Heater Shield",
 };
 
-/*
- * Customer-facing primary charges.
- *
- * Mako Shark replaces Salmon as the seventh animal.
- * Salmon remains supported as a legacy saved value
- * through normalizeHouseIdentity().
- */
 export const HOUSE_ANIMALS = [
   "Lion",
   "Eagle",
@@ -51,9 +44,9 @@ export const HOUSE_SHIELDS: BuilderShieldStyle[] = [
   "Targe",
 ];
 
-function isRecord(
-  value: unknown,
-): value is Record<string, unknown> {
+type SavedRecord = Record<string, unknown>;
+
+function isRecord(value: unknown): value is SavedRecord {
   return (
     typeof value === "object" &&
     value !== null &&
@@ -61,57 +54,53 @@ function isRecord(
   );
 }
 
-function readObject(
-  key: string,
-): Record<string, unknown> | null {
+function readObject(key: string): SavedRecord | null {
   if (typeof window === "undefined") return null;
 
   try {
     const saved = window.localStorage.getItem(key);
-
     if (!saved) return null;
 
     const parsed: unknown = JSON.parse(saved);
-
     return isRecord(parsed) ? parsed : null;
   } catch {
     return null;
   }
 }
 
-/*
- * Normalize legacy animal names before checking
- * the current customer-facing selection list.
- */
-function normalizeAnimalName(
-  value: unknown,
-): string | null {
-  if (typeof value !== "string") {
-    return null;
-  }
+function normalizeAnimalName(value: unknown): string | null {
+  if (typeof value !== "string") return null;
 
   const candidate = value.trim();
 
-  // Legacy Salmon designs migrate to Mako Shark.
-  if (candidate === "Salmon") {
+  if (
+    candidate === "Salmon" ||
+    candidate === "Shark" ||
+    candidate === "mako-shark"
+  ) {
     return "Mako Shark";
   }
 
-  // Support earlier generic Shark naming.
-  if (candidate === "Shark") {
-    return "Mako Shark";
-  }
-
-  // Support canonical asset ID in saved records.
-  if (candidate === "mako-shark") {
-    return "Mako Shark";
-  }
-
-  const match = HOUSE_ANIMALS.find(
-    (animal) => animal === candidate,
+  return (
+    HOUSE_ANIMALS.find((animal) => animal === candidate) ??
+    null
   );
+}
 
-  return match ?? null;
+function normalizeShieldName(
+  value: unknown,
+): BuilderShieldStyle | null {
+  if (typeof value !== "string") return null;
+
+  const migrated =
+    value === "Tournament Shield"
+      ? "Spanish Shield"
+      : value === "Crusader Shield"
+        ? "Heater Shield"
+        : value;
+
+  return HOUSE_SHIELDS.find((shield) => shield === migrated) ??
+    null;
 }
 
 export function normalizeHouseIdentity(
@@ -134,27 +123,18 @@ export function normalizeHouseIdentity(
       ? value.motto.slice(0, 60)
       : fallback.motto;
 
-  /*
-   * Supports current House identity records
-   * and legacy records using the "symbol" field.
-   */
-  const candidateAnimal =
-    typeof value.animal === "string"
-      ? value.animal
-      : value.symbol;
-
   const animal =
-    normalizeAnimalName(candidateAnimal) ??
+    normalizeAnimalName(
+      typeof value.animal === "string"
+        ? value.animal
+        : value.symbol,
+    ) ??
     normalizeAnimalName(fallback.animal) ??
     DEFAULT_HOUSE_IDENTITY.animal;
 
   const shield =
-    typeof value.shield === "string" &&
-    HOUSE_SHIELDS.includes(
-      value.shield as BuilderShieldStyle,
-    )
-      ? (value.shield as BuilderShieldStyle)
-      : fallback.shield;
+    normalizeShieldName(value.shield) ??
+    fallback.shield;
 
   return {
     familyName,
@@ -165,35 +145,68 @@ export function normalizeHouseIdentity(
   };
 }
 
+/**
+ * Merge legacy drafts without allowing a partial record
+ * to overwrite valid identity fields from another draft.
+ *
+ * Priority:
+ * 1. Existing shared House identity
+ * 2. Heritage Blazer draft
+ * 3. Regiment Jacket draft
+ * 4. Defaults
+ */
 export function readHouseIdentity(): HouseIdentity {
   const shared = readObject(HOUSE_IDENTITY_KEY);
-
-  if (shared) {
-    return normalizeHouseIdentity(shared);
-  }
-
-  // Migration: preserve an existing blazer design first.
   const blazer = readObject(BLAZER_DRAFT_KEY);
-
-  if (blazer) {
-    return normalizeHouseIdentity(blazer);
-  }
-
   const regiment = readObject(REGIMENT_DRAFT_KEY);
 
-  if (regiment) {
-    return normalizeHouseIdentity(regiment);
+  const merged: SavedRecord = {
+    ...DEFAULT_HOUSE_IDENTITY,
+  };
+
+  for (const source of [regiment, blazer, shared]) {
+    if (!source) continue;
+
+    if (typeof source.familyName === "string") {
+      merged.familyName = source.familyName;
+    }
+
+    if (typeof source.initials === "string") {
+      merged.initials = source.initials;
+    }
+
+    if (typeof source.motto === "string") {
+      merged.motto = source.motto;
+    }
+
+    const animal =
+      normalizeAnimalName(source.animal) ??
+      normalizeAnimalName(source.symbol);
+
+    if (animal) {
+      merged.animal = animal;
+    }
+
+    const shield = normalizeShieldName(source.shield);
+
+    if (shield) {
+      merged.shield = shield;
+    }
   }
 
-  return { ...DEFAULT_HOUSE_IDENTITY };
+  return normalizeHouseIdentity(merged);
 }
 
+/**
+ * Save the shared House identity.
+ *
+ * Returns false when browser storage is unavailable.
+ * Garment-specific preferences are stored separately.
+ */
 export function saveHouseIdentity(
   identity: HouseIdentity,
 ): boolean {
-  if (typeof window === "undefined") {
-    return false;
-  }
+  if (typeof window === "undefined") return false;
 
   try {
     const normalized = normalizeHouseIdentity(identity);

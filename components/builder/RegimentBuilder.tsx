@@ -4,6 +4,7 @@ import {
   useEffect,
   useMemo,
   useState,
+  useRef,
 } from "react";
 import BuilderHeader from "./BuilderHeader";
 import BuilderHeraldry from "./BuilderHeraldry";
@@ -33,6 +34,7 @@ import type {
 } from "@/lib/herald/design";
 import {
   HOUSE_IDENTITY_KEY,
+  REGIMENT_DRAFT_KEY,
   readHouseIdentity,
   saveHouseIdentity,
   type HouseIdentity,
@@ -458,6 +460,7 @@ const [
           defaultDraft.value,
         ),
     );
+  const sharedIdentitySnapshot = useRef<string | null>(null);
   const [
     draftLoaded,
     setDraftLoaded,
@@ -715,8 +718,11 @@ designCreatedAt,
           normalizeAdditionalIdentityPatches(parsedDraft.additionalIdentityPatches),
         );
         const loadedComposition =
-          parsedDraft.composition ??
-          createDefaultComposition(
+          parsedDraft.composition &&
+          Array.isArray(parsedDraft.composition.quadrants) &&
+          parsedDraft.composition.quadrants.length === 4
+            ? parsedDraft.composition
+            : createDefaultComposition(
             loadedHeritage,
             loadedAnimal,
             loadedValue,
@@ -785,7 +791,9 @@ designCreatedAt,
     }
     // The shared House identity is authoritative. Existing jacket-only
     // customization is restored above and remains independent.
-    applySharedIdentity(readHouseIdentity());
+    const initialIdentity = readHouseIdentity();
+    sharedIdentitySnapshot.current = JSON.stringify(initialIdentity);
+    applySharedIdentity(initialIdentity);
     setDraftLoaded(true);
   }, []);
 
@@ -812,6 +820,7 @@ designCreatedAt,
           parsed.shield !== shield ||
           parsed.motto !== motto
         ) {
+          sharedIdentitySnapshot.current = JSON.stringify(identity);
           applySharedIdentity(identity);
         }
       } catch {
@@ -831,22 +840,24 @@ designCreatedAt,
     };
   }, [draftLoaded, familyName, initials, animal, shield, motto]);
   useEffect(() => {
-    if (!draftLoaded) {
-      return;
+    if (!draftLoaded) return;
+    try {
+      window.localStorage.setItem(REGIMENT_DRAFT_KEY, JSON.stringify(createDraft()));
+    } catch {
+      setSaveMessage("Browser storage unavailable — draft not saved");
     }
-    window.localStorage.setItem(
-      "family-regiment-draft",
-      JSON.stringify(
-        createDraft(),
-      ),
-    );
-    saveHouseIdentity({
-      familyName,
-      initials,
-      motto,
-      animal,
-      shield: normalizeShield(shield),
-    });
+    // Only changes to House identity update the shared record. Garment
+    // configuration changes must never write stale House information.
+    const identity: HouseIdentity = {
+      familyName, initials, motto, animal, shield: normalizeShield(shield),
+    };
+    const serialized = JSON.stringify(identity);
+    if (serialized !== sharedIdentitySnapshot.current) {
+      sharedIdentitySnapshot.current = serialized;
+      if (!saveHouseIdentity(identity)) {
+        setSaveMessage("Browser storage unavailable — House identity not saved");
+      }
+    }
   }, [
     draftLoaded,
     familyName,
@@ -983,35 +994,32 @@ militaryBranch,
         ),
     );
   }
-  function saveDraft() {
-    window.localStorage.setItem(
-      "family-regiment-draft",
-      JSON.stringify(
-        createDraft(),
-      ),
-    );
-    saveHouseIdentity({
-      familyName,
-      initials,
-      motto,
-      animal,
-      shield: normalizeShield(shield),
-    });
-    showMessage(
-      "Draft saved",
-    );
+  function saveDraft(): boolean {
+    try {
+      window.localStorage.setItem(REGIMENT_DRAFT_KEY, JSON.stringify(createDraft()));
+    } catch {
+      showMessage("Unable to save draft in this browser");
+      return false;
+    }
+    const identity: HouseIdentity = {
+      familyName, initials, motto, animal, shield: normalizeShield(shield),
+    };
+    if (!saveHouseIdentity(identity)) {
+      showMessage("Draft saved; House identity could not be saved");
+      return false;
+    }
+    sharedIdentitySnapshot.current = JSON.stringify(identity);
+    showMessage("Draft saved");
+    return true;
   }
   function createCrest() {
-    saveDraft();
-    window.localStorage.setItem(
-      "family-regiment-herald-design",
-      JSON.stringify(
-        heraldDesign,
-      ),
-    );
-    router.push(
-      "/studio",
-    );
+    if (!saveDraft()) return;
+    try {
+      window.localStorage.setItem("family-regiment-herald-design", JSON.stringify(heraldDesign));
+      router.push("/studio");
+    } catch {
+      showMessage("Unable to save crest design in this browser");
+    }
   }
   function resetDraft() {
     const sharedHouse = readHouseIdentity();
@@ -1062,14 +1070,9 @@ setMilitaryBranch(
     );
     setCurrentStep(0);
     window.localStorage.removeItem(
-      "family-regiment-draft",
-    );
-    window.localStorage.removeItem(
       "family-regiment-herald-design",
     );
-    showMessage(
-      "Builder reset",
-    );
+    showMessage("Jacket preferences reset; House identity preserved");
   }
   function showMessage(
     message: string,
@@ -1335,6 +1338,17 @@ onMilitaryBranchChange={setMilitaryBranch}
                       saveDraft
                     }
                   />
+                )}
+                {currentStep === 6 && (
+                  <div className="mt-8 space-y-4 rounded-2xl border border-[#B08D57]/35 bg-[#B08D57]/5 p-6">
+                    <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#B08D57]">Continue Your Collection</p>
+                    <p className="text-sm leading-7 text-[#C5BFB3]">Your House crest is shared with the Heritage Blazer. View your matching blazer, or review both garments before choosing sizes and quantities.</p>
+                    <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+                      <button type="button" onClick={() => { if (saveDraft()) router.push("/blazer/builder"); }} className="rounded-full bg-[#B08D57] px-6 py-3 text-xs font-semibold uppercase tracking-[0.12em] text-[#151515] hover:bg-[#c7a56c]">View My Heritage Blazer</button>
+                      <button type="button" onClick={() => { if (saveDraft()) router.push("/collection/review"); }} className="rounded-full border border-[#B08D57]/60 px-6 py-3 text-xs font-semibold uppercase tracking-[0.12em] text-[#F6F2EA] hover:bg-[#B08D57]/10">Review Both Garments</button>
+                    </div>
+                    <p className="text-xs leading-6 text-[#99958D]">Creating your crest in the Studio remains available above. Viewing the blazer does not add it to your order.</p>
+                  </div>
                 )}
               </div>
               <BuilderNavigation

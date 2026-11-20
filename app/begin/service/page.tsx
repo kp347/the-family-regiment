@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import QuestionCard from "@/components/builder/QuestionCard";
 import { createClient } from "@/lib/supabase/client";
@@ -39,6 +39,16 @@ export default function ServicePage() {
   const [saveStatus, setSaveStatus] =
     useState<SaveStatus>("loading");
   const [errorMessage, setErrorMessage] = useState("");
+  const [revision, setRevision] = useState(0);
+  const revisionRef = useRef(0);
+  const savedRevisionRef = useRef(0);
+  const latestFormRef = useRef<ServiceForm>(emptyForm);
+  const saveInFlightRef = useRef<Promise<boolean> | null>(null);
+
+  function publishStatus(status: SaveStatus) {
+    setSaveStatus(status);
+    window.dispatchEvent(new CustomEvent("family-record-save-status", { detail: status }));
+  }
 
   useEffect(() => {
     let cancelled = false;
@@ -73,20 +83,18 @@ export default function ServicePage() {
         setErrorMessage(
           "We could not load this part of your Family Record. Please try again."
         );
-        setSaveStatus("error");
+        publishStatus("error");
         setLoaded(true);
         return;
       }
 
-      if (data?.service) {
-        setForm({
-          ...emptyForm,
-          ...(data.service as Partial<ServiceForm>),
-        });
-      }
-
+      const initialForm = data?.service
+        ? { ...emptyForm, ...(data.service as Partial<ServiceForm>) }
+        : emptyForm;
+      latestFormRef.current = initialForm;
+      setForm(initialForm);
       setLoaded(true);
-      setSaveStatus("saved");
+      publishStatus("saved");
     }
 
     loadService();
@@ -97,91 +105,78 @@ export default function ServicePage() {
   }, [router]);
 
   useEffect(() => {
-    if (!loaded || !userId) return;
-
-    setSaveStatus("saving");
-    setErrorMessage("");
-
-    const timer = window.setTimeout(async () => {
-      const success = await saveService();
-      setSaveStatus(success ? "saved" : "error");
-    }, 800);
-
+    if (!loaded || !userId || revision === 0) return;
+    const timer = window.setTimeout(() => { void flushSave(); }, 800);
     return () => window.clearTimeout(timer);
-  }, [form, loaded, userId]);
+    // The flush uses refs for the latest form and revision.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [revision, loaded, userId]);
 
-  function updateField(
-    field: keyof ServiceForm,
-    value: string
-  ) {
-    setSaveStatus("unsaved");
-
-    setForm((current) => ({
-      ...current,
-      [field]: value,
-    }));
+  function updateField(field: keyof ServiceForm, value: string) {
+    const next = { ...latestFormRef.current, [field]: value };
+    latestFormRef.current = next;
+    revisionRef.current += 1;
+    setRevision(revisionRef.current);
+    setForm(next);
+    publishStatus("unsaved");
   }
 
-  async function saveService(): Promise<boolean> {
-    if (!userId) {
+  async function flushSave(): Promise<boolean> {
+    if (!userId || !loaded) {
       setErrorMessage("Please sign in before saving.");
+      publishStatus("error");
       return false;
     }
+    // Only one writer at a time. If the user types during a save,
+    // the loop saves the newest revision before reporting success.
+    if (saveInFlightRef.current) return saveInFlightRef.current;
 
-    const supabase = createClient();
-
-    const { error } = await supabase
-      .from("family_records")
-      .upsert(
-        {
-          user_id: userId,
-          service: form,
-          current_article: "service",
-          completion_percent: 42,
-          updated_at: new Date().toISOString(),
-        },
-        {
-          onConflict: "user_id",
+    const operation = (async () => {
+      publishStatus("saving");
+      setErrorMessage("");
+      const supabase = createClient();
+      do {
+        const version = revisionRef.current;
+        const snapshot = { ...latestFormRef.current };
+        const { error } = await supabase.from("family_records").upsert(
+          {
+            user_id: userId,
+            service: snapshot,
+            current_article: "service",
+            updated_at: new Date().toISOString(),
+          },
+          { onConflict: "user_id" }
+        );
+        if (error) {
+          console.error("Unable to save Service:", error);
+          setErrorMessage(`Save failed: ${error.message}`);
+          publishStatus("error");
+          return false;
         }
-      );
-
-    if (error) {
-      console.error("Unable to save Service:", error);
-      setErrorMessage(
-        "Your changes could not be saved. Please try again."
-      );
-      return false;
+        savedRevisionRef.current = version;
+      } while (savedRevisionRef.current < revisionRef.current);
+      publishStatus("saved");
+      return true;
+    })();
+    saveInFlightRef.current = operation;
+    try {
+      return await operation;
+    } finally {
+      saveInFlightRef.current = null;
     }
-
-    return true;
   }
 
   async function saveNow() {
-    setSaveStatus("saving");
-    setErrorMessage("");
-
-    const success = await saveService();
-
-    setSaveStatus(success ? "saved" : "error");
+    await flushSave();
   }
 
-  async function continueToTraditions(
-    event: React.FormEvent<HTMLFormElement>
-  ) {
+  async function goBack() {
+    if (await flushSave()) router.push("/begin/values");
+  }
+
+  async function continueToTraditions(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-
-    setSaveStatus("saving");
-    setErrorMessage("");
-
-    const success = await saveService();
-
-    if (!success) {
-      setSaveStatus("error");
-      return;
-    }
-
-    setSaveStatus("saved");
-    router.push("/begin/traditions");
+    if (await flushSave()) router.push("/begin/traditions");
   }
 
   function getStatusText() {
@@ -336,7 +331,7 @@ export default function ServicePage() {
         <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
           <button
             type="button"
-            onClick={() => router.push("/begin/values")}
+            onClick={goBack}
             className="text-sm font-semibold uppercase tracking-[0.15em] text-[#6f4328]"
           >
             ← Back to Values

@@ -1,3 +1,4 @@
+
 import type { ReactNode } from "react";
 
 type QuestionCardProps = {
@@ -16,16 +17,20 @@ export default function QuestionCard({
   return (
     <section className="border border-[#d8c9b3] bg-white/70 p-6 sm:p-8">
       <div className="mb-5">
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
           <h2 className="font-display text-2xl text-[#2d2822]">
             {label}
           </h2>
 
-          {required && (
-            <span className="text-xs font-semibold uppercase tracking-[0.16em] text-[#8b542f]">
-              Required
-            </span>
-          )}
+          <span
+            className={`text-[0.65rem] font-semibold uppercase tracking-[0.16em] ${
+              required
+                ? "text-[#8b542f]"
+                : "text-[#817366]"
+            }`}
+          >
+            {required ? "Required" : "Optional"}
+          </span>
         </div>
 
         {description && (

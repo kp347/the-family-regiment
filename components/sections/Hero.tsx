@@ -26,24 +26,21 @@ export default function Hero() {
             />
 
             <p className="text-[10px] font-semibold uppercase tracking-[0.3em] text-[#c5a16a] sm:text-xs">
-              Establish Your House
+              A Legacy Worth Carrying
             </p>
           </div>
 
           <h1 className="font-display text-[clamp(3.1rem,5.3vw,5.7rem)] leading-[1.02] tracking-[-0.035em] text-[#f0e7d7]">
-            Every Legacy
+            Your Name Is Inherited.
             <span className="mt-2 block text-[#c7aa78]">
-              Begins With a House.
+              Your Legacy Is Created.
             </span>
           </h1>
 
           <div className="mt-8 h-px w-20 bg-[#a9824b]/70" />
 
           <p className="mt-8 max-w-xl text-base leading-8 text-[#c5bdad] sm:text-lg">
-            Found your House through heraldry, craftsmanship, and
-            enduring tradition. Create a meaningful family crest,
-            express your heritage through the Regiment Jacket,
-            and preserve a story worthy of generations.
+            Every family carries a story of courage, tradition, and belonging. Discover what defines yours, give it a symbol, and carry it forward through generations.
           </p>
 
           <div className="mt-10 flex flex-col gap-4 sm:flex-row sm:flex-wrap">
@@ -51,14 +48,14 @@ export default function Hero() {
               href="/begin"
               className="inline-flex min-h-12 items-center justify-center border border-[#b08d57] bg-[#b08d57] px-7 py-3 text-center text-[11px] font-semibold uppercase tracking-[0.18em] text-[#171914] transition-colors duration-300 hover:border-[#d0ac75] hover:bg-[#d0ac75] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#d0ac75]"
             >
-              Establish Your House
+              Discover Your House
             </Link>
 
             <Link
-              href="#founding-journey"
-              className="inline-flex min-h-12 items-center justify-center border border-[#756c5c] px-7 py-3 text-center text-[11px] font-semibold uppercase tracking-[0.18em] text-[#eee4d3] transition-colors duration-300 hover:border-[#c09a60] hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#d0ac75]"
+              href="/#our-story"
+              className="inline-flex min-h-12 items-center justify-center px-4 py-3 text-center text-[11px] font-semibold uppercase tracking-[0.18em] text-[#d9c4a0] underline underline-offset-8 transition-colors duration-300 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#d0ac75]"
             >
-              Explore the Regiment
+              Explore Our Story
             </Link>
           </div>
 

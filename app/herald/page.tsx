@@ -4,19 +4,23 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
+type HeraldRecommendation = {
+  recommendation: string;
+  traditionalMeaning: string;
+  familyReason: string;
+  learnMore: string;
+};
+
 type HeraldReport = {
   family_summary: string;
   themes: string[];
   virtues: string[];
-
-  recommended_colors: string[];
-  recommended_symbols: string[];
-  recommended_charges: string[];
-
-  shield_direction: string;
-  crest_direction: string;
-
-  motto_options: string[];
+  recommended_colors: HeraldRecommendation[];
+  recommended_symbols: HeraldRecommendation[];
+  recommended_charges: HeraldRecommendation[];
+  shield_direction: HeraldRecommendation;
+  crest_direction: HeraldRecommendation;
+  motto_options: HeraldRecommendation[];
 };
 
 type AnalysisStep = {
@@ -58,7 +62,7 @@ const analysisSteps: AnalysisStep[] = [
   {
     title: "Preparing the Herald's Report",
     detail:
-      "Bringing the findings together into recommendations for tinctures, charges, crest direction, and motto.",
+      "Bringing the findings together into recommendations for family symbols, a meaningful motto, and a crest direction.",
   },
 ];
 
@@ -271,8 +275,8 @@ export default function HeraldPage() {
           <div className="mt-8 h-px w-24 bg-[#b89559]" />
 
           <p className="mt-8 max-w-3xl text-lg leading-8 text-[#c8bfb2]">
-            The Herald examines your Family Record and develops a
-            disciplined starting point for your family&apos;s heraldry.
+            The Herald considers what makes your family distinct and proposes
+            symbols and words that can carry its story forward.
             Every recommendation must be traceable to something meaningful
             in the record you have created.
           </p>
@@ -321,7 +325,7 @@ export default function HeraldPage() {
         {report && (
           <HeraldReportView
             report={report}
-            onContinue={() => router.push("/studio")}
+            onContinue={() => router.push("/builder")}
             onRegenerate={beginAnalysis}
           />
         )}
@@ -458,6 +462,45 @@ function HeraldChamber({
   );
 }
 
+type RecommendationValue = HeraldRecommendation | string | null | undefined;
+
+function normalizeRecommendation(value: RecommendationValue): HeraldRecommendation | null {
+  if (!value) return null;
+  if (typeof value === "object") {
+    return typeof value.recommendation === "string"
+      ? {
+          recommendation: value.recommendation,
+          traditionalMeaning: value.traditionalMeaning || "",
+          familyReason: value.familyReason || "",
+          learnMore: value.learnMore || "",
+        }
+      : null;
+  }
+
+  // Older reports may store a complete recommendation object as JSON text.
+  const text = value.trim();
+  if (!text) return null;
+  if (text.startsWith("{")) {
+    try {
+      const parsed: unknown = JSON.parse(text);
+      if (parsed && typeof parsed === "object" && "recommendation" in parsed) {
+        const item = parsed as Record<string, unknown>;
+        if (typeof item.recommendation === "string") {
+          return {
+            recommendation: item.recommendation,
+            traditionalMeaning: typeof item.traditionalMeaning === "string" ? item.traditionalMeaning : "",
+            familyReason: typeof item.familyReason === "string" ? item.familyReason : "",
+            learnMore: typeof item.learnMore === "string" ? item.learnMore : "",
+          };
+        }
+      }
+    } catch {
+      // Plain text is a valid legacy recommendation.
+    }
+  }
+  return { recommendation: text, traditionalMeaning: "", familyReason: "", learnMore: "" };
+}
+
 function HeraldReportView({
   report,
   onContinue,
@@ -467,145 +510,179 @@ function HeraldReportView({
   onContinue: () => void;
   onRegenerate: () => void;
 }) {
+  const [showHeraldicDetails, setShowHeraldicDetails] = useState(false);
   return (
-    <div className="mt-16 space-y-10">
-      <section className="border border-[#6b593d] bg-[#f5efe4] px-10 py-12 text-[#2d2822] shadow-2xl">
-        <p className="text-center text-xs font-semibold uppercase tracking-[0.45em] text-[#8b6a37]">
+    <div className="mt-12 space-y-8">
+      <section className="border border-[#6b593d] bg-[#f5efe4] px-6 py-9 text-[#2d2822] shadow-2xl sm:px-10 sm:py-12">
+        <p className="text-center text-[0.65rem] font-semibold uppercase tracking-[0.32em] text-[#8b6a37]">
           The Family Regiment
         </p>
-
-        <h1 className="font-display mt-5 text-center text-5xl">
+        <h2 className="font-display mt-4 text-center text-3xl sm:text-4xl">
           The Herald&apos;s Report
-        </h1>
-
-        <p className="mt-3 text-center text-sm uppercase tracking-[0.28em] text-[#8a7b6c]">
-          Prepared From Your Family Record
+        </h2>
+        <p className="mt-3 text-center text-xs uppercase tracking-[0.2em] text-[#8a7b6c]">
+          A reflection of your Family Record
         </p>
-
-        <div className="mx-auto mt-8 h-px w-32 bg-[#b89b6a]" />
-
-        <div className="mt-10">
-          <p className="text-xs font-semibold uppercase tracking-[0.28em] text-[#8b6a37]">
-            The Herald&apos;s Findings
-          </p>
-
-          <p className="mt-6 whitespace-pre-wrap text-lg leading-9 text-[#453b32]">
-            {report.family_summary}
-          </p>
-        </div>
-
-        <div className="mt-12 border-l-4 border-[#b89b6a] pl-6">
-          <p className="text-base italic leading-8 text-[#5b5147]">
-            Every recommendation contained within this report is derived
-            from the information provided in your Family Record. The
-            Herald does not invent family history, but interprets
-            recurring themes and traditions into meaningful heraldic
-            recommendations.
-          </p>
-        </div>
+        <div className="mx-auto mt-7 h-px w-24 bg-[#b89b6a]" />
+        <p className="mt-8 whitespace-pre-line text-base leading-8 text-[#453b32] sm:text-lg">
+          {report.family_summary}
+        </p>
+        <p className="mt-7 border-t border-[#d8c9b3] pt-5 text-sm leading-7 text-[#695b4c]">
+          This is an interpretation of the history your family provided, not a claim
+          of inherited arms, noble rank, or a shared identity with everyone who bears
+          the same surname.
+        </p>
       </section>
 
-      <div className="grid gap-8 lg:grid-cols-2">
-        <Recommendation
-          title="Core Themes"
-          items={report.themes}
-        />
-
-        <Recommendation
-          title="Virtues"
-          items={report.virtues}
-        />
-
-        <Recommendation
-          title="Recommended Tinctures"
-          items={report.recommended_colors}
-        />
-
-        <Recommendation
-          title="Recommended Symbols"
-          items={report.recommended_symbols}
-        />
-
-        <Recommendation
-          title="Heraldic Charges"
-          items={report.recommended_charges}
-        />
-
-        <Recommendation
-          title="Motto Directions"
-          items={report.motto_options}
-        />
+      <div className="grid gap-5 md:grid-cols-2">
+        <SimpleList title="What defines your family" items={report.themes} />
+        <SimpleList title="Values worth carrying forward" items={report.virtues} />
       </div>
 
-      <section className="grid gap-8 lg:grid-cols-2">
-        <DirectionCard
-          eyebrow="Shield Direction"
-          text={report.shield_direction}
+      <section className="space-y-5">
+        <SectionHeading
+          title="Symbols with a personal connection"
+          description="These suggestions matter because of the experiences and principles recorded by your family—not simply because they look impressive."
         />
-
-        <DirectionCard
-          eyebrow="Crest Direction"
-          text={report.crest_direction}
-        />
+        <div className="grid gap-5 md:grid-cols-2">
+          <MeaningfulList title="Symbols" items={report.recommended_symbols} />
+          <MeaningfulList title="Principal heraldic imagery" items={report.recommended_charges} />
+        </div>
       </section>
 
-      <div className="flex flex-col gap-4 border-t border-[#574c3d] pt-10 sm:flex-row sm:flex-wrap">
-        <button
-          type="button"
-          onClick={() => window.history.back()}
-          className="border border-[#6c6255] px-6 py-4 text-sm font-semibold uppercase tracking-[0.16em] text-[#d5cbbb] transition hover:bg-white/[0.04]"
-        >
-          ← Return to Family Record
-        </button>
+      <section className="space-y-5">
+        <SectionHeading
+          title="Words your family can live by"
+          description="Possible mottos grounded in the values and lessons of your Family Record. These are starting points, not decisions made on your behalf."
+        />
+        <MeaningfulList title="Motto ideas" items={report.motto_options} />
+      </section>
 
+      <section className="space-y-5">
+        <SectionHeading
+          title="How the story could become a crest"
+          description="Two complementary design directions to consider as you customize your family crest."
+        />
+        <div className="grid gap-5 md:grid-cols-2">
+          <DirectionCard eyebrow="Shield concept" recommendation={report.shield_direction} />
+          <DirectionCard eyebrow="Crest concept" recommendation={report.crest_direction} />
+        </div>
+      </section>
+
+      <section className="border border-[#574c3d] bg-[#1b1c17] p-6 sm:p-8">
+        <h3 className="font-display text-xl text-[#f1e7cf]">One surname. Distinct family branches.</h3>
+        <p className="mt-3 text-sm leading-7 text-[#c8bfb2]">
+          Siblings, cousins, and relatives in different regions may share ancestry
+          and a surname while maintaining different households, values, traditions,
+          and heraldic choices. Your Family Record should describe your own branch.
+          Other branches can have their own records and crests without changing yours.
+        </p>
+        <p className="mt-3 text-xs leading-6 text-[#a9a095]">
+          Branch-specific fields and relationships will be added to the Family Record
+          in a separate update. This report does not yet store or compare branches.
+        </p>
+      </section>
+
+      <section className="border border-[#574c3d] bg-[#1b1c17] p-6 sm:p-8">
         <button
           type="button"
-          onClick={onRegenerate}
-          className="border border-[#8c7450] px-6 py-4 text-sm font-semibold uppercase tracking-[0.16em] text-[#cfb486] transition hover:bg-white/[0.04]"
+          onClick={() => setShowHeraldicDetails((previous) => !previous)}
+          aria-expanded={showHeraldicDetails}
+          className="flex w-full items-center justify-between gap-4 text-left"
         >
+          <span>
+            <span className="block font-display text-xl text-[#f1e7cf]">Heraldic reference notes</span>
+            <span className="mt-2 block text-sm text-[#a9a095]">
+              Optional details about colors, traditional associations, and symbolism.
+            </span>
+          </span>
+          <span className="text-xl text-[#c8a86b]" aria-hidden="true">
+            {showHeraldicDetails ? "−" : "+"}
+          </span>
+        </button>
+        {showHeraldicDetails && (
+          <div className="mt-6 grid gap-4 border-t border-[#514735] pt-6 md:grid-cols-2">
+            {(report.recommended_colors || []).map((entry, index) => {
+              const item = normalizeRecommendation(entry);
+              return item ? <MeaningCard key={index} item={item} showContext /> : null;
+            })}
+          </div>
+        )}
+      </section>
+
+      <div className="flex flex-col gap-4 border-t border-[#574c3d] pt-8 sm:flex-row sm:flex-wrap">
+        <button type="button" onClick={() => window.history.back()}
+          className="border border-[#6c6255] px-6 py-4 text-xs font-semibold uppercase tracking-[0.13em] text-[#d5cbbb] hover:bg-white/[0.04]">
+          Return to Family Record
+        </button>
+        <button type="button" onClick={onRegenerate}
+          className="border border-[#8c7450] px-6 py-4 text-xs font-semibold uppercase tracking-[0.13em] text-[#cfb486] hover:bg-white/[0.04]">
           Run Analysis Again
         </button>
-
-        <button
-          type="button"
-          onClick={onContinue}
-          className="border border-[#a7723f] bg-[#7a4728] px-7 py-4 text-sm font-semibold uppercase tracking-[0.18em] text-white transition hover:bg-[#925a32]"
-        >
-          Continue to Design Studio →
+        <button type="button" onClick={onContinue}
+          className="border border-[#a7723f] bg-[#7a4728] px-7 py-4 text-xs font-semibold uppercase tracking-[0.13em] text-white hover:bg-[#925a32]">
+          Continue to Crest Builder →
         </button>
       </div>
     </div>
   );
 }
 
-function Recommendation({
-  title,
-  items,
-}: {
-  title: string;
-  items: string[];
-}) {
+function SectionHeading({ title, description }: { title: string; description: string }) {
   return (
-    <section className="border border-[#574c3d] bg-[#1b1c17] p-7">
-      <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[#c8a86b]">
-        {title}
-      </p>
+    <div>
+      <h2 className="font-display text-2xl text-[#f1e7cf] sm:text-3xl">{title}</h2>
+      <p className="mt-2 max-w-3xl text-sm leading-7 text-[#b8afa2]">{description}</p>
+    </div>
+  );
+}
 
-      <div className="mt-5 flex flex-wrap gap-3">
-        {items?.length ? (
-          items.map((item) => (
-            <span
-              key={item}
-              className="border border-[#655845] bg-[#20211c] px-4 py-2 text-sm leading-6 text-[#ddd2c2]"
-            >
-              {item}
-            </span>
-          ))
-        ) : (
-          <p className="text-[#958c80]">
-            No recommendation yet.
-          </p>
-        )}
+function SimpleList({ title, items }: { title: string; items: string[] }) {
+  return (
+    <section className="border border-[#574c3d] bg-[#1b1c17] p-6">
+      <h3 className="text-xs font-semibold uppercase tracking-[0.2em] text-[#c8a86b]">{title}</h3>
+      <ul className="mt-5 space-y-3">
+        {(items || []).map((item, index) => (
+          <li key={index} className="border-l-2 border-[#8f7447] py-1 pl-4 text-sm leading-6 text-[#e2d7c6]">
+            {item}
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
+function MeaningCard({ item, showContext = false }: { item: HeraldRecommendation; showContext?: boolean }) {
+  return (
+    <article className="border border-[#655845] bg-[#20211c] p-5">
+      <h4 className="font-display text-lg leading-7 text-[#f1e7cf]">{item.recommendation}</h4>
+      {item.familyReason && (
+        <p className="mt-3 text-sm leading-7 text-[#ddd2c2]">{item.familyReason}</p>
+      )}
+      {showContext && item.traditionalMeaning && (
+        <p className="mt-4 border-t border-[#514735] pt-4 text-xs leading-6 text-[#b8afa2]">
+          <span className="font-semibold text-[#c8a86b]">Traditional association: </span>
+          {item.traditionalMeaning}
+        </p>
+      )}
+      {showContext && item.learnMore && (
+        <p className="mt-3 text-xs leading-6 text-[#a9a095]">{item.learnMore}</p>
+      )}
+    </article>
+  );
+}
+
+function MeaningfulList({ title, items }: { title: string; items: HeraldRecommendation[] }) {
+  const normalized = (items || []).map(normalizeRecommendation).filter(
+    (item): item is HeraldRecommendation => item !== null
+  );
+  return (
+    <section className="border border-[#574c3d] bg-[#1b1c17] p-6">
+      <h3 className="text-xs font-semibold uppercase tracking-[0.2em] text-[#c8a86b]">{title}</h3>
+      <div className="mt-5 grid gap-4">
+        {normalized.length ? normalized.map((item, index) => (
+          <MeaningCard key={index} item={item} />
+        )) : <p className="text-sm text-[#a9a095]">No suggestions available yet.</p>}
       </div>
     </section>
   );
@@ -613,20 +690,26 @@ function Recommendation({
 
 function DirectionCard({
   eyebrow,
-  text,
+  recommendation,
 }: {
   eyebrow: string;
-  text: string;
+  recommendation: RecommendationValue;
 }) {
+  const item = normalizeRecommendation(recommendation);
   return (
-    <section className="border border-[#574c3d] bg-[#1b1c17] p-8">
-      <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[#c8a86b]">
-        {eyebrow}
+    <section className="min-w-0 border border-[#574c3d] bg-[#1b1c17] p-6">
+      <h3 className="text-xs font-semibold uppercase tracking-[0.2em] text-[#c8a86b]">{eyebrow}</h3>
+      <p className="mt-4 break-words font-display text-lg leading-7 text-[#eee3d2] sm:text-xl">
+        {item?.recommendation || "Direction not yet available."}
       </p>
-
-      <p className="font-display mt-5 text-3xl leading-tight text-[#eee3d2]">
-        {text}
-      </p>
+      {item?.familyReason && (
+        <div className="mt-5 border-l-2 border-[#8f7447] pl-4">
+          <p className="text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-[#c8a86b]">
+            Why it fits your family
+          </p>
+          <p className="mt-2 text-sm leading-7 text-[#d5cbbb]">{item.familyReason}</p>
+        </div>
+      )}
     </section>
   );
 }

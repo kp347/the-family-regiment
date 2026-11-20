@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import QuestionCard from "@/components/builder/QuestionCard";
 import { createClient } from "@/lib/supabase/client";
@@ -41,6 +41,9 @@ export default function OriginsPage() {
   const [saveStatus, setSaveStatus] =
     useState<SaveStatus>("loading");
   const [errorMessage, setErrorMessage] = useState("");
+  const latestForm = useRef<OriginsForm>(emptyForm);
+  const saveQueue = useRef<Promise<boolean>>(Promise.resolve(true));
+  const changeVersion = useRef(0);
 
   useEffect(() => {
     let cancelled = false;
@@ -81,10 +84,12 @@ export default function OriginsPage() {
       }
 
       if (data?.origins) {
-        setForm({
+        const restored = {
           ...emptyForm,
           ...(data.origins as Partial<OriginsForm>),
-        });
+        };
+        latestForm.current = restored;
+        setForm(restored);
       }
 
       setLoaded(true);
@@ -101,16 +106,16 @@ export default function OriginsPage() {
   useEffect(() => {
     if (!loaded || !userId) return;
 
+    // Do not save unchanged data immediately after the initial load.
+    if (changeVersion.current === 0) return;
+    const version = changeVersion.current;
     setSaveStatus("saving");
     setErrorMessage("");
 
     const timer = window.setTimeout(async () => {
       const success = await saveOrigins();
-
-      if (success) {
-        setSaveStatus("saved");
-      } else {
-        setSaveStatus("error");
+      if (version === changeVersion.current) {
+        setSaveStatus(success ? "saved" : "error");
       }
     }, 800);
 
@@ -121,48 +126,48 @@ export default function OriginsPage() {
     field: keyof OriginsForm,
     value: string
   ) {
+    changeVersion.current += 1;
     setSaveStatus("unsaved");
-
-    setForm((current) => ({
-      ...current,
-      [field]: value,
-    }));
+    const next = { ...latestForm.current, [field]: value };
+    latestForm.current = next;
+    setForm(next);
   }
 
-  async function saveOrigins(): Promise<boolean> {
+  function saveOrigins(nextArticle?: "values"): Promise<boolean> {
     if (!userId) {
       setErrorMessage("Please sign in before saving.");
-      return false;
+      return Promise.resolve(false);
     }
 
-    const supabase = createClient();
+    // Queue writes so a slower autosave cannot overwrite a later manual save.
+    const snapshot = { ...latestForm.current };
+    const performSave = async (): Promise<boolean> => {
+      const supabase = createClient();
+      const payload: Record<string, unknown> = {
+        user_id: userId,
+        origins: snapshot,
+        updated_at: new Date().toISOString(),
+      };
 
-    const { error } = await supabase
-      .from("family_records")
-      .upsert(
-        {
-          user_id: userId,
-          origins: form,
-          current_article: "origins",
-          completion_percent: 14,
-          updated_at: new Date().toISOString(),
-        },
-        {
-          onConflict: "user_id",
-        }
-      );
+      // Only explicit chapter advancement updates the resume destination.
+      // Do not reset completion_percent or current_article during autosave.
+      if (nextArticle) payload.current_article = nextArticle;
 
-    if (error) {
-      console.error("Unable to save Origins:", error);
+      const { error } = await supabase
+        .from("family_records")
+        .upsert(payload, { onConflict: "user_id" });
 
-      setErrorMessage(
-        "Your changes could not be saved. Please try again."
-      );
+      if (error) {
+        console.error("Unable to save Origins:", error);
+        setErrorMessage("Your changes could not be saved. Please try again.");
+        return false;
+      }
+      return true;
+    };
 
-      return false;
-    }
-
-    return true;
+    const next = saveQueue.current.then(performSave, performSave);
+    saveQueue.current = next;
+    return next;
   }
 
   async function saveNow() {
@@ -182,7 +187,7 @@ export default function OriginsPage() {
     setSaveStatus("saving");
     setErrorMessage("");
 
-    const success = await saveOrigins();
+    const success = await saveOrigins("values");
 
     if (!success) {
       setSaveStatus("error");

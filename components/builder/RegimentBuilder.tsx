@@ -7,6 +7,7 @@ import {
   useRef,
 } from "react";
 import BuilderHeader from "./BuilderHeader";
+import HouseDiscovery, { type DiscoverySelection } from "./HouseDiscovery";
 import BuilderHeraldry from "./BuilderHeraldry";
 import BuilderHeritage from "./BuilderHeritage";
 import BuilderIdentity from "./BuilderIdentity";
@@ -461,6 +462,7 @@ const [
         ),
     );
   const sharedIdentitySnapshot = useRef<string | null>(null);
+  const [showDiscovery, setShowDiscovery] = useState(false);
   const [
     draftLoaded,
     setDraftLoaded,
@@ -587,6 +589,9 @@ designCreatedAt,
       window.localStorage.getItem(
         "family-regiment-draft",
       );
+    const hasSharedIdentity = Boolean(window.localStorage.getItem(HOUSE_IDENTITY_KEY));
+    const discoveryCompleted = window.localStorage.getItem("family-regiment-discovery-completed") === "1";
+    setShowDiscovery(!savedDraft && !hasSharedIdentity && !discoveryCompleted);
     if (savedDraft) {
       try {
         const parsedDraft =
@@ -976,6 +981,25 @@ militaryBranch,
       }),
     );
   }
+  function completeDiscovery(selection: DiscoverySelection) {
+    setFamilyName(selection.familyName);
+    setInitials(selection.familyName.charAt(0).toUpperCase());
+    chooseValue(selection.value);
+    chooseAnimal(selection.animal);
+    setMotto(selection.motto);
+    // Only first-time visitors reach Discovery. Seed the tape once;
+    // subsequent House name edits never overwrite a customized tape.
+    setNameTapeText(selection.familyName);
+    setCurrentStep(2);
+    setShowDiscovery(false);
+    try { window.localStorage.setItem("family-regiment-discovery-completed", "1"); } catch { /* storage optional */ }
+  }
+
+  function skipDiscovery() {
+    setShowDiscovery(false);
+    try { window.localStorage.setItem("family-regiment-discovery-completed", "1"); } catch { /* storage optional */ }
+  }
+
   function nextStep() {
     setCurrentStep(
       (step) =>
@@ -1101,6 +1125,11 @@ setMilitaryBranch(
         }
       />
       <main className="min-w-0 px-3 pb-10 sm:px-6 md:pb-16">
+        {draftLoaded && showDiscovery ? (
+          <div className="mx-auto max-w-7xl pt-6">
+            <HouseDiscovery onComplete={completeDiscovery} onSkip={skipDiscovery} />
+          </div>
+        ) : (
         <div className="mx-auto min-w-0 max-w-7xl">
           <BuilderStepper
             steps={
@@ -1430,6 +1459,7 @@ zodiacSign={zodiacSign}
             />
           </div>
         </div>
+        )}
       </main>
     </div>
   );

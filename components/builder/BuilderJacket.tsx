@@ -1035,7 +1035,21 @@ function PersonalIdentityCollection({
 
               className={`rounded-xl border p-4 text-left transition ${active ? "border-[#B08D57] bg-[#B08D57]/10" : "border-white/10 bg-[#151614]"} ${disabled ? "cursor-not-allowed opacity-50" : "hover:border-[#B08D57]/60"}`}>
 
-              <div className="mb-3 h-24 w-24">{activeCategory === "Profession" && <IdentityShieldPatch finish={patchFinish} label={value} />}</div>
+              <div className={`relative mb-3 flex h-24 w-24 items-center justify-center overflow-hidden rounded-lg ${activeCategory === "Zodiac" ? "bg-[#E9E2D2] p-3" : ""}`}>
+                {activeCategory === "Profession" ? (
+                  <IdentityShieldPatch finish={patchFinish} label={value} />
+                ) : patchArtwork({ category: activeCategory, value } as InterchangeableIdentityPatch) ? (
+                  <Image
+                    src={patchArtwork({ category: activeCategory, value } as InterchangeableIdentityPatch)!}
+                    alt={`${value} ${activeCategory} patch artwork`}
+                    fill
+                    sizes="96px"
+                    className={`object-contain ${activeCategory === "Zodiac" ? "p-3" : ""}`}
+                  />
+                ) : (
+                  <span className="text-xs text-[#99958D]">Artwork pending</span>
+                )}
+              </div>
               <span className="block text-sm text-[#E4DED3]">{value}</span>
 
               <span className="mt-2 block text-[9px] uppercase tracking-[0.16em] text-[#B08D57]">
@@ -1059,11 +1073,11 @@ function PersonalIdentityCollection({
           {selectedPrimary && (
             <div className="rounded-xl border border-[#B08D57]/50 bg-[#151614] p-4">
               <p className="text-[10px] uppercase tracking-wider text-[#B08D57]">On jacket · Primary</p>
-              <div className="relative my-3 h-24 w-full">
+              <div className={`relative my-3 h-24 w-full rounded-lg ${primaryCategory === "Zodiac" ? "bg-[#E9E2D2] p-3" : ""}`}>
                 {primaryCategory === "Profession" ? (
                   <IdentityShieldPatch finish={patchFinish} label={primaryValue} />
                 ) : patchArtwork({ category: primaryCategory, value: primaryValue } as InterchangeableIdentityPatch) && (
-                  <Image src={patchArtwork({ category: primaryCategory, value: primaryValue } as InterchangeableIdentityPatch)!} alt={`${primaryValue} patch`} fill sizes="180px" className="object-contain" />
+                  <Image src={patchArtwork({ category: primaryCategory, value: primaryValue } as InterchangeableIdentityPatch)!} alt={`${primaryValue} patch`} fill sizes="180px" className={`object-contain ${primaryCategory === "Zodiac" ? "p-3" : ""}`} />
                 )}
               </div>
               <p className="text-sm text-[#E4DED3]">{primaryValue}</p>
@@ -1073,11 +1087,11 @@ function PersonalIdentityCollection({
           {visiblePatches.map(patch => (
             <div key={`${patch.category}:${patch.value}`} className="rounded-xl border border-white/10 bg-[#151614] p-4">
               <p className="text-[10px] uppercase tracking-wider text-[#B08D57]">Interchangeable · Additional</p>
-              <div className="relative my-3 h-24 w-full">
+              <div className={`relative my-3 h-24 w-full rounded-lg ${patch.category === "Zodiac" ? "bg-[#E9E2D2] p-3" : ""}`}>
                 {patch.category === "Profession" ? (
                   <IdentityShieldPatch finish={patchFinish} label={patch.value} />
                 ) : patchArtwork(patch) && (
-                  <Image src={patchArtwork(patch)!} alt={`${patch.value} patch`} fill sizes="180px" className="object-contain" />
+                  <Image src={patchArtwork(patch)!} alt={`${patch.value} patch`} fill sizes="180px" className={`object-contain ${patch.category === "Zodiac" ? "p-3" : ""}`} />
                 )}
               </div>
               <p className="text-sm text-[#E4DED3]">{patch.value}</p>

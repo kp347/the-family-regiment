@@ -1,21 +1,25 @@
+
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
+type SectionKey =
+  | "origins"
+  | "values_record"
+  | "service"
+  | "traditions"
+  | "symbols"
+  | "achievements"
+  | "future_legacy";
+
 type RecordSection = {
   title: string;
   route: string;
-  sourceKey:
-    | "origins"
-    | "values_record"
-    | "service"
-    | "traditions"
-    | "symbols"
-    | "achievements"
-    | "future_legacy";
+  sourceKey: SectionKey;
   labels: Record<string, string>;
+  requiredFields: string[];
 };
 
 const sections: RecordSection[] = [
@@ -28,10 +32,13 @@ const sections: RecordSection[] = [
       alternateSpellings: "Alternate Spellings",
       countryOfOrigin: "Country of Origin",
       regionOfOrigin: "State, Province, or Region",
+      branchName: "Family Branch (Optional)",
+      branchLocation: "Family Branch Location (Optional)",
       earliestAncestor: "Earliest Known Ancestor",
       approximateYear: "Approximate Year",
       familyStory: "The Story of Your Origins",
     },
+    requiredFields: ["surname", "familyStory"],
   },
   {
     title: "Values",
@@ -44,6 +51,10 @@ const sections: RecordSection[] = [
       admiredQualities: "Qualities You Most Admire",
       lessonsToCarryForward: "Lessons Worth Carrying Forward",
     },
+    requiredFields: [
+      "coreValues",
+      "lessonsToCarryForward",
+    ],
   },
   {
     title: "Service",
@@ -57,6 +68,7 @@ const sections: RecordSection[] = [
       organizations: "Organizations and Institutions",
       serviceLegacy: "Legacy of Service",
     },
+    requiredFields: ["professions", "serviceLegacy"],
   },
   {
     title: "Traditions",
@@ -70,6 +82,7 @@ const sections: RecordSection[] = [
       customs: "Customs and Rituals",
       traditionsToPreserve: "Traditions Worth Preserving",
     },
+    requiredFields: ["traditionsToPreserve"],
   },
   {
     title: "Symbols",
@@ -83,6 +96,7 @@ const sections: RecordSection[] = [
       plants: "Trees, Plants, and Natural Symbols",
       meaningfulSymbols: "Symbols That Must Be Considered",
     },
+    requiredFields: ["meaningfulSymbols"],
   },
   {
     title: "Achievements",
@@ -94,8 +108,10 @@ const sections: RecordSection[] = [
       careerAchievements: "Career, Business, and Craft",
       civicAchievements: "Civic and Community Achievements",
       familyMilestones: "Family Milestones",
-      proudestLegacy: "The Achievement That Best Represents Your Family",
+      proudestLegacy:
+        "The Achievement That Best Represents Your Family",
     },
+    requiredFields: ["proudestLegacy"],
   },
   {
     title: "Future Legacy",
@@ -103,40 +119,83 @@ const sections: RecordSection[] = [
     sourceKey: "future_legacy",
     labels: {
       futureVision: "Your Vision for the Family",
-      descendantsShouldKnow: "What Should Your Descendants Know?",
+      descendantsShouldKnow:
+        "What Should Your Descendants Know?",
       familyMission: "Family Mission",
-      responsibilities: "Responsibilities of Future Stewards",
-      hopesForNextGeneration: "Hopes for the Next Generation",
+      responsibilities:
+        "Responsibilities of Future Stewards",
+      hopesForNextGeneration:
+        "Hopes for the Next Generation",
       legacyStatement: "Legacy Statement",
     },
+    requiredFields: [
+      "futureVision",
+      "descendantsShouldKnow",
+      "legacyStatement",
+    ],
   },
 ];
 
 type FamilyRecordRow = {
-  origins: Record<string, string> | null;
-  values_record: Record<string, string> | null;
-  service: Record<string, string> | null;
-  traditions: Record<string, string> | null;
-  symbols: Record<string, string> | null;
-  achievements: Record<string, string> | null;
-  future_legacy: Record<string, string> | null;
+  id: string;
+} & Record<SectionKey, Record<string, string> | null>;
+
+type SavedEntry = {
+  field: string;
+  label: string;
+  value: string;
+  required: boolean;
+  provided: boolean;
 };
 
 type SavedSection = {
   title: string;
   route: string;
-  entries: {
-    label: string;
-    value: string;
-  }[];
+  entries: SavedEntry[];
 };
+
+function formatRecord(
+  familyRecord: FamilyRecordRow
+): SavedSection[] {
+  return sections.map((section) => {
+    const source = familyRecord[section.sourceKey] ?? {};
+
+    return {
+      title: section.title,
+      route: section.route,
+      entries: Object.entries(section.labels).map(
+        ([field, label]) => {
+          const rawValue = source[field];
+          const value =
+            typeof rawValue === "string"
+              ? rawValue.trim()
+              : "";
+
+          return {
+            field,
+            label,
+            value,
+            required:
+              section.requiredFields.includes(field),
+            provided: value.length > 0,
+          };
+        }
+      ),
+    };
+  });
+}
 
 export default function ReviewPage() {
   const router = useRouter();
 
   const [record, setRecord] = useState<SavedSection[]>([]);
+  const [userId, setUserId] = useState<string | null>(
+    null
+  );
+  const [recordId, setRecordId] = useState<string | null>(null);
   const [loaded, setLoaded] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  const [finalizing, setFinalizing] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -156,19 +215,10 @@ export default function ReviewPage() {
         return;
       }
 
-      const { data, error } = await supabase
+      // One authenticated account owns one Family Record.
+      const { data: familyRecord, error } = await supabase
         .from("family_records")
-        .select(
-          `
-          origins,
-          values_record,
-          service,
-          traditions,
-          symbols,
-          achievements,
-          future_legacy
-        `
-        )
+        .select("id, origins, values_record, service, traditions, symbols, achievements, future_legacy")
         .eq("user_id", user.id)
         .maybeSingle();
 
@@ -176,91 +226,154 @@ export default function ReviewPage() {
 
       if (error) {
         console.error("Unable to load Family Record:", error);
-        setErrorMessage(
-          "We could not load your Family Record. Please try again."
-        );
+        setErrorMessage("We could not load your Family Record. Please try again.");
         setLoaded(true);
         return;
       }
 
-      const familyRecord = (data ?? {
-        origins: {},
-        values_record: {},
-        service: {},
-        traditions: {},
-        symbols: {},
-        achievements: {},
-        future_legacy: {},
-      }) as FamilyRecordRow;
+      if (!familyRecord) {
+        setErrorMessage("No Family Record was found. Begin with Origins to create your record.");
+        setLoaded(true);
+        return;
+      }
 
-      const formattedRecord: SavedSection[] = sections.map((section) => {
-        const source = familyRecord[section.sourceKey] ?? {};
-
-        return {
-          title: section.title,
-          route: section.route,
-          entries: Object.entries(section.labels).map(([field, label]) => ({
-            label,
-            value: source[field]?.trim() || "Not provided",
-          })),
-        };
-      });
-
-      setRecord(formattedRecord);
+      setRecordId(familyRecord.id);
+      setRecord(formatRecord(familyRecord));
+      setUserId(user.id);
       setLoaded(true);
     }
 
-    loadFamilyRecord();
+    void loadFamilyRecord();
 
     return () => {
       cancelled = true;
     };
   }, [router]);
 
-  const completion = useMemo(() => {
-    if (!loaded) return 0;
+  const requiredProgress = useMemo(() => {
+    const required = record.flatMap((section) =>
+      section.entries.filter((entry) => entry.required)
+    );
 
-    const entries = record.flatMap((section) => section.entries);
-
-    if (entries.length === 0) return 0;
-
-    const completed = entries.filter(
-      (entry) => entry.value !== "Not provided"
+    const completed = required.filter(
+      (entry) => entry.provided
     ).length;
 
-    return Math.round((completed / entries.length) * 100);
-  }, [record, loaded]);
+    return {
+      completed,
+      total: required.length,
+      percentage:
+        required.length > 0
+          ? Math.round(
+              (completed / required.length) * 100
+            )
+          : 0,
+    };
+  }, [record]);
+
+  const missingSections = useMemo(() => {
+    return record
+      .map((section) => ({
+        title: section.title,
+        route: section.route,
+        missing: section.entries.filter(
+          (entry) => entry.required && !entry.provided
+        ),
+      }))
+      .filter((section) => section.missing.length > 0);
+  }, [record]);
+
+  const canFinalize =
+    !!userId &&
+    !!recordId &&
+    loaded &&
+    record.length === sections.length &&
+    requiredProgress.total > 0 &&
+    missingSections.length === 0 &&
+    !finalizing;
 
   async function continueToHerald() {
-    const supabase = createClient();
+    if (!userId || !recordId || finalizing) return;
 
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    setFinalizing(true);
+    setErrorMessage("");
 
-    if (!user) {
-      router.push("/auth/sign-in");
-      return;
-    }
+    try {
+      const supabase = createClient();
 
-    const { error } = await supabase
-      .from("family_records")
-      .update({
-        current_article: "review",
-        completion_percent: 100,
-        updated_at: new Date().toISOString(),
-      })
-      .eq("user_id", user.id);
+      // Reload before finalization so the required-field
+      // check uses the latest persisted record.
+      const { data, error: loadError } = await supabase
+        .from("family_records")
+        .select(`id, origins, values_record, service, traditions, symbols, achievements, future_legacy`)
+        .eq("id", recordId)
+        .eq("user_id", userId)
+        .limit(1);
 
-    if (error) {
-      console.error("Unable to finalize Family Record:", error);
-      setErrorMessage(
-        "Your Family Record could not be finalized. Please try again."
+      if (loadError || !data?.[0]) {
+        setErrorMessage(
+          "We could not verify your saved Family Record. Please try again."
+        );
+        return;
+      }
+
+      const freshRecord = formatRecord(
+        data[0] as FamilyRecordRow
       );
-      return;
-    }
 
-    router.push("/herald");
+      setRecord(freshRecord);
+
+      const hasMissingRequired = freshRecord.some(
+        (section) =>
+          section.entries.some(
+            (entry) => entry.required && !entry.provided
+          )
+      );
+
+      if (hasMissingRequired) {
+        setErrorMessage(
+          "Some required answers are missing. Please complete the highlighted fields before continuing."
+        );
+        return;
+      }
+
+      const { data: updatedRows, error: updateError } =
+        await supabase
+          .from("family_records")
+          .update({
+            current_article: "review",
+            completion_percent: 100,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", recordId)
+          .eq("user_id", userId)
+          .select("id");
+
+      if (updateError || updatedRows?.length !== 1) {
+        console.error(
+          "Unable to finalize Family Record:",
+          updateError
+        );
+
+        setErrorMessage(
+          "Your Family Record could not be finalized. Please try again."
+        );
+        return;
+      }
+
+      router.push("/herald");
+    } catch (error) {
+      console.error(
+        "Unexpected Family Record finalization error:",
+        error
+      );
+
+      setErrorMessage(
+        "Something went wrong while finalizing your Family Record. Please try again."
+      );
+    } finally {
+      setFinalizing(false);
+    }
   }
 
   if (!loaded) {
@@ -287,14 +400,18 @@ export default function ReviewPage() {
         <div className="mt-7 h-px w-20 bg-[#b89559]" />
 
         <p className="mt-7 text-lg leading-8 text-[#665b50]">
-          Review each article before continuing. This record will become the
-          source material for the heraldic recommendations created in the next
-          stage.
+          Review each article before continuing. This
+          record will become the source material for
+          the heraldic recommendations created in
+          the next stage.
         </p>
       </header>
 
       {errorMessage && (
-        <div className="mt-8 border border-red-300 bg-red-50 px-5 py-4 text-sm text-red-800">
+        <div
+          role="alert"
+          className="mt-8 border border-red-300 bg-red-50 px-5 py-4 text-sm text-red-800"
+        >
           {errorMessage}
         </div>
       )}
@@ -303,24 +420,75 @@ export default function ReviewPage() {
         <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#8b542f]">
-              Record Completion
+              Required Answers Completed
             </p>
 
             <p className="font-display mt-2 text-3xl text-[#2d2822]">
-              {completion}%
+              {requiredProgress.percentage}%
+            </p>
+
+            <p className="mt-2 text-sm text-[#665b50]">
+              {requiredProgress.completed} of{" "}
+              {requiredProgress.total} required answers
+              provided. Optional questions do not
+              affect this percentage.
             </p>
           </div>
 
           <div className="w-full max-w-md">
-            <div className="h-2 overflow-hidden bg-[#d7c9b5]">
+            <div
+              className="h-2 overflow-hidden bg-[#d7c9b5]"
+              role="progressbar"
+              aria-label="Required answers completed"
+              aria-valuenow={requiredProgress.percentage}
+              aria-valuemin={0}
+              aria-valuemax={100}
+            >
               <div
                 className="h-full bg-[#8b542f] transition-all duration-300"
-                style={{ width: `${completion}%` }}
+                style={{
+                  width: `${requiredProgress.percentage}%`,
+                }}
               />
             </div>
           </div>
         </div>
       </div>
+
+      {missingSections.length > 0 && (
+        <div className="mt-8 border border-[#cdbda5] bg-[#fbf8f2] px-6 py-5">
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#8b542f]">
+            Answers Needed Before Continuing
+          </p>
+
+          <p className="mt-3 text-sm leading-7 text-[#665b50]">
+            Complete the following required questions.
+            Your other answers have been preserved.
+          </p>
+
+          <ul className="mt-4 space-y-4">
+            {missingSections.map((section) => (
+              <li key={section.title}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (recordId) router.push(section.route);
+                  }}
+                  className="text-sm font-semibold text-[#6f4328] underline underline-offset-4"
+                >
+                  Edit {section.title}
+                </button>
+
+                <p className="mt-1 text-sm leading-6 text-[#665b50]">
+                  {section.missing
+                    .map((entry) => entry.label)
+                    .join(", ")}
+                </p>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       <div className="mt-12 space-y-8">
         {record.map((section) => (
@@ -335,7 +503,9 @@ export default function ReviewPage() {
 
               <button
                 type="button"
-                onClick={() => router.push(section.route)}
+                onClick={() => {
+                  if (recordId) router.push(section.route);
+                }}
                 className="text-xs font-semibold uppercase tracking-[0.18em] text-[#6f4328]"
               >
                 Edit Article
@@ -345,21 +515,33 @@ export default function ReviewPage() {
             <div className="divide-y divide-[#e1d5c4]">
               {section.entries.map((entry) => (
                 <div
-                  key={entry.label}
+                  key={entry.field}
                   className="grid gap-3 px-6 py-5 sm:grid-cols-[220px_1fr] sm:px-8"
                 >
                   <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#8b542f]">
                     {entry.label}
+                    {entry.required && (
+                      <span
+                        className="ml-1 text-[#8b542f]"
+                        aria-label="Required"
+                      >
+                        *
+                      </span>
+                    )}
                   </p>
 
                   <p
                     className={`whitespace-pre-wrap leading-7 ${
-                      entry.value === "Not provided"
+                      !entry.provided
                         ? "italic text-[#9a8e80]"
                         : "text-[#4d443b]"
                     }`}
                   >
-                    {entry.value}
+                    {entry.provided
+                      ? entry.value
+                      : entry.required
+                        ? "Required answer missing"
+                        : "Not provided"}
                   </p>
                 </div>
               ))}
@@ -378,16 +560,28 @@ export default function ReviewPage() {
         </h2>
 
         <p className="mt-5 max-w-3xl leading-8 text-[#c8bfb2]">
-          The Herald will interpret the themes in your Family Record and use
-          them to develop meaningful recommendations for colors, symbols,
-          charges, motto directions, and visual identity.
+          The Herald will interpret the themes in your
+          Family Record and use them to develop
+          meaningful recommendations for colors,
+          symbols, charges, motto directions, and
+          visual identity.
+        </p>
+
+        <p className="mt-4 text-sm leading-7 text-[#c8bfb2]">
+          You may return to edit your Family Record.
+          Completing this stage confirms that the
+          required information is ready for heraldic
+          interpretation.
         </p>
 
         <div className="mt-8 flex flex-col gap-3 sm:flex-row">
           <button
             type="button"
-            onClick={() => router.push("/begin/future")}
-            className="border border-[#8c806e] px-6 py-3 text-sm font-semibold uppercase tracking-[0.15em] text-[#eee4d4] transition hover:bg-white/[0.05]"
+            onClick={() => {
+              if (recordId) router.push("/begin/future");
+            }}
+            disabled={finalizing || !recordId}
+            className="border border-[#8c806e] px-6 py-3 text-sm font-semibold uppercase tracking-[0.15em] text-[#eee4d4] transition hover:bg-white/[0.05] disabled:opacity-50"
           >
             ← Back to Future Legacy
           </button>
@@ -395,9 +589,12 @@ export default function ReviewPage() {
           <button
             type="button"
             onClick={continueToHerald}
-            className="border border-[#a7723f] bg-[#7a4728] px-7 py-3 text-sm font-semibold uppercase tracking-[0.15em] text-white transition hover:bg-[#925a32]"
+            disabled={!canFinalize}
+            className="border border-[#a7723f] bg-[#7a4728] px-7 py-3 text-sm font-semibold uppercase tracking-[0.15em] text-white transition hover:bg-[#925a32] disabled:cursor-not-allowed disabled:opacity-50"
           >
-            Continue to the Herald →
+            {finalizing
+              ? "Finalizing Family Record..."
+              : "Continue to the Herald →"}
           </button>
         </div>
       </div>

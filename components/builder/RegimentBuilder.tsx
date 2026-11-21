@@ -585,6 +585,8 @@ designCreatedAt,
   }
 
   useEffect(() => {
+    // Defer browser-storage hydration until after the initial render.
+    const hydrationTimer = window.setTimeout(() => {
     const savedDraft =
       window.localStorage.getItem(
         "family-regiment-draft",
@@ -800,6 +802,9 @@ designCreatedAt,
     sharedIdentitySnapshot.current = JSON.stringify(initialIdentity);
     applySharedIdentity(initialIdentity);
     setDraftLoaded(true);
+    }, 0);
+
+    return () => window.clearTimeout(hydrationTimer);
   }, []);
 
   useEffect(() => {
@@ -849,7 +854,7 @@ designCreatedAt,
     try {
       window.localStorage.setItem(REGIMENT_DRAFT_KEY, JSON.stringify(createDraft()));
     } catch {
-      setSaveMessage("Browser storage unavailable — draft not saved");
+      window.setTimeout(() => setSaveMessage("Browser storage unavailable — draft not saved"), 0);
     }
     // Only changes to House identity update the shared record. Garment
     // configuration changes must never write stale House information.
@@ -860,7 +865,7 @@ designCreatedAt,
     if (serialized !== sharedIdentitySnapshot.current) {
       sharedIdentitySnapshot.current = serialized;
       if (!saveHouseIdentity(identity)) {
-        setSaveMessage("Browser storage unavailable — House identity not saved");
+        window.setTimeout(() => setSaveMessage("Browser storage unavailable — House identity not saved"), 0);
       }
     }
   }, [

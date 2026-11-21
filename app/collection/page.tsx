@@ -76,7 +76,7 @@ export default function CollectionPage() {
           </div>
         </section>
 
-        {/* Founding garment */}
+        {/* Founding garment: Regiment Jacket */}
         <section className="bg-[#f3ecdf] py-24 text-[#2d2822] sm:py-28">
           <div className="mx-auto max-w-[1440px] px-6 sm:px-8 lg:px-12">
             <div className="mb-12">
@@ -118,10 +118,12 @@ export default function CollectionPage() {
                 </h3>
 
                 <p className="mt-7 text-base leading-8 text-[#655a4f]">
-                  Heritage flags, a family crest, name tapes,
-                  and personal insignia come together on
-                  an olive-drab field jacket inspired by
-                  military tradition.
+                  A family crest on the wearer&apos;s left shoulder,
+                  heritage flags on the right shoulder, and an
+                  independently personalized name tape above the
+                  chest pocket bring your House identity to an
+                  olive-drab field jacket inspired by military
+                  tradition.
                 </p>
 
                 <p className="mt-5 text-sm leading-7 text-[#817362]">
@@ -150,32 +152,33 @@ export default function CollectionPage() {
           </div>
         </section>
 
-        {/* Future collection editorial gallery */}
+        {/* Heritage Blazer: second founding launch garment */}
         <section className="bg-[#20221b] py-24 sm:py-28">
           <div className="mx-auto max-w-[1440px] px-6 sm:px-8 lg:px-12">
             <div className="flex flex-col justify-between gap-8 lg:flex-row lg:items-end">
               <div className="max-w-3xl">
                 <p className="text-xs font-semibold uppercase tracking-[0.3em] text-[#c5a16a]">
-                  The Collection Ahead
+                  Collection No. 002 · Founding Garment
                 </p>
 
                 <h2 className="font-display mt-6 text-4xl leading-tight sm:text-5xl lg:text-6xl">
-                  Beyond the
+                  The Heritage
                   <span className="block text-[#c7aa78]">
-                    Founding Garment.
+                    Blazer.
                   </span>
                 </h2>
 
                 <p className="mt-7 text-lg leading-8 text-[#b9b1a2]">
-                  The Regiment Jacket is only the beginning.
-                  Our future collections envision a more formal
-                  expression of family heritage, shared across
-                  generations.
+                  A more formal expression of the same House
+                  identity. The Heritage Blazer carries a larger
+                  family crest on the wearer&apos;s left chest,
+                  featuring the chosen House name and Latin motto.
+                  No additional patches.
                 </p>
               </div>
 
               <span className="self-start border border-[#8a744e]/60 px-4 py-2 text-[10px] uppercase tracking-[0.16em] text-[#c7b28d] lg:self-end">
-                Future Collection · Concept Preview
+                Founding Collection · Pre-Production
               </span>
             </div>
 
@@ -195,7 +198,7 @@ export default function CollectionPage() {
                     />
 
                     <span className="absolute left-4 top-4 bg-[#171914]/90 px-3 py-2 text-[10px] uppercase tracking-[0.14em] text-[#eee6d6]">
-                      Editorial Concept
+                      Editorial Visualization
                     </span>
                   </div>
 
@@ -224,18 +227,29 @@ export default function CollectionPage() {
 
             <div className="mt-12 flex flex-col items-start justify-between gap-7 border-t border-[#756445]/50 pt-9 sm:flex-row sm:items-center">
               <p className="max-w-2xl text-xs leading-6 text-[#a99e8c]">
-                These photographs are conceptual visualizations
-                of future apparel. The Heritage Blazer, women's
-                apparel, and children's apparel are not currently
-                available for purchase.
+                These photographs are editorial visualizations,
+                not approved production samples. The Heritage
+                Blazer is planned to launch alongside the
+                Regiment Jacket, subject to final production
+                validation. Women&apos;s and children&apos;s
+                apparel remain future collection concepts.
               </p>
 
-              <Link
-                href="/blazer"
-                className="inline-flex min-h-12 shrink-0 items-center justify-center border border-[#b08d57] px-6 py-3 text-center text-xs font-semibold uppercase tracking-[0.14em] text-[#eee6d6] transition-colors hover:bg-[#b08d57]/10"
-              >
-                Explore the Heritage Blazer
-              </Link>
+              <div className="flex flex-wrap gap-3">
+                <Link
+                  href="/blazer"
+                  className="inline-flex min-h-12 shrink-0 items-center justify-center border border-[#b08d57] px-6 py-3 text-center text-xs font-semibold uppercase tracking-[0.14em] text-[#eee6d6] transition-colors hover:bg-[#b08d57]/10"
+                >
+                  Explore the Heritage Blazer
+                </Link>
+
+                <Link
+                  href="/blazer/builder"
+                  className="inline-flex min-h-12 shrink-0 items-center justify-center bg-[#b08d57] px-6 py-3 text-center text-xs font-semibold uppercase tracking-[0.14em] text-[#171914] transition-colors hover:bg-[#d0b17c]"
+                >
+                  Customize Your Blazer Crest
+                </Link>
+              </div>
             </div>
           </div>
         </section>
@@ -249,7 +263,8 @@ export default function CollectionPage() {
 
             <p className="mt-5 text-base leading-8 text-[#b9b1a2]">
               Discover the heritage behind your family
-              identity, or begin composing your Regiment Jacket.
+              identity, or begin composing your Regiment Jacket
+              or Heritage Blazer.
             </p>
 
             <div className="mt-9 flex flex-col justify-center gap-4 sm:flex-row">
@@ -265,6 +280,13 @@ export default function CollectionPage() {
                 className="inline-flex min-h-12 items-center justify-center border border-[#b08d57] px-7 py-3 text-xs font-semibold uppercase tracking-[0.15em] text-[#eee6d6] transition-colors hover:bg-[#b08d57]/10"
               >
                 Explore the Jacket
+              </Link>
+
+              <Link
+                href="/blazer"
+                className="inline-flex min-h-12 items-center justify-center border border-[#b08d57] px-7 py-3 text-xs font-semibold uppercase tracking-[0.15em] text-[#eee6d6] transition-colors hover:bg-[#b08d57]/10"
+              >
+                Explore the Blazer
               </Link>
             </div>
           </div>

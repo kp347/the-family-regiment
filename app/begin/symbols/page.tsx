@@ -1,6 +1,12 @@
+
 "use client";
 
-import { useEffect, useState } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+  type FormEvent,
+} from "react";
 import { useRouter } from "next/navigation";
 import QuestionCard from "@/components/builder/QuestionCard";
 import { createClient } from "@/lib/supabase/client";
@@ -14,6 +20,13 @@ type SymbolsForm = {
   meaningfulSymbols: string;
 };
 
+type SaveStatus =
+  | "loading"
+  | "saved"
+  | "saving"
+  | "unsaved"
+  | "error";
+
 const emptyForm: SymbolsForm = {
   animals: "",
   colors: "",
@@ -23,22 +36,28 @@ const emptyForm: SymbolsForm = {
   meaningfulSymbols: "",
 };
 
-type SaveStatus =
-  | "loading"
-  | "saved"
-  | "saving"
-  | "unsaved"
-  | "error";
-
 export default function SymbolsPage() {
   const router = useRouter();
 
+  const [recordId, setRecordId] = useState<string | null>(
+    null
+  );
   const [form, setForm] = useState<SymbolsForm>(emptyForm);
   const [userId, setUserId] = useState<string | null>(null);
   const [loaded, setLoaded] = useState(false);
+  const [blocked, setBlocked] = useState(false);
   const [saveStatus, setSaveStatus] =
     useState<SaveStatus>("loading");
   const [errorMessage, setErrorMessage] = useState("");
+  const [revision, setRevision] = useState(0);
+  const [navigating, setNavigating] = useState(false);
+
+  const latestFormRef = useRef<SymbolsForm>(emptyForm);
+  const revisionRef = useRef(0);
+  const savedRevisionRef = useRef(0);
+  const saveQueueRef = useRef<Promise<boolean>>(
+    Promise.resolve(true)
+  );
 
   useEffect(() => {
     let cancelled = false;
@@ -58,133 +77,212 @@ export default function SymbolsPage() {
         return;
       }
 
-      setUserId(user.id);
-
-      const { data, error } = await supabase
+      // One account owns one Family Record.
+      // Geographic family branches remain optional
+      // fields within that record.
+      const { data: record, error } = await supabase
         .from("family_records")
-        .select("symbols")
+        .select("id, symbols")
         .eq("user_id", user.id)
         .maybeSingle();
 
       if (cancelled) return;
 
-      if (error) {
-        console.error("Unable to load Symbols:", error);
+      if (error || !record) {
+        if (error) {
+          console.error(
+            "Unable to load Symbols:",
+            error
+          );
+        }
 
+        setBlocked(true);
         setErrorMessage(
-          "We could not load this part of your Family Record. Please try again."
+          "We could not find your Family Record. Return to the Founding Journey and complete Origins first."
         );
-
         setSaveStatus("error");
         setLoaded(true);
         return;
       }
 
-      if (data?.symbols) {
-        setForm({
-          ...emptyForm,
-          ...(data.symbols as Partial<SymbolsForm>),
-        });
-      }
+      const restored: SymbolsForm = record.symbols
+        ? {
+            ...emptyForm,
+            ...(record.symbols as Partial<SymbolsForm>),
+          }
+        : { ...emptyForm };
 
+      latestFormRef.current = restored;
+      setForm(restored);
+      setRecordId(record.id);
+      setUserId(user.id);
       setLoaded(true);
       setSaveStatus("saved");
     }
 
-    loadSymbols();
+    void loadSymbols();
 
     return () => {
       cancelled = true;
     };
   }, [router]);
 
-  useEffect(() => {
-    if (!loaded || !userId) return;
-
-    setSaveStatus("saving");
-    setErrorMessage("");
-
-    const timer = window.setTimeout(async () => {
-      const success = await saveSymbols();
-      setSaveStatus(success ? "saved" : "error");
-    }, 800);
-
-    return () => window.clearTimeout(timer);
-  }, [form, loaded, userId]);
-
   function updateField(
     field: keyof SymbolsForm,
     value: string
   ) {
-    setSaveStatus("unsaved");
+    if (blocked || !recordId || navigating) return;
 
-    setForm((current) => ({
-      ...current,
+    revisionRef.current += 1;
+
+    const next: SymbolsForm = {
+      ...latestFormRef.current,
       [field]: value,
-    }));
+    };
+
+    latestFormRef.current = next;
+    setForm(next);
+    setRevision(revisionRef.current);
+    setSaveStatus("unsaved");
+    setErrorMessage("");
   }
 
-  async function saveSymbols(): Promise<boolean> {
-    if (!userId) {
-      setErrorMessage("Please sign in before saving.");
-      return false;
-    }
-
-    const supabase = createClient();
-
-    const { error } = await supabase
-      .from("family_records")
-      .upsert(
-        {
-          user_id: userId,
-          symbols: form,
-          current_article: "symbols",
-          completion_percent: 71,
-          updated_at: new Date().toISOString(),
-        },
-        {
-          onConflict: "user_id",
-        }
-      );
-
-    if (error) {
-      console.error("Unable to save Symbols:", error);
-
+  function saveSymbols(
+    nextArticle?: "achievements"
+  ): Promise<boolean> {
+    if (!userId || !recordId || blocked || !loaded) {
       setErrorMessage(
-        "Your changes could not be saved. Please try again."
+        "Your Family Record is unavailable. Please refresh and try again."
       );
-
-      return false;
+      setSaveStatus("error");
+      return Promise.resolve(false);
     }
 
-    return true;
+    const performSave = async (): Promise<boolean> => {
+      setSaveStatus("saving");
+      setErrorMessage("");
+
+      const supabase = createClient();
+
+      // Save the latest answers. If edits arrive while
+      // saving, continue until they are persisted.
+      do {
+        const version = revisionRef.current;
+        const snapshot = { ...latestFormRef.current };
+
+        const payload = {
+          symbols: snapshot,
+          updated_at: new Date().toISOString(),
+          ...(nextArticle
+            ? { current_article: nextArticle }
+            : {}),
+        };
+
+        const { data: savedRecord, error } = await supabase
+          .from("family_records")
+          .update(payload)
+          .eq("id", recordId)
+          .eq("user_id", userId)
+          .select("id")
+          .maybeSingle();
+
+        if (error || !savedRecord) {
+          console.error(
+            "Unable to save Symbols:",
+            error ?? "No matching Family Record"
+          );
+
+          setErrorMessage(
+            "Your changes could not be saved. Please try again."
+          );
+          setSaveStatus("error");
+          return false;
+        }
+
+        savedRevisionRef.current = Math.max(
+          savedRevisionRef.current,
+          version
+        );
+      } while (
+        savedRevisionRef.current < revisionRef.current
+      );
+
+      setSaveStatus("saved");
+      return true;
+    };
+
+    // Queue all saves, including chapter advancement.
+    const operation = saveQueueRef.current.then(
+      performSave,
+      performSave
+    );
+
+    saveQueueRef.current = operation;
+
+    return operation;
   }
 
-  async function saveNow() {
-    setSaveStatus("saving");
-    setErrorMessage("");
-
-    const success = await saveSymbols();
-
-    setSaveStatus(success ? "saved" : "error");
-  }
-
-  async function continueToAchievements(
-    event: React.FormEvent<HTMLFormElement>
-  ) {
-    event.preventDefault();
-
-    setSaveStatus("saving");
-    setErrorMessage("");
-
-    const success = await saveSymbols();
-
-    if (!success) {
-      setSaveStatus("error");
+  useEffect(() => {
+    if (!loaded || !userId || !recordId || blocked) {
       return;
     }
 
-    setSaveStatus("saved");
+    if (revision === 0) return;
+    if (revision <= savedRevisionRef.current) return;
+
+    const timer = window.setTimeout(() => {
+      void saveSymbols();
+    }, 800);
+
+    return () => window.clearTimeout(timer);
+
+    // saveSymbols reads the latest form from refs.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [revision, loaded, userId, recordId, blocked]);
+
+  async function saveNow() {
+    if (blocked || !recordId || navigating) return;
+
+    await saveSymbols();
+  }
+
+  async function goBack() {
+    if (blocked || !recordId || navigating) return;
+
+    setNavigating(true);
+
+    const success = await saveSymbols();
+
+    if (success) {
+      router.push("/begin/traditions");
+    } else {
+      setNavigating(false);
+    }
+  }
+
+  async function continueToAchievements(
+    event: FormEvent<HTMLFormElement>
+  ) {
+    event.preventDefault();
+
+    if (blocked || !recordId || navigating) return;
+
+    if (!latestFormRef.current.meaningfulSymbols.trim()) {
+      setErrorMessage(
+        "Please describe the symbols most meaningful to your family."
+      );
+      return;
+    }
+
+    setNavigating(true);
+
+    const success = await saveSymbols("achievements");
+
+    if (!success) {
+      setNavigating(false);
+      return;
+    }
+
     router.push("/begin/achievements");
   }
 
@@ -202,6 +300,9 @@ export default function SymbolsPage() {
         return "Saved to Family Record";
     }
   }
+
+  const textareaClass =
+    "w-full resize-y border border-[#cdbda5] bg-[#fbf8f2] px-4 py-3 text-lg leading-8 text-[#2d2822] outline-none transition focus:border-[#8b542f]";
 
   if (!loaded) {
     return (
@@ -227,19 +328,39 @@ export default function SymbolsPage() {
         <div className="mt-7 h-px w-20 bg-[#b89559]" />
 
         <p className="mt-7 text-lg leading-8 text-[#665b50]">
-          Heraldry should emerge from meaning, not decoration. These answers
-          help identify visual themes that may later influence your crest,
-          motto, colors, and other expressions of family identity.
+          Heraldry should emerge from meaning, not decoration.
+          These answers help identify visual themes that may
+          later influence your crest, motto, colors, and other
+          expressions of family identity.
         </p>
       </header>
 
+      <div className="mt-10 border-l-2 border-[#b89559] bg-[#eee5d7] px-6 py-5">
+        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#8b542f]">
+          Symbols of Your House
+        </p>
+
+        <p className="mt-3 text-sm leading-7 text-[#665b50]">
+          Your family&apos;s symbols should reflect its own
+          history, values, and traditions. Consider the
+          places and experiences that matter most to
+          the family you represent.
+        </p>
+      </div>
+
       {errorMessage && (
-        <div className="mt-8 border border-red-300 bg-red-50 px-5 py-4 text-sm text-red-800">
+        <div
+          role="alert"
+          className="mt-8 border border-red-300 bg-red-50 px-5 py-4 text-sm text-red-800"
+        >
           {errorMessage}
         </div>
       )}
 
-      <div className="mt-12 space-y-6">
+      <fieldset
+        disabled={blocked || navigating || !recordId}
+        className="mt-12 space-y-6"
+      >
         <QuestionCard
           label="Animals"
           description="Are there animals with personal, geographic, occupational, religious, or historical meaning to your family?"
@@ -251,7 +372,7 @@ export default function SymbolsPage() {
             }
             rows={5}
             placeholder="Examples: eagle, horse, bear, stag, dog, lion, hawk..."
-            className="w-full resize-y border border-[#cdbda5] bg-[#fbf8f2] px-4 py-3 text-lg leading-8 text-[#2d2822] outline-none transition focus:border-[#8b542f]"
+            className={textareaClass}
           />
         </QuestionCard>
 
@@ -266,7 +387,7 @@ export default function SymbolsPage() {
             }
             rows={4}
             placeholder="Examples: navy for service, green for farmland, red from a state or national flag..."
-            className="w-full resize-y border border-[#cdbda5] bg-[#fbf8f2] px-4 py-3 text-lg leading-8 text-[#2d2822] outline-none transition focus:border-[#8b542f]"
+            className={textareaClass}
           />
         </QuestionCard>
 
@@ -281,7 +402,7 @@ export default function SymbolsPage() {
             }
             rows={5}
             placeholder="What landscapes or places feel inseparable from your family story?"
-            className="w-full resize-y border border-[#cdbda5] bg-[#fbf8f2] px-4 py-3 text-lg leading-8 text-[#2d2822] outline-none transition focus:border-[#8b542f]"
+            className={textareaClass}
           />
         </QuestionCard>
 
@@ -296,7 +417,7 @@ export default function SymbolsPage() {
             }
             rows={5}
             placeholder="Examples: hammer, plow, compass, medical symbol, book, ship, aircraft, musical instrument..."
-            className="w-full resize-y border border-[#cdbda5] bg-[#fbf8f2] px-4 py-3 text-lg leading-8 text-[#2d2822] outline-none transition focus:border-[#8b542f]"
+            className={textareaClass}
           />
         </QuestionCard>
 
@@ -311,7 +432,7 @@ export default function SymbolsPage() {
             }
             rows={4}
             placeholder="Examples: oak, pine, rose, thistle, wheat, olive branch..."
-            className="w-full resize-y border border-[#cdbda5] bg-[#fbf8f2] px-4 py-3 text-lg leading-8 text-[#2d2822] outline-none transition focus:border-[#8b542f]"
+            className={textareaClass}
           />
         </QuestionCard>
 
@@ -331,23 +452,29 @@ export default function SymbolsPage() {
             }
             rows={6}
             placeholder="Tell us which symbols matter most and what they represent."
-            className="w-full resize-y border border-[#cdbda5] bg-[#fbf8f2] px-4 py-3 text-lg leading-8 text-[#2d2822] outline-none transition focus:border-[#8b542f]"
+            className={textareaClass}
           />
         </QuestionCard>
-      </div>
+      </fieldset>
 
       <footer className="mt-10 border-t border-[#cdbda5] pt-8">
         <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
           <button
             type="button"
-            onClick={() => router.push("/begin/traditions")}
-            className="text-sm font-semibold uppercase tracking-[0.15em] text-[#6f4328]"
+            onClick={goBack}
+            disabled={
+              blocked ||
+              navigating ||
+              !recordId
+            }
+            className="text-sm font-semibold uppercase tracking-[0.15em] text-[#6f4328] disabled:opacity-50"
           >
             ← Back to Traditions
           </button>
 
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
             <p
+              aria-live="polite"
               className={`mr-2 text-xs font-semibold uppercase tracking-[0.18em] ${
                 saveStatus === "error"
                   ? "text-red-700"
@@ -360,7 +487,12 @@ export default function SymbolsPage() {
             <button
               type="button"
               onClick={saveNow}
-              disabled={saveStatus === "saving"}
+              disabled={
+                blocked ||
+                navigating ||
+                !recordId ||
+                saveStatus === "saving"
+              }
               className="border border-[#9d835f] px-6 py-3 text-sm font-semibold uppercase tracking-[0.15em] text-[#5b4433] transition hover:bg-[#ebe1d2] disabled:cursor-not-allowed disabled:opacity-50"
             >
               Save Progress
@@ -368,10 +500,17 @@ export default function SymbolsPage() {
 
             <button
               type="submit"
-              disabled={saveStatus === "saving"}
+              disabled={
+                blocked ||
+                navigating ||
+                !recordId ||
+                saveStatus === "saving"
+              }
               className="border border-[#6f4328] bg-[#6f4328] px-7 py-3 text-sm font-semibold uppercase tracking-[0.15em] text-white transition hover:bg-[#875235] disabled:cursor-not-allowed disabled:opacity-50"
             >
-              Continue to Achievements →
+              {navigating
+                ? "Saving..."
+                : "Continue to Achievements →"}
             </button>
           </div>
         </div>

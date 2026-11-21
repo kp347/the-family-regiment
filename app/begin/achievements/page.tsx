@@ -1,6 +1,12 @@
+
 "use client";
 
-import { useEffect, useState } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+  type FormEvent,
+} from "react";
 import { useRouter } from "next/navigation";
 import QuestionCard from "@/components/builder/QuestionCard";
 import { createClient } from "@/lib/supabase/client";
@@ -14,6 +20,13 @@ type AchievementsForm = {
   proudestLegacy: string;
 };
 
+type SaveStatus =
+  | "loading"
+  | "saved"
+  | "saving"
+  | "unsaved"
+  | "error";
+
 const emptyForm: AchievementsForm = {
   militaryAchievements: "",
   educationAchievements: "",
@@ -23,22 +36,30 @@ const emptyForm: AchievementsForm = {
   proudestLegacy: "",
 };
 
-type SaveStatus =
-  | "loading"
-  | "saved"
-  | "saving"
-  | "unsaved"
-  | "error";
-
 export default function AchievementsPage() {
   const router = useRouter();
 
-  const [form, setForm] = useState<AchievementsForm>(emptyForm);
+  const [recordId, setRecordId] = useState<string | null>(
+    null
+  );
+  const [form, setForm] =
+    useState<AchievementsForm>(emptyForm);
   const [userId, setUserId] = useState<string | null>(null);
   const [loaded, setLoaded] = useState(false);
+  const [blocked, setBlocked] = useState(false);
   const [saveStatus, setSaveStatus] =
     useState<SaveStatus>("loading");
   const [errorMessage, setErrorMessage] = useState("");
+  const [revision, setRevision] = useState(0);
+  const [navigating, setNavigating] = useState(false);
+
+  const latestFormRef =
+    useRef<AchievementsForm>(emptyForm);
+  const revisionRef = useRef(0);
+  const savedRevisionRef = useRef(0);
+  const saveQueueRef = useRef<Promise<boolean>>(
+    Promise.resolve(true)
+  );
 
   useEffect(() => {
     let cancelled = false;
@@ -58,133 +79,211 @@ export default function AchievementsPage() {
         return;
       }
 
-      setUserId(user.id);
-
-      const { data, error } = await supabase
+      // Each authenticated account owns one Family Record.
+      const { data: record, error } = await supabase
         .from("family_records")
-        .select("achievements")
+        .select("id, achievements")
         .eq("user_id", user.id)
         .maybeSingle();
 
       if (cancelled) return;
 
-      if (error) {
-        console.error("Unable to load Achievements:", error);
+      if (error || !record) {
+        if (error) {
+          console.error(
+            "Unable to load Achievements:",
+            error
+          );
+        }
 
+        setBlocked(true);
         setErrorMessage(
-          "We could not load this part of your Family Record. Please try again."
+          "We could not find your Family Record. Return to the Founding Journey and complete Origins first."
         );
-
         setSaveStatus("error");
         setLoaded(true);
         return;
       }
 
-      if (data?.achievements) {
-        setForm({
-          ...emptyForm,
-          ...(data.achievements as Partial<AchievementsForm>),
-        });
-      }
+      const restored: AchievementsForm =
+        record.achievements
+          ? {
+              ...emptyForm,
+              ...(record.achievements as Partial<AchievementsForm>),
+            }
+          : { ...emptyForm };
 
+      latestFormRef.current = restored;
+      setForm(restored);
+      setRecordId(record.id);
+      setUserId(user.id);
       setLoaded(true);
       setSaveStatus("saved");
     }
 
-    loadAchievements();
+    void loadAchievements();
 
     return () => {
       cancelled = true;
     };
   }, [router]);
 
-  useEffect(() => {
-    if (!loaded || !userId) return;
-
-    setSaveStatus("saving");
-    setErrorMessage("");
-
-    const timer = window.setTimeout(async () => {
-      const success = await saveAchievements();
-      setSaveStatus(success ? "saved" : "error");
-    }, 800);
-
-    return () => window.clearTimeout(timer);
-  }, [form, loaded, userId]);
-
   function updateField(
     field: keyof AchievementsForm,
     value: string
   ) {
-    setSaveStatus("unsaved");
+    if (blocked || !recordId || navigating) return;
 
-    setForm((current) => ({
-      ...current,
+    revisionRef.current += 1;
+
+    const next: AchievementsForm = {
+      ...latestFormRef.current,
       [field]: value,
-    }));
+    };
+
+    latestFormRef.current = next;
+    setForm(next);
+    setRevision(revisionRef.current);
+    setSaveStatus("unsaved");
+    setErrorMessage("");
   }
 
-  async function saveAchievements(): Promise<boolean> {
-    if (!userId) {
-      setErrorMessage("Please sign in before saving.");
-      return false;
-    }
-
-    const supabase = createClient();
-
-    const { error } = await supabase
-      .from("family_records")
-      .upsert(
-        {
-          user_id: userId,
-          achievements: form,
-          current_article: "achievements",
-          completion_percent: 85,
-          updated_at: new Date().toISOString(),
-        },
-        {
-          onConflict: "user_id",
-        }
-      );
-
-    if (error) {
-      console.error("Unable to save Achievements:", error);
-
+  function saveAchievements(
+    nextArticle?: "future"
+  ): Promise<boolean> {
+    if (!userId || !recordId || blocked || !loaded) {
       setErrorMessage(
-        "Your changes could not be saved. Please try again."
+        "Your Family Record is unavailable. Please refresh and try again."
       );
-
-      return false;
+      setSaveStatus("error");
+      return Promise.resolve(false);
     }
 
-    return true;
+    const performSave = async (): Promise<boolean> => {
+      setSaveStatus("saving");
+      setErrorMessage("");
+
+      const supabase = createClient();
+
+      // Persist the latest answers, including any
+      // changes made while an earlier save was running.
+      do {
+        const version = revisionRef.current;
+        const snapshot = { ...latestFormRef.current };
+
+        const payload = {
+          achievements: snapshot,
+          updated_at: new Date().toISOString(),
+          ...(nextArticle
+            ? { current_article: nextArticle }
+            : {}),
+        };
+
+        const { data: savedRecord, error } = await supabase
+          .from("family_records")
+          .update(payload)
+          .eq("id", recordId)
+          .eq("user_id", userId)
+          .select("id")
+          .maybeSingle();
+
+        if (error || !savedRecord) {
+          console.error(
+            "Unable to save Achievements:",
+            error ?? "No matching Family Record"
+          );
+
+          setErrorMessage(
+            "Your changes could not be saved. Please try again."
+          );
+          setSaveStatus("error");
+          return false;
+        }
+
+        savedRevisionRef.current = Math.max(
+          savedRevisionRef.current,
+          version
+        );
+      } while (
+        savedRevisionRef.current < revisionRef.current
+      );
+
+      setSaveStatus("saved");
+      return true;
+    };
+
+    // Serialize autosaves and explicit navigation saves.
+    const operation = saveQueueRef.current.then(
+      performSave,
+      performSave
+    );
+
+    saveQueueRef.current = operation;
+
+    return operation;
   }
 
-  async function saveNow() {
-    setSaveStatus("saving");
-    setErrorMessage("");
-
-    const success = await saveAchievements();
-
-    setSaveStatus(success ? "saved" : "error");
-  }
-
-  async function continueToFuture(
-    event: React.FormEvent<HTMLFormElement>
-  ) {
-    event.preventDefault();
-
-    setSaveStatus("saving");
-    setErrorMessage("");
-
-    const success = await saveAchievements();
-
-    if (!success) {
-      setSaveStatus("error");
+  useEffect(() => {
+    if (!loaded || !userId || !recordId || blocked) {
       return;
     }
 
-    setSaveStatus("saved");
+    if (revision === 0) return;
+    if (revision <= savedRevisionRef.current) return;
+
+    const timer = window.setTimeout(() => {
+      void saveAchievements();
+    }, 800);
+
+    return () => window.clearTimeout(timer);
+
+    // saveAchievements reads current answers from refs.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [revision, loaded, userId, recordId, blocked]);
+
+  async function saveNow() {
+    if (blocked || !recordId || navigating) return;
+
+    await saveAchievements();
+  }
+
+  async function goBack() {
+    if (blocked || !recordId || navigating) return;
+
+    setNavigating(true);
+
+    const success = await saveAchievements();
+
+    if (success) {
+      router.push("/begin/symbols");
+    } else {
+      setNavigating(false);
+    }
+  }
+
+  async function continueToFuture(
+    event: FormEvent<HTMLFormElement>
+  ) {
+    event.preventDefault();
+
+    if (blocked || !recordId || navigating) return;
+
+    if (!latestFormRef.current.proudestLegacy.trim()) {
+      setErrorMessage(
+        "Please describe the achievement or turning point that best represents your family."
+      );
+      return;
+    }
+
+    setNavigating(true);
+
+    const success = await saveAchievements("future");
+
+    if (!success) {
+      setNavigating(false);
+      return;
+    }
+
     router.push("/begin/future");
   }
 
@@ -202,6 +301,9 @@ export default function AchievementsPage() {
         return "Saved to Family Record";
     }
   }
+
+  const textareaClass =
+    "w-full resize-y border border-[#cdbda5] bg-[#fbf8f2] px-4 py-3 text-lg leading-8 text-[#2d2822] outline-none transition focus:border-[#8b542f]";
 
   if (!loaded) {
     return (
@@ -227,19 +329,40 @@ export default function AchievementsPage() {
         <div className="mt-7 h-px w-20 bg-[#b89559]" />
 
         <p className="mt-7 text-lg leading-8 text-[#665b50]">
-          Achievement is broader than awards or titles. It includes service,
-          education, enterprise, perseverance, sacrifice, milestones, and the
-          quiet accomplishments that changed a family&apos;s path.
+          Achievement is broader than awards or titles.
+          It includes service, education, enterprise,
+          perseverance, sacrifice, milestones, and the
+          quiet accomplishments that changed a
+          family&apos;s path.
         </p>
       </header>
 
+      <div className="mt-10 border-l-2 border-[#b89559] bg-[#eee5d7] px-6 py-5">
+        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#8b542f]">
+          The Achievements of Your House
+        </p>
+
+        <p className="mt-3 text-sm leading-7 text-[#665b50]">
+          Record the accomplishments, sacrifices, and
+          milestones that have shaped your family. These
+          experiences help tell the story of your House
+          and the legacy it will carry forward.
+        </p>
+      </div>
+
       {errorMessage && (
-        <div className="mt-8 border border-red-300 bg-red-50 px-5 py-4 text-sm text-red-800">
+        <div
+          role="alert"
+          className="mt-8 border border-red-300 bg-red-50 px-5 py-4 text-sm text-red-800"
+        >
           {errorMessage}
         </div>
       )}
 
-      <div className="mt-12 space-y-6">
+      <fieldset
+        disabled={blocked || navigating || !recordId}
+        className="mt-12 space-y-6"
+      >
         <QuestionCard
           label="Military Achievements"
           description="Record decorations, promotions, commands, distinguished service, deployments, or other military accomplishments."
@@ -254,7 +377,7 @@ export default function AchievementsPage() {
             }
             rows={5}
             placeholder="Optional"
-            className="w-full resize-y border border-[#cdbda5] bg-[#fbf8f2] px-4 py-3 text-lg leading-8 text-[#2d2822] outline-none transition focus:border-[#8b542f]"
+            className={textareaClass}
           />
         </QuestionCard>
 
@@ -272,7 +395,7 @@ export default function AchievementsPage() {
             }
             rows={5}
             placeholder="What educational achievements are part of your family story?"
-            className="w-full resize-y border border-[#cdbda5] bg-[#fbf8f2] px-4 py-3 text-lg leading-8 text-[#2d2822] outline-none transition focus:border-[#8b542f]"
+            className={textareaClass}
           />
         </QuestionCard>
 
@@ -290,7 +413,7 @@ export default function AchievementsPage() {
             }
             rows={5}
             placeholder="What did members of your family build, lead, create, or master?"
-            className="w-full resize-y border border-[#cdbda5] bg-[#fbf8f2] px-4 py-3 text-lg leading-8 text-[#2d2822] outline-none transition focus:border-[#8b542f]"
+            className={textareaClass}
           />
         </QuestionCard>
 
@@ -308,7 +431,7 @@ export default function AchievementsPage() {
             }
             rows={5}
             placeholder="How has your family made its community stronger?"
-            className="w-full resize-y border border-[#cdbda5] bg-[#fbf8f2] px-4 py-3 text-lg leading-8 text-[#2d2822] outline-none transition focus:border-[#8b542f]"
+            className={textareaClass}
           />
         </QuestionCard>
 
@@ -326,7 +449,7 @@ export default function AchievementsPage() {
             }
             rows={5}
             placeholder="What moments changed the direction of your family?"
-            className="w-full resize-y border border-[#cdbda5] bg-[#fbf8f2] px-4 py-3 text-lg leading-8 text-[#2d2822] outline-none transition focus:border-[#8b542f]"
+            className={textareaClass}
           />
         </QuestionCard>
 
@@ -346,23 +469,25 @@ export default function AchievementsPage() {
             }
             rows={6}
             placeholder="Tell the story and explain why it matters."
-            className="w-full resize-y border border-[#cdbda5] bg-[#fbf8f2] px-4 py-3 text-lg leading-8 text-[#2d2822] outline-none transition focus:border-[#8b542f]"
+            className={textareaClass}
           />
         </QuestionCard>
-      </div>
+      </fieldset>
 
       <footer className="mt-10 border-t border-[#cdbda5] pt-8">
         <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
           <button
             type="button"
-            onClick={() => router.push("/begin/symbols")}
-            className="text-sm font-semibold uppercase tracking-[0.15em] text-[#6f4328]"
+            onClick={goBack}
+            disabled={blocked || navigating || !recordId}
+            className="text-sm font-semibold uppercase tracking-[0.15em] text-[#6f4328] disabled:opacity-50"
           >
             ← Back to Symbols
           </button>
 
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
             <p
+              aria-live="polite"
               className={`mr-2 text-xs font-semibold uppercase tracking-[0.18em] ${
                 saveStatus === "error"
                   ? "text-red-700"
@@ -375,7 +500,12 @@ export default function AchievementsPage() {
             <button
               type="button"
               onClick={saveNow}
-              disabled={saveStatus === "saving"}
+              disabled={
+                blocked ||
+                navigating ||
+                !recordId ||
+                saveStatus === "saving"
+              }
               className="border border-[#9d835f] px-6 py-3 text-sm font-semibold uppercase tracking-[0.15em] text-[#5b4433] transition hover:bg-[#ebe1d2] disabled:cursor-not-allowed disabled:opacity-50"
             >
               Save Progress
@@ -383,10 +513,17 @@ export default function AchievementsPage() {
 
             <button
               type="submit"
-              disabled={saveStatus === "saving"}
+              disabled={
+                blocked ||
+                navigating ||
+                !recordId ||
+                saveStatus === "saving"
+              }
               className="border border-[#6f4328] bg-[#6f4328] px-7 py-3 text-sm font-semibold uppercase tracking-[0.15em] text-white transition hover:bg-[#875235] disabled:cursor-not-allowed disabled:opacity-50"
             >
-              Continue to Future Legacy →
+              {navigating
+                ? "Saving..."
+                : "Continue to Future Legacy →"}
             </button>
           </div>
         </div>

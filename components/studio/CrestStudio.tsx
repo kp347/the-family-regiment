@@ -168,6 +168,7 @@ export default function CrestStudio() {
   const [message, setMessage] = useState("");
 
   useEffect(() => {
+    const hydrationTimer = window.setTimeout(() => {
     const savedBuilderDraft =
       window.localStorage.getItem(
         "family-regiment-draft",
@@ -312,6 +313,9 @@ export default function CrestStudio() {
     }
 
     setLoaded(true);
+    }, 0);
+
+    return () => window.clearTimeout(hydrationTimer);
   }, []);
 
   useEffect(() => {

@@ -1,3 +1,4 @@
+
 // components/builder/BuilderIdentity.tsx
 
 type BuilderIdentityProps = {
@@ -56,7 +57,7 @@ export default function BuilderIdentity({
         <p className="mt-4 text-3xl">{regimentTitle}</p>
         <p className="mt-3 text-sm leading-6 text-[#8F8B82]">
           This is your shared family identity, not your jacket name tape.
-          You'll personalize the chest name tape separately in the Jacket step.
+          You&apos;ll personalize the chest name tape separately in the Jacket step.
         </p>
       </div>
     </div>
@@ -82,9 +83,13 @@ function InputField({
 }) {
   return (
     <div>
-      <label htmlFor={id} className="text-xs uppercase tracking-[0.3em] text-[#B08D57]">
+      <label
+        htmlFor={id}
+        className="text-xs uppercase tracking-[0.3em] text-[#B08D57]"
+      >
         {label}
       </label>
+
       <input
         id={id}
         type="text"
@@ -94,9 +99,12 @@ function InputField({
         onChange={(event) => onChange(event.target.value)}
         className="mt-4 w-full border-b border-white/20 bg-transparent px-0 py-4 text-3xl text-[#F6F2EA] outline-none transition placeholder:text-[#4F4D49] focus:border-[#B08D57]"
       />
+
       <div className="mt-3 flex items-start justify-between gap-4 text-xs text-[#8F8B82]">
         <span>{helper}</span>
-        <span className="shrink-0 text-[#65625D]">{value.length}/{maxLength}</span>
+        <span className="shrink-0 text-[#65625D]">
+          {value.length}/{maxLength}
+        </span>
       </div>
     </div>
   );

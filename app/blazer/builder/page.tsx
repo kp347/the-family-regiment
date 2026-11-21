@@ -101,36 +101,42 @@ export default function HeritageBlazerBuilderPage() {
   >("saved");
 
   useEffect(() => {
-    const initialHouse = readHouseIdentity();
-    const initialConfiguration = readBlazerConfiguration();
+    // Defer hydration to a scheduled callback so React does not
+    // synchronously cascade state updates from an effect.
+    const timer = window.setTimeout(() => {
+      const initialHouse = readHouseIdentity();
+      const initialConfiguration = readBlazerConfiguration();
 
-    // Hydrate saved customer data after the initial render.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    sharedIdentitySnapshot.current = JSON.stringify(initialHouse);
-    setHouse(initialHouse);
-    setConfiguration(initialConfiguration);
-    setLoaded(true);
+      sharedIdentitySnapshot.current = JSON.stringify(initialHouse);
+      setHouse(initialHouse);
+      setConfiguration(initialConfiguration);
+      setLoaded(true);
+    }, 0);
+
+    return () => window.clearTimeout(timer);
   }, []);
 
   useEffect(() => {
     if (!loaded) return;
 
-    const serialized = JSON.stringify(house);
-    const houseSaved = serialized === sharedIdentitySnapshot.current
-      ? true
-      : saveHouseIdentity(house);
-    if (houseSaved) sharedIdentitySnapshot.current = serialized;
+    // Persist the latest House and garment selections together.
+    // A timer avoids synchronous effect-driven state updates and
+    // is cancelled if the customer makes another edit first.
+    const timer = window.setTimeout(() => {
+      const serialized = JSON.stringify(house);
+      const houseSaved = serialized === sharedIdentitySnapshot.current
+        ? true
+        : saveHouseIdentity(house);
 
-    const blazerSaved = saveBlazerConfiguration(
-      configuration,
-    );
+      if (houseSaved) sharedIdentitySnapshot.current = serialized;
 
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setSaveStatus(
-      houseSaved && blazerSaved
-        ? "saved"
-        : "unavailable",
-    );
+      const blazerSaved = saveBlazerConfiguration(configuration);
+      setSaveStatus(
+        houseSaved && blazerSaved ? "saved" : "unavailable"
+      );
+    }, 0);
+
+    return () => window.clearTimeout(timer);
   }, [house, configuration, loaded]);
 
   // Reflect House identity changes made in another tab.

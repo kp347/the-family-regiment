@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useRef, useState } from "react";
@@ -21,6 +22,11 @@ type HeraldReport = {
   shield_direction: HeraldRecommendation;
   crest_direction: HeraldRecommendation;
   motto_options: HeraldRecommendation[];
+};
+
+type StoredHeraldReport = HeraldReport & {
+  created_at: string | null;
+  family_record_id: string | null;
 };
 
 type AnalysisStep = {
@@ -66,18 +72,63 @@ const analysisSteps: AnalysisStep[] = [
   },
 ];
 
+const reportColumns = `
+  family_record_id,
+  created_at,
+  family_summary,
+  themes,
+  virtues,
+  recommended_colors,
+  recommended_symbols,
+  recommended_charges,
+  shield_direction,
+  crest_direction,
+  motto_options
+`;
+
+function isReportCurrent(
+  reportCreatedAt: string | null,
+  recordUpdatedAt: string | null
+): boolean {
+  if (!reportCreatedAt || !recordUpdatedAt) {
+    return false;
+  }
+
+  const reportTime = Date.parse(reportCreatedAt);
+  const recordTime = Date.parse(recordUpdatedAt);
+
+  return (
+    Number.isFinite(reportTime) &&
+    Number.isFinite(recordTime) &&
+    reportTime >= recordTime
+  );
+}
+
 export default function HeraldPage() {
   const router = useRouter();
 
   const [loading, setLoading] = useState(true);
   const [analyzing, setAnalyzing] = useState(false);
-  const [report, setReport] = useState<HeraldReport | null>(null);
+  const [report, setReport] = useState<HeraldReport | null>(
+    null
+  );
 
+  const [recordId, setRecordId] = useState<string | null>(
+    null
+  );
+
+  const [recordReady, setRecordReady] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
-  const [analysisStep, setAnalysisStep] = useState(0);
-  const [analysisComplete, setAnalysisComplete] = useState(false);
 
-  const ceremonyTimer = useRef<ReturnType<typeof setInterval> | null>(null);
+  const [analysisStep, setAnalysisStep] = useState(0);
+  const [analysisComplete, setAnalysisComplete] =
+    useState(false);
+
+  const ceremonyTimer = useRef<
+    ReturnType<typeof setInterval> | null
+  >(null);
+
+  const analysisInFlightRef = useRef(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -87,55 +138,115 @@ export default function HeraldPage() {
 
       const {
         data: { user },
+        error: authError,
       } = await supabase.auth.getUser();
 
       if (cancelled) return;
 
-      if (!user) {
+      if (authError || !user) {
         router.replace("/auth/sign-in");
         return;
       }
 
-      const { data, error } = await supabase
-        .from("herald_reports")
-        .select(
-          `
-          family_summary,
-          themes,
-          virtues,
-          recommended_colors,
-          recommended_symbols,
-          recommended_charges,
-          shield_direction,
-          crest_direction,
-          motto_options
-        `
-        )
+      // One authenticated account has one Family Record.
+      const {
+        data: familyRecord,
+        error: recordError,
+      } = await supabase
+        .from("family_records")
+        .select("id, completion_percent, updated_at")
         .eq("user_id", user.id)
-        .order("created_at", { ascending: false })
-        .limit(1)
         .maybeSingle();
 
       if (cancelled) return;
 
-      if (error) {
-        console.error("Unable to load Herald Report:", error);
+      if (recordError) {
+        console.error(
+          "Unable to load Family Record:",
+          recordError
+        );
+
+        setErrorMessage(
+          "We could not load your Family Record. Please try again."
+        );
+        setLoading(false);
+        return;
       }
 
-      if (data) {
-        setReport(data as HeraldReport);
+      if (!familyRecord) {
+        setErrorMessage(
+          "No Family Record was found. Begin the Founding Journey before visiting the Herald."
+        );
+        setLoading(false);
+        return;
+      }
+
+      setRecordId(familyRecord.id);
+
+      if (familyRecord.completion_percent !== 100) {
+        setErrorMessage(
+          "Your Family Record must be completed and reviewed before heraldic analysis can begin."
+        );
+        setLoading(false);
+        return;
+      }
+
+      setRecordReady(true);
+
+      // Only display reports associated with this
+      // authenticated customer's Family Record.
+      const { data: reports, error: reportError } =
+        await supabase
+          .from("herald_reports")
+          .select(reportColumns)
+          .eq("user_id", user.id)
+          .eq("family_record_id", familyRecord.id)
+          .order("created_at", {
+            ascending: false,
+          })
+          .limit(1);
+
+      if (cancelled) return;
+
+      if (reportError) {
+        console.error(
+          "Unable to load Herald Report:",
+          reportError
+        );
+
+        setErrorMessage(
+          "Your previous Herald Report could not be loaded. You may try the analysis again."
+        );
+      } else {
+        const existing = reports?.[0] as
+          | StoredHeraldReport
+          | undefined;
+
+        // Never present an old report as the current
+        // interpretation of an edited Family Record.
+        if (
+          existing &&
+          existing.family_record_id === familyRecord.id &&
+          isReportCurrent(
+            existing.created_at,
+            familyRecord.updated_at
+          )
+        ) {
+          setReport(existing);
+        }
       }
 
       setLoading(false);
     }
 
-    initializeHerald();
+    void initializeHerald();
 
     return () => {
       cancelled = true;
 
       if (ceremonyTimer.current) {
         clearInterval(ceremonyTimer.current);
+        ceremonyTimer.current = null;
       }
     };
   }, [router]);
@@ -153,10 +264,10 @@ export default function HeraldPage() {
         if (current >= analysisSteps.length - 1) {
           if (ceremonyTimer.current) {
             clearInterval(ceremonyTimer.current);
+            ceremonyTimer.current = null;
           }
 
           setAnalysisComplete(true);
-
           return current;
         }
 
@@ -169,28 +280,41 @@ export default function HeraldPage() {
     const minimumCeremonyTime =
       analysisSteps.length * 1400 + 600;
 
-    await new Promise((resolve) =>
-      window.setTimeout(resolve, minimumCeremonyTime)
-    );
+    await new Promise<void>((resolve) => {
+      window.setTimeout(resolve, minimumCeremonyTime);
+    });
   }
 
   async function beginAnalysis() {
+    if (
+      analysisInFlightRef.current ||
+      !recordId ||
+      !recordReady
+    ) {
+      return;
+    }
+
+    analysisInFlightRef.current = true;
+
     setAnalyzing(true);
     setErrorMessage("");
-    setReport(null);
 
     beginCeremony();
 
     try {
+      // The API identifies the Family Record from
+      // the authenticated user, not a client-supplied ID.
       const [response] = await Promise.all([
         fetch("/api/herald/analyze", {
           method: "POST",
+          cache: "no-store",
         }),
         waitForCeremony(),
       ]);
 
       let result: {
         report?: HeraldReport;
+        reused?: boolean;
         error?: string;
       } = {};
 
@@ -217,9 +341,9 @@ export default function HeraldPage() {
 
       setAnalysisComplete(true);
 
-      await new Promise((resolve) =>
-        window.setTimeout(resolve, 900)
-      );
+      await new Promise<void>((resolve) => {
+        window.setTimeout(resolve, 900);
+      });
 
       setReport(result.report);
     } catch (error) {
@@ -233,9 +357,11 @@ export default function HeraldPage() {
     } finally {
       if (ceremonyTimer.current) {
         clearInterval(ceremonyTimer.current);
+        ceremonyTimer.current = null;
       }
 
       setAnalyzing(false);
+      analysisInFlightRef.current = false;
     }
   }
 
@@ -275,39 +401,66 @@ export default function HeraldPage() {
           <div className="mt-8 h-px w-24 bg-[#b89559]" />
 
           <p className="mt-8 max-w-3xl text-lg leading-8 text-[#c8bfb2]">
-            The Herald considers what makes your family distinct and proposes
-            symbols and words that can carry its story forward.
-            Every recommendation must be traceable to something meaningful
-            in the record you have created.
+            The Herald considers what makes your family
+            distinct and proposes symbols and words that
+            can carry its story forward. Every
+            recommendation must be traceable to something
+            meaningful in the record you have created.
           </p>
         </div>
 
-        {!report && (
+        {!recordReady && (
+          <section className="mt-12 border border-[#574c3d] bg-[#1b1c17] p-8">
+            <p
+              role="alert"
+              className="text-sm leading-7 text-[#e4b5a7]"
+            >
+              {errorMessage ||
+                "Your Family Record is not ready for heraldic analysis."}
+            </p>
+
+            <button
+              type="button"
+              onClick={() => router.push("/begin")}
+              className="mt-7 border border-[#8c7450] px-6 py-3 text-xs font-semibold uppercase tracking-[0.15em] text-[#cfb486] transition hover:bg-white/[0.04]"
+            >
+              Return to Founding Journey
+            </button>
+          </section>
+        )}
+
+        {recordReady && !report && (
           <section className="mt-16 border border-[#574c3d] bg-[#1b1c17] p-8 sm:p-10">
             <p className="text-xs font-semibold uppercase tracking-[0.28em] text-[#c8a86b]">
               The Record Has Been Received
             </p>
 
             <h2 className="font-display mt-4 max-w-3xl text-4xl leading-tight">
-              The Herald is prepared to examine your family&apos;s record.
+              The Herald is prepared to examine your
+              family&apos;s record.
             </h2>
 
             <p className="mt-5 max-w-3xl leading-8 text-[#bcb3a7]">
               Origins, values, service, traditions, symbols,
-              achievements, and future legacy will be considered together
-              before any heraldic recommendation is made.
+              achievements, and future legacy will be
+              considered together before any heraldic
+              recommendation is made.
             </p>
 
             <div className="mt-8 border-l border-[#6b593d] pl-6">
               <p className="text-sm italic leading-7 text-[#9f9689]">
-                The purpose of this analysis is not to invent a history,
-                but to interpret the history and identity your family has
+                The purpose of this analysis is not to
+                invent a history, but to interpret the
+                history and identity your family has
                 documented.
               </p>
             </div>
 
             {errorMessage && (
-              <div className="mt-8 border border-red-900/60 bg-red-950/30 px-5 py-4 text-sm text-red-200">
+              <div
+                role="alert"
+                className="mt-8 border border-red-900/60 bg-red-950/30 px-5 py-4 text-sm text-red-200"
+              >
                 {errorMessage}
               </div>
             )}
@@ -315,18 +468,30 @@ export default function HeraldPage() {
             <button
               type="button"
               onClick={beginAnalysis}
-              className="mt-10 border border-[#a7723f] bg-[#7a4728] px-7 py-4 text-sm font-semibold uppercase tracking-[0.18em] text-white transition hover:bg-[#925a32]"
+              disabled={analyzing}
+              className="mt-10 border border-[#a7723f] bg-[#7a4728] px-7 py-4 text-sm font-semibold uppercase tracking-[0.18em] text-white transition hover:bg-[#925a32] disabled:opacity-50"
             >
               Begin Heraldic Analysis
             </button>
           </section>
         )}
 
-        {report && (
+        {report && errorMessage && (
+          <div
+            role="alert"
+            className="mt-10 border border-red-900/60 bg-red-950/30 px-5 py-4 text-sm text-red-200"
+          >
+            {errorMessage} Your previous report remains
+            available below.
+          </div>
+        )}
+
+        {recordReady && report && (
           <HeraldReportView
             report={report}
             onContinue={() => router.push("/builder")}
-            onRegenerate={beginAnalysis}
+            onCheckAnalysis={beginAnalysis}
+            onReturn={() => router.push("/begin/review")}
           />
         )}
       </section>
@@ -363,8 +528,8 @@ function HeraldChamber({
             <div className="mx-auto mt-7 h-px w-24 bg-[#8f7447]" />
 
             <p className="mx-auto mt-6 max-w-2xl text-base leading-8 text-[#a9a095]">
-              The Herald will now consider the record as a whole before
-              preparing any recommendation.
+              The Herald will now consider the record as a
+              whole before preparing any recommendation.
             </p>
           </div>
 
@@ -378,8 +543,6 @@ function HeraldChamber({
               const active =
                 index === activeStep &&
                 !analysisComplete;
-
-              const waiting = index > activeStep;
 
               return (
                 <div
@@ -452,7 +615,8 @@ function HeraldChamber({
               </>
             ) : (
               <p className="text-xs uppercase tracking-[0.24em] text-[#756e64]">
-                Please remain while the Herald examines the record.
+                Please remain while the Herald examines
+                the record.
               </p>
             )}
           </div>
@@ -462,81 +626,138 @@ function HeraldChamber({
   );
 }
 
-type RecommendationValue = HeraldRecommendation | string | null | undefined;
+type RecommendationValue =
+  | HeraldRecommendation
+  | string
+  | null
+  | undefined;
 
-function normalizeRecommendation(value: RecommendationValue): HeraldRecommendation | null {
+function normalizeRecommendation(
+  value: RecommendationValue
+): HeraldRecommendation | null {
   if (!value) return null;
+
   if (typeof value === "object") {
     return typeof value.recommendation === "string"
       ? {
           recommendation: value.recommendation,
-          traditionalMeaning: value.traditionalMeaning || "",
+          traditionalMeaning:
+            value.traditionalMeaning || "",
           familyReason: value.familyReason || "",
           learnMore: value.learnMore || "",
         }
       : null;
   }
 
-  // Older reports may store a complete recommendation object as JSON text.
+  // Older reports may store a recommendation
+  // object as JSON text.
   const text = value.trim();
+
   if (!text) return null;
+
   if (text.startsWith("{")) {
     try {
       const parsed: unknown = JSON.parse(text);
-      if (parsed && typeof parsed === "object" && "recommendation" in parsed) {
-        const item = parsed as Record<string, unknown>;
-        if (typeof item.recommendation === "string") {
+
+      if (
+        parsed &&
+        typeof parsed === "object" &&
+        "recommendation" in parsed
+      ) {
+        const item = parsed as Record<
+          string,
+          unknown
+        >;
+
+        if (
+          typeof item.recommendation === "string"
+        ) {
           return {
             recommendation: item.recommendation,
-            traditionalMeaning: typeof item.traditionalMeaning === "string" ? item.traditionalMeaning : "",
-            familyReason: typeof item.familyReason === "string" ? item.familyReason : "",
-            learnMore: typeof item.learnMore === "string" ? item.learnMore : "",
+            traditionalMeaning:
+              typeof item.traditionalMeaning ===
+              "string"
+                ? item.traditionalMeaning
+                : "",
+            familyReason:
+              typeof item.familyReason === "string"
+                ? item.familyReason
+                : "",
+            learnMore:
+              typeof item.learnMore === "string"
+                ? item.learnMore
+                : "",
           };
         }
       }
     } catch {
-      // Plain text is a valid legacy recommendation.
+      // Plain text is valid legacy content.
     }
   }
-  return { recommendation: text, traditionalMeaning: "", familyReason: "", learnMore: "" };
+
+  return {
+    recommendation: text,
+    traditionalMeaning: "",
+    familyReason: "",
+    learnMore: "",
+  };
 }
 
 function HeraldReportView({
   report,
   onContinue,
-  onRegenerate,
+  onCheckAnalysis,
+  onReturn,
 }: {
   report: HeraldReport;
   onContinue: () => void;
-  onRegenerate: () => void;
+  onCheckAnalysis: () => void;
+  onReturn: () => void;
 }) {
-  const [showHeraldicDetails, setShowHeraldicDetails] = useState(false);
+  const [
+    showHeraldicDetails,
+    setShowHeraldicDetails,
+  ] = useState(false);
+
   return (
     <div className="mt-12 space-y-8">
       <section className="border border-[#6b593d] bg-[#f5efe4] px-6 py-9 text-[#2d2822] shadow-2xl sm:px-10 sm:py-12">
         <p className="text-center text-[0.65rem] font-semibold uppercase tracking-[0.32em] text-[#8b6a37]">
           The Family Regiment
         </p>
+
         <h2 className="font-display mt-4 text-center text-3xl sm:text-4xl">
           The Herald&apos;s Report
         </h2>
+
         <p className="mt-3 text-center text-xs uppercase tracking-[0.2em] text-[#8a7b6c]">
           A reflection of your Family Record
         </p>
+
         <div className="mx-auto mt-7 h-px w-24 bg-[#b89b6a]" />
+
         <p className="mt-8 whitespace-pre-line text-base leading-8 text-[#453b32] sm:text-lg">
           {report.family_summary}
         </p>
+
         <p className="mt-7 border-t border-[#d8c9b3] pt-5 text-sm leading-7 text-[#695b4c]">
-          This is an interpretation of the history your family provided, not a claim
-          of inherited arms, noble rank, or a shared identity with everyone who bears
-          the same surname.
+          This is an interpretation of the history your
+          family provided, not a claim of inherited arms,
+          noble rank, or a shared identity with everyone
+          who bears the same surname.
         </p>
       </section>
 
       <div className="grid gap-5 md:grid-cols-2">
-        <SimpleList title="What defines your family" items={report.themes} />
-        <SimpleList title="Values worth carrying forward" items={report.virtues} />
+        <SimpleList
+          title="What defines your family"
+          items={report.themes}
+        />
+
+        <SimpleList
+          title="Values worth carrying forward"
+          items={report.virtues}
+        />
       </div>
 
       <section className="space-y-5">
@@ -544,9 +765,17 @@ function HeraldReportView({
           title="Symbols with a personal connection"
           description="These suggestions matter because of the experiences and principles recorded by your family—not simply because they look impressive."
         />
+
         <div className="grid gap-5 md:grid-cols-2">
-          <MeaningfulList title="Symbols" items={report.recommended_symbols} />
-          <MeaningfulList title="Principal heraldic imagery" items={report.recommended_charges} />
+          <MeaningfulList
+            title="Symbols"
+            items={report.recommended_symbols}
+          />
+
+          <MeaningfulList
+            title="Principal heraldic imagery"
+            items={report.recommended_charges}
+          />
         </div>
       </section>
 
@@ -555,72 +784,125 @@ function HeraldReportView({
           title="Words your family can live by"
           description="Possible mottos grounded in the values and lessons of your Family Record. These are starting points, not decisions made on your behalf."
         />
-        <MeaningfulList title="Motto ideas" items={report.motto_options} />
+
+        <MeaningfulList
+          title="Motto ideas"
+          items={report.motto_options}
+        />
       </section>
 
       <section className="space-y-5">
         <SectionHeading
           title="How the story could become a crest"
-          description="Two complementary design directions to consider as you customize your family crest."
+          description="Two complementary design directions to consider as you customize your family's single heraldic identity."
         />
+
         <div className="grid gap-5 md:grid-cols-2">
-          <DirectionCard eyebrow="Shield concept" recommendation={report.shield_direction} />
-          <DirectionCard eyebrow="Crest concept" recommendation={report.crest_direction} />
+          <DirectionCard
+            eyebrow="Shield concept"
+            recommendation={report.shield_direction}
+          />
+
+          <DirectionCard
+            eyebrow="Crest concept"
+            recommendation={report.crest_direction}
+          />
         </div>
       </section>
 
       <section className="border border-[#574c3d] bg-[#1b1c17] p-6 sm:p-8">
-        <h3 className="font-display text-xl text-[#f1e7cf]">One surname. Distinct family branches.</h3>
+        <h3 className="font-display text-xl text-[#f1e7cf]">
+          One Family Record. One Heraldic Identity.
+        </h3>
+
         <p className="mt-3 text-sm leading-7 text-[#c8bfb2]">
-          Siblings, cousins, and relatives in different regions may share ancestry
-          and a surname while maintaining different households, values, traditions,
-          and heraldic choices. Your Family Record should describe your own branch.
-          Other branches can have their own records and crests without changing yours.
+          Your Family Record establishes the identity,
+          values, traditions, and symbolism of your House.
+          Its heraldic recommendations provide a common
+          foundation for the family crest used throughout
+          The Family Regiment collection.
         </p>
-        <p className="mt-3 text-xs leading-6 text-[#a9a095]">
-          Branch-specific fields and relationships will be added to the Family Record
-          in a separate update. This report does not yet store or compare branches.
+
+        <p className="mt-3 text-sm leading-7 text-[#c8bfb2]">
+          The Regiment Jacket and Heritage Blazer share
+          this same family heraldry. Their crest sizes and
+          garment placements differ, but they do not
+          represent separate family identities.
         </p>
       </section>
 
       <section className="border border-[#574c3d] bg-[#1b1c17] p-6 sm:p-8">
         <button
           type="button"
-          onClick={() => setShowHeraldicDetails((previous) => !previous)}
+          onClick={() =>
+            setShowHeraldicDetails(
+              (previous) => !previous
+            )
+          }
           aria-expanded={showHeraldicDetails}
           className="flex w-full items-center justify-between gap-4 text-left"
         >
           <span>
-            <span className="block font-display text-xl text-[#f1e7cf]">Heraldic reference notes</span>
+            <span className="block font-display text-xl text-[#f1e7cf]">
+              Heraldic reference notes
+            </span>
+
             <span className="mt-2 block text-sm text-[#a9a095]">
-              Optional details about colors, traditional associations, and symbolism.
+              Optional details about colors,
+              traditional associations, and symbolism.
             </span>
           </span>
-          <span className="text-xl text-[#c8a86b]" aria-hidden="true">
+
+          <span
+            className="text-xl text-[#c8a86b]"
+            aria-hidden="true"
+          >
             {showHeraldicDetails ? "−" : "+"}
           </span>
         </button>
+
         {showHeraldicDetails && (
           <div className="mt-6 grid gap-4 border-t border-[#514735] pt-6 md:grid-cols-2">
-            {(report.recommended_colors || []).map((entry, index) => {
-              const item = normalizeRecommendation(entry);
-              return item ? <MeaningCard key={index} item={item} showContext /> : null;
-            })}
+            {(report.recommended_colors || []).map(
+              (entry, index) => {
+                const item =
+                  normalizeRecommendation(entry);
+
+                return item ? (
+                  <MeaningCard
+                    key={index}
+                    item={item}
+                    showContext
+                  />
+                ) : null;
+              }
+            )}
           </div>
         )}
       </section>
 
       <div className="flex flex-col gap-4 border-t border-[#574c3d] pt-8 sm:flex-row sm:flex-wrap">
-        <button type="button" onClick={() => window.history.back()}
-          className="border border-[#6c6255] px-6 py-4 text-xs font-semibold uppercase tracking-[0.13em] text-[#d5cbbb] hover:bg-white/[0.04]">
+        <button
+          type="button"
+          onClick={onReturn}
+          className="border border-[#6c6255] px-6 py-4 text-xs font-semibold uppercase tracking-[0.13em] text-[#d5cbbb] transition hover:bg-white/[0.04]"
+        >
           Return to Family Record
         </button>
-        <button type="button" onClick={onRegenerate}
-          className="border border-[#8c7450] px-6 py-4 text-xs font-semibold uppercase tracking-[0.13em] text-[#cfb486] hover:bg-white/[0.04]">
-          Run Analysis Again
+
+        <button
+          type="button"
+          onClick={onCheckAnalysis}
+          className="border border-[#8c7450] px-6 py-4 text-xs font-semibold uppercase tracking-[0.13em] text-[#cfb486] transition hover:bg-white/[0.04]"
+        >
+          Check for Updated Analysis
         </button>
-        <button type="button" onClick={onContinue}
-          className="border border-[#a7723f] bg-[#7a4728] px-7 py-4 text-xs font-semibold uppercase tracking-[0.13em] text-white hover:bg-[#925a32]">
+
+        <button
+          type="button"
+          onClick={onContinue}
+          className="border border-[#a7723f] bg-[#7a4728] px-7 py-4 text-xs font-semibold uppercase tracking-[0.13em] text-white transition hover:bg-[#925a32]"
+        >
           Continue to Crest Builder →
         </button>
       </div>
@@ -628,22 +910,45 @@ function HeraldReportView({
   );
 }
 
-function SectionHeading({ title, description }: { title: string; description: string }) {
+function SectionHeading({
+  title,
+  description,
+}: {
+  title: string;
+  description: string;
+}) {
   return (
     <div>
-      <h2 className="font-display text-2xl text-[#f1e7cf] sm:text-3xl">{title}</h2>
-      <p className="mt-2 max-w-3xl text-sm leading-7 text-[#b8afa2]">{description}</p>
+      <h2 className="font-display text-2xl text-[#f1e7cf] sm:text-3xl">
+        {title}
+      </h2>
+
+      <p className="mt-2 max-w-3xl text-sm leading-7 text-[#b8afa2]">
+        {description}
+      </p>
     </div>
   );
 }
 
-function SimpleList({ title, items }: { title: string; items: string[] }) {
+function SimpleList({
+  title,
+  items,
+}: {
+  title: string;
+  items: string[];
+}) {
   return (
     <section className="border border-[#574c3d] bg-[#1b1c17] p-6">
-      <h3 className="text-xs font-semibold uppercase tracking-[0.2em] text-[#c8a86b]">{title}</h3>
+      <h3 className="text-xs font-semibold uppercase tracking-[0.2em] text-[#c8a86b]">
+        {title}
+      </h3>
+
       <ul className="mt-5 space-y-3">
         {(items || []).map((item, index) => (
-          <li key={index} className="border-l-2 border-[#8f7447] py-1 pl-4 text-sm leading-6 text-[#e2d7c6]">
+          <li
+            key={index}
+            className="border-l-2 border-[#8f7447] py-1 pl-4 text-sm leading-6 text-[#e2d7c6]"
+          >
             {item}
           </li>
         ))}
@@ -652,37 +957,76 @@ function SimpleList({ title, items }: { title: string; items: string[] }) {
   );
 }
 
-function MeaningCard({ item, showContext = false }: { item: HeraldRecommendation; showContext?: boolean }) {
+function MeaningCard({
+  item,
+  showContext = false,
+}: {
+  item: HeraldRecommendation;
+  showContext?: boolean;
+}) {
   return (
     <article className="border border-[#655845] bg-[#20211c] p-5">
-      <h4 className="font-display text-lg leading-7 text-[#f1e7cf]">{item.recommendation}</h4>
+      <h4 className="font-display text-lg leading-7 text-[#f1e7cf]">
+        {item.recommendation}
+      </h4>
+
       {item.familyReason && (
-        <p className="mt-3 text-sm leading-7 text-[#ddd2c2]">{item.familyReason}</p>
+        <p className="mt-3 text-sm leading-7 text-[#ddd2c2]">
+          {item.familyReason}
+        </p>
       )}
+
       {showContext && item.traditionalMeaning && (
         <p className="mt-4 border-t border-[#514735] pt-4 text-xs leading-6 text-[#b8afa2]">
-          <span className="font-semibold text-[#c8a86b]">Traditional association: </span>
+          <span className="font-semibold text-[#c8a86b]">
+            Traditional association:{" "}
+          </span>
           {item.traditionalMeaning}
         </p>
       )}
+
       {showContext && item.learnMore && (
-        <p className="mt-3 text-xs leading-6 text-[#a9a095]">{item.learnMore}</p>
+        <p className="mt-3 text-xs leading-6 text-[#a9a095]">
+          {item.learnMore}
+        </p>
       )}
     </article>
   );
 }
 
-function MeaningfulList({ title, items }: { title: string; items: HeraldRecommendation[] }) {
-  const normalized = (items || []).map(normalizeRecommendation).filter(
-    (item): item is HeraldRecommendation => item !== null
-  );
+function MeaningfulList({
+  title,
+  items,
+}: {
+  title: string;
+  items: HeraldRecommendation[];
+}) {
+  const normalized = (items || [])
+    .map(normalizeRecommendation)
+    .filter(
+      (item): item is HeraldRecommendation =>
+        item !== null
+    );
+
   return (
     <section className="border border-[#574c3d] bg-[#1b1c17] p-6">
-      <h3 className="text-xs font-semibold uppercase tracking-[0.2em] text-[#c8a86b]">{title}</h3>
+      <h3 className="text-xs font-semibold uppercase tracking-[0.2em] text-[#c8a86b]">
+        {title}
+      </h3>
+
       <div className="mt-5 grid gap-4">
-        {normalized.length ? normalized.map((item, index) => (
-          <MeaningCard key={index} item={item} />
-        )) : <p className="text-sm text-[#a9a095]">No suggestions available yet.</p>}
+        {normalized.length ? (
+          normalized.map((item, index) => (
+            <MeaningCard
+              key={index}
+              item={item}
+            />
+          ))
+        ) : (
+          <p className="text-sm text-[#a9a095]">
+            No suggestions available yet.
+          </p>
+        )}
       </div>
     </section>
   );
@@ -695,19 +1039,29 @@ function DirectionCard({
   eyebrow: string;
   recommendation: RecommendationValue;
 }) {
-  const item = normalizeRecommendation(recommendation);
+  const item =
+    normalizeRecommendation(recommendation);
+
   return (
     <section className="min-w-0 border border-[#574c3d] bg-[#1b1c17] p-6">
-      <h3 className="text-xs font-semibold uppercase tracking-[0.2em] text-[#c8a86b]">{eyebrow}</h3>
+      <h3 className="text-xs font-semibold uppercase tracking-[0.2em] text-[#c8a86b]">
+        {eyebrow}
+      </h3>
+
       <p className="mt-4 break-words font-display text-lg leading-7 text-[#eee3d2] sm:text-xl">
-        {item?.recommendation || "Direction not yet available."}
+        {item?.recommendation ||
+          "Direction not yet available."}
       </p>
+
       {item?.familyReason && (
         <div className="mt-5 border-l-2 border-[#8f7447] pl-4">
           <p className="text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-[#c8a86b]">
             Why it fits your family
           </p>
-          <p className="mt-2 text-sm leading-7 text-[#d5cbbb]">{item.familyReason}</p>
+
+          <p className="mt-2 text-sm leading-7 text-[#d5cbbb]">
+            {item.familyReason}
+          </p>
         </div>
       )}
     </section>

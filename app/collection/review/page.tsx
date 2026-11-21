@@ -117,7 +117,7 @@ const DEFAULT_ORDER: OrderDraft = {
   jacketGroups: [{ id: "jacket-1", nameTape: "", sizes: [] }],
   blazerSizes: [],
 };
-function validLines(value: unknown, _product: Product): SizeLine[] {
+function validLines(value: unknown): SizeLine[] {
   if (!Array.isArray(value)) return [];
   return value.filter((v): v is SizeLine => Boolean(v && typeof v === "object" && typeof v.size === "string" && v.size.trim().length > 0 && v.size.length <= 20 && Number.isInteger(v.quantity) && v.quantity > 0 && v.quantity <= 99));
 }
@@ -128,12 +128,12 @@ function readOrder(tape: string): OrderDraft {
     const data: unknown = JSON.parse(raw);
     if (!data || typeof data !== "object") throw Error("Invalid order");
     const record = data as Partial<OrderDraft>;
-    const groups = Array.isArray(record.jacketGroups) ? record.jacketGroups.filter((g): g is JacketGroup => Boolean(g && typeof g.id === "string" && typeof g.nameTape === "string")).slice(0, 20).map(g => ({ id: g.id, nameTape: g.nameTape.slice(0, 30), sizes: validLines(g.sizes, "jacket") })) : [];
+    const groups = Array.isArray(record.jacketGroups) ? record.jacketGroups.filter((g): g is JacketGroup => Boolean(g && typeof g.id === "string" && typeof g.nameTape === "string")).slice(0, 20).map(g => ({ id: g.id, nameTape: g.nameTape.slice(0, 30), sizes: validLines(g.sizes) })) : [];
     return {
       jacketSelected: record.jacketSelected === true,
       blazerSelected: record.blazerSelected === true,
       jacketGroups: groups.length ? groups : [{ id: "jacket-1", nameTape: tape, sizes: [] }],
-      blazerSizes: validLines(record.blazerSizes, "blazer"),
+      blazerSizes: validLines(record.blazerSizes),
     };
   } catch { return { ...DEFAULT_ORDER, jacketGroups: [{ id: "jacket-1", nameTape: tape, sizes: [] }] }; }
 }
@@ -184,29 +184,67 @@ export default function CollectionReviewPage() {
   const [saveError, setSaveError] = useState(false);
   const [saveMessage, setSaveMessage] = useState("");
   useEffect(() => {
-    let tape = "";
-    try {
-      const rawJacket = window.localStorage.getItem(REGIMENT_DRAFT_KEY);
-      if (rawJacket) {
-        const jacket = JSON.parse(rawJacket) as { nameTapeText?: unknown; embroideryFinish?: unknown; rightShoulderHeritage?: unknown };
-        setJacketPreview(getJacketPreview(jacket));
-        if (typeof jacket.nameTapeText === "string") tape = jacket.nameTapeText;
-        if (typeof jacket.embroideryFinish === "string") setJacketFinish(jacket.embroideryFinish);
-        if (Array.isArray(jacket.rightShoulderHeritage)) setJacketDescription(`Heritage: ${jacket.rightShoulderHeritage.join(", ") || "None"}`);
+    // Hydrate browser-only drafts after mount, without synchronous
+    // state updates in the effect body.
+    const timer = window.setTimeout(() => {
+      let tape = "";
+      try {
+        const rawJacket = window.localStorage.getItem(REGIMENT_DRAFT_KEY);
+        if (rawJacket) {
+          const jacket = JSON.parse(rawJacket) as {
+            nameTapeText?: unknown;
+            embroideryFinish?: unknown;
+            rightShoulderHeritage?: unknown;
+          };
+          setJacketPreview(getJacketPreview(jacket));
+          if (typeof jacket.nameTapeText === "string") tape = jacket.nameTapeText;
+          if (typeof jacket.embroideryFinish === "string") {
+            setJacketFinish(jacket.embroideryFinish);
+          }
+          if (Array.isArray(jacket.rightShoulderHeritage)) {
+            const heritage = jacket.rightShoulderHeritage.filter(
+              (value): value is string => typeof value === "string"
+            );
+            setJacketDescription(`Heritage: ${heritage.join(", ") || "None"}`);
+          }
+        }
+        const rawBlazer = window.localStorage.getItem(BLAZER_DRAFT_KEY);
+        if (rawBlazer) {
+          const blazer = JSON.parse(rawBlazer) as { finish?: unknown };
+          if (
+            blazer.finish === "Regiment Gold" ||
+            blazer.finish === "Tactical Subdued" ||
+            blazer.finish === "Heritage Ivory"
+          ) {
+            setFinish(blazer.finish);
+          }
+        }
+      } catch {
+        // Retain safe defaults for invalid garment drafts.
       }
-      const rawBlazer = window.localStorage.getItem(BLAZER_DRAFT_KEY);
-      if (rawBlazer) {
-        const blazer = JSON.parse(rawBlazer) as { finish?: unknown };
-        if (blazer.finish === "Regiment Gold" || blazer.finish === "Tactical Subdued" || blazer.finish === "Heritage Ivory") setFinish(blazer.finish);
-      }
-    } catch { /* Retain safe defaults. */ }
-    setHouse(readHouseIdentity());
-    setOrder(readOrder(tape));
-    setLoaded(true);
+      setHouse(readHouseIdentity());
+      setOrder(readOrder(tape));
+      setLoaded(true);
+    }, 0);
+
+    return () => window.clearTimeout(timer);
   }, []);
+
   useEffect(() => {
     if (!loaded) return;
-    try { window.localStorage.setItem(ORDER_KEY, JSON.stringify(order)); setSaveError(false); } catch { setSaveError(true); }
+
+    // Keep storage writes in order and report failures without
+    // synchronously updating React state from the effect.
+    const timer = window.setTimeout(() => {
+      try {
+        window.localStorage.setItem(ORDER_KEY, JSON.stringify(order));
+        setSaveError(false);
+      } catch {
+        setSaveError(true);
+      }
+    }, 0);
+
+    return () => window.clearTimeout(timer);
   }, [loaded, order]);
   const jacketCount = useMemo(() => order.jacketSelected ? order.jacketGroups.reduce((n, group) => n + quantity(group.sizes), 0) : 0, [order]);
   const blazerCount = order.blazerSelected ? quantity(order.blazerSizes) : 0;

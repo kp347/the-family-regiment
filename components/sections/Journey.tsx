@@ -1,11 +1,14 @@
-import Image from "next/image";
+
+"use client";
+
+import { useState } from "react";
 
 type JourneyStage = {
   number: string;
   title: string;
   subtitle: string;
   body: string;
-  image: string | null;
+  image: string;
   alt: string;
   position: string;
 };
@@ -18,7 +21,7 @@ const stages: JourneyStage[] = [
     body:
       "We begin by uncovering the people, values, traditions, places, and defining moments that shaped your family. Before a symbol is drawn, the identity behind it must be understood.",
     image: "/images/family-charter-desk.png",
-    alt: "A family interview with photographs, notes, and journals",
+    alt: "Family photographs, journals, and historical records",
     position: "object-center",
   },
   {
@@ -28,7 +31,7 @@ const stages: JourneyStage[] = [
     body:
       "Documents, photographs, service records, migration stories, heirlooms, and oral traditions become the foundation of a living family record.",
     image: "/images/heritage-map.png",
-    alt: "An antique heritage map with archival family research materials",
+    alt: "An antique heritage map and archival research materials",
     position: "object-center",
   },
   {
@@ -48,7 +51,7 @@ const stages: JourneyStage[] = [
     body:
       "The approved heraldry is adapted for embroidery, print, archival records, garments, and other expressions while preserving clarity and dignity.",
     image: "/images/thread-and-embroidery.png",
-    alt: "Embroidery thread and tools used to create a heraldic patch",
+    alt: "Close-up of embroidered heraldry, fabric, and thread",
     position: "object-center",
   },
   {
@@ -58,7 +61,7 @@ const stages: JourneyStage[] = [
     body:
       "The completed identity, crest, motto, registry, and first heirloom pieces are presented as the beginning of a tradition—not the end of a design project.",
     image: "/images/family-regiment-design-system.png",
-    alt: "A finished family charter, registry, and presentation box",
+    alt: "A finished family charter, registry, and presentation materials",
     position: "object-center",
   },
   {
@@ -68,10 +71,62 @@ const stages: JourneyStage[] = [
     body:
       "Future generations inherit more than an image. They inherit a record they can understand, preserve, expand, and carry forward with purpose.",
     image: "/images/jacket-hanging.png",
-    alt: "A Family Regiment jacket displayed in a heritage study",
+    alt: "A Family Regiment heritage garment displayed in a study",
     position: "object-center",
   },
 ];
+
+function JourneyImage({ stage }: { stage: JourneyStage }) {
+  const [failed, setFailed] = useState(false);
+
+  return (
+    <div className="relative">
+      <div className="absolute -left-4 top-4 h-full w-full border border-[#a98f69]/35 bg-[#d8c7ad]" />
+
+      <div className="relative aspect-[5/4] overflow-hidden border border-[#9d835f] bg-[#1a1b16] shadow-[0_25px_70px_rgba(62,46,30,0.2)]">
+        {!failed ? (
+          // Standard image loading avoids Next.js image optimization.
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={stage.image}
+            alt={stage.alt}
+            loading={stage.number === "01" ? "eager" : "lazy"}
+            decoding="async"
+            className={`absolute inset-0 block h-full w-full object-cover ${stage.position}`}
+            onError={() => setFailed(true)}
+          />
+        ) : (
+          <div className="absolute inset-0 flex items-center justify-center px-10 text-center">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-[#c8a86b]">
+                The Family Regiment
+              </p>
+
+              <p className="font-display mt-4 text-3xl text-[#efe5d6]">
+                {stage.title}
+              </p>
+
+              <p className="mt-3 text-xs text-[#b9aa91]">
+                Heritage in the making
+              </p>
+            </div>
+          </div>
+        )}
+
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/45 via-transparent to-black/5"
+        />
+
+        <div className="absolute bottom-0 left-0 right-0 border-t border-white/10 bg-black/35 px-5 py-4 backdrop-blur-sm">
+          <p className="text-[0.62rem] font-semibold uppercase tracking-[0.27em] text-[#d3b77f]">
+            The Founding Journey · {stage.number}
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function Journey() {
   return (
@@ -114,44 +169,10 @@ export default function Journey() {
               <article
                 key={stage.number}
                 id={stage.title === "Heraldry" ? "heraldry" : undefined}
-                className={`grid scroll-mt-24 items-center gap-12 lg:grid-cols-2 lg:gap-20`}
+                className="grid scroll-mt-24 items-center gap-12 lg:grid-cols-2 lg:gap-20"
               >
                 <div className={imageFirst ? "lg:order-1" : "lg:order-2"}>
-                  <div className="relative">
-                    <div className="absolute -left-4 top-4 h-full w-full border border-[#a98f69]/35 bg-[#d8c7ad]" />
-
-                    <div className="relative aspect-[5/4] overflow-hidden border border-[#9d835f] bg-[#1a1b16] shadow-[0_25px_70px_rgba(62,46,30,0.2)]">
-                      {stage.image ? (
-                        <Image
-                          src={stage.image}
-                          alt={stage.alt}
-                          fill
-                          sizes="(min-width: 1024px) 50vw, 100vw"
-                          className={`object-cover ${stage.position}`}
-                        />
-                      ) : (
-                        <div className="flex h-full items-center justify-center px-10 text-center">
-                          <div>
-                            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-[#c8a86b]">
-                              Archival image in development
-                            </p>
-
-                            <p className="font-display mt-4 text-3xl text-[#efe5d6]">
-                              {stage.title}
-                            </p>
-                          </div>
-                        </div>
-                      )}
-
-                      <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/45 via-transparent to-black/5" />
-
-                      <div className="absolute bottom-0 left-0 right-0 border-t border-white/10 bg-black/35 px-5 py-4 backdrop-blur-sm">
-                        <p className="text-[0.62rem] font-semibold uppercase tracking-[0.27em] text-[#d3b77f]">
-                          The Founding Journey · {stage.number}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
+                  <JourneyImage stage={stage} />
                 </div>
 
                 <div className={imageFirst ? "lg:order-2" : "lg:order-1"}>

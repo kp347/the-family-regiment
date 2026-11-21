@@ -27,9 +27,17 @@ type FamilyRecordProgress = {
 };
 
 const chapterPaths = [
-  "origins", "values", "service", "traditions",
-  "symbols", "achievements", "future", "review",
+  "origins",
+  "values",
+  "service",
+  "traditions",
+  "symbols",
+  "achievements",
+  "future",
+  "review",
 ] as const;
+
+const REQUEST_TIMEOUT_MS = 12000;
 
 const initialJourney: JourneyState = {
   loading: true,
@@ -43,13 +51,13 @@ const initialJourney: JourneyState = {
 function hasAnswers(value: unknown): boolean {
   return Boolean(
     value &&
-    typeof value === "object" &&
-    !Array.isArray(value) &&
-    Object.values(value).some(
-      (answer) =>
-        typeof answer === "string" &&
-        answer.trim().length > 0,
-    ),
+      typeof value === "object" &&
+      !Array.isArray(value) &&
+      Object.values(value).some(
+        (answer) =>
+          typeof answer === "string" &&
+          answer.trim().length > 0,
+      ),
   );
 }
 
@@ -64,7 +72,9 @@ function getResumeDestination(
     (chapter) => chapter === record.current_article,
   );
 
-  if (savedArticle) return `/begin/${savedArticle}`;
+  if (savedArticle) {
+    return `/begin/${savedArticle}`;
+  }
 
   const latestAnswered = [
     { chapter: "future", answers: record.future_legacy },
@@ -81,9 +91,37 @@ function getResumeDestination(
     : "/begin/origins";
 }
 
+function withTimeout<T>(
+  operation: PromiseLike<T>,
+  timeoutMs: number,
+): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timer = setTimeout(() => {
+      reject(
+        new Error(
+          "The request timed out while contacting the service.",
+        ),
+      );
+    }, timeoutMs);
+
+    Promise.resolve(operation).then(
+      (result) => {
+        clearTimeout(timer);
+        resolve(result);
+      },
+      (error: unknown) => {
+        clearTimeout(timer);
+        reject(error);
+      },
+    );
+  });
+}
+
 export default function BeginPage() {
   const [journey, setJourney] =
     useState<JourneyState>(initialJourney);
+
+  const [retryCount, setRetryCount] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
@@ -92,12 +130,17 @@ export default function BeginPage() {
       try {
         const supabase = createClient();
 
+        const authResult = await withTimeout(
+          supabase.auth.getUser(),
+          REQUEST_TIMEOUT_MS,
+        );
+
+        if (cancelled) return;
+
         const {
           data: { user },
           error: authError,
-        } = await supabase.auth.getUser();
-
-        if (cancelled) return;
+        } = authResult;
 
         if (authError || !user) {
           setJourney({
@@ -105,29 +148,36 @@ export default function BeginPage() {
             loading: false,
             destination: "/auth/sign-in",
             error: authError
-              ? "We could not verify your session. Please sign in again."
+              ? "We could not verify your session. You can sign in again or retry."
               : null,
           });
           return;
         }
 
-        const { data, error } = await supabase
-          .from("family_records")
-          .select(`
-            origins,
-            values_record,
-            service,
-            traditions,
-            symbols,
-            achievements,
-            future_legacy,
-            current_article,
-            completion_percent
-          `)
-          .eq("user_id", user.id)
-          .maybeSingle();
+        const recordResult = await withTimeout(
+          supabase
+            .from("family_records")
+            .select(
+              `
+                origins,
+                values_record,
+                service,
+                traditions,
+                symbols,
+                achievements,
+                future_legacy,
+                current_article,
+                completion_percent
+              `,
+            )
+            .eq("user_id", user.id)
+            .maybeSingle(),
+          REQUEST_TIMEOUT_MS,
+        );
 
         if (cancelled) return;
+
+        const { data, error } = recordResult;
 
         if (error) {
           console.error(
@@ -140,7 +190,7 @@ export default function BeginPage() {
             loading: false,
             signedIn: true,
             error:
-              "We could not load your Family Record. Please refresh and try again.",
+              "We could not retrieve your Family Record. Please try again.",
           });
           return;
         }
@@ -192,9 +242,8 @@ export default function BeginPage() {
         setJourney({
           ...initialJourney,
           loading: false,
-          signedIn: true,
           error:
-            "Something went wrong while opening your Family Record. Please refresh and try again.",
+            "The connection to your Family Record did not complete. Please retry. If the problem continues, check your connection or sign in again.",
         });
       }
     }
@@ -204,7 +253,7 @@ export default function BeginPage() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [retryCount]);
 
   const buttonText = journey.loading
     ? "Loading Your Family Record..."
@@ -217,6 +266,14 @@ export default function BeginPage() {
           : journey.hasProgress
             ? "Continue Your Family Record"
             : "Begin Your Family Record";
+
+  const buttonDisabled =
+    journey.loading || Boolean(journey.error);
+
+  function retryLoading() {
+    setJourney(initialJourney);
+    setRetryCount((count) => count + 1);
+  }
 
   return (
     <main className="min-h-screen bg-[#171914] px-6 py-20 text-[#F1E7CF]">
@@ -265,24 +322,39 @@ export default function BeginPage() {
         </div>
 
         {journey.error && (
-          <p
-            role="alert"
-            className="mt-8 max-w-lg text-sm text-red-300"
-          >
-            {journey.error}
-          </p>
+          <div className="mt-8 flex max-w-xl flex-col items-center gap-4">
+            <p
+              role="alert"
+              className="text-sm leading-7 text-red-300"
+            >
+              {journey.error}
+            </p>
+
+            <div className="flex flex-wrap justify-center gap-3">
+              <button
+                type="button"
+                onClick={retryLoading}
+                className="min-h-11 border border-[#D4AF6A] px-6 py-3 text-xs font-semibold uppercase tracking-[0.12em] text-[#D4AF6A] transition-colors hover:bg-[#D4AF6A]/10"
+              >
+                Retry Connection
+              </button>
+
+              <Link
+                href="/auth/sign-in"
+                className="inline-flex min-h-11 items-center border border-[#C9C1AE]/40 px-6 py-3 text-xs font-semibold uppercase tracking-[0.12em] text-[#F1E7CF] transition-colors hover:bg-white/10"
+              >
+                Sign In Again
+              </Link>
+            </div>
+          </div>
         )}
 
         <Link
           href={journey.destination}
-          aria-disabled={
-            journey.loading || !!journey.error
-          }
-          tabIndex={
-            journey.loading || journey.error ? -1 : 0
-          }
+          aria-disabled={buttonDisabled}
+          tabIndex={buttonDisabled ? -1 : 0}
           className={`mt-12 inline-flex min-h-14 items-center justify-center bg-[#D4AF6A] px-10 py-4 text-xs font-semibold uppercase tracking-[0.16em] text-[#171914] transition-colors hover:bg-[#E6C78D] ${
-            journey.loading || journey.error
+            buttonDisabled
               ? "pointer-events-none opacity-60"
               : ""
           }`}
